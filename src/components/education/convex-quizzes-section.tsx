@@ -1,7 +1,7 @@
 "use client";
 
 import { DataSourceBadge } from "@/components/education/data-source-badge";
-import { glassCardClassName } from "@/components/education/glass-card";
+import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,7 +104,7 @@ function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
 
           return (
             <Link key={quiz.id} href={`/quiz/${quiz.id}`} className="block">
-              <Card className={`animate-widget rounded-lg ${glassCardClassName}`}>
+              <Card className={`animate-widget rounded-lg ${glassCardClassName} ${clickableGlassCardClassName}`}>
                 <CardHeader>
                   <Badge variant="secondary" className="mb-2 w-fit">
                     {status}

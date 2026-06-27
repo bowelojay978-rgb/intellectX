@@ -1,5 +1,5 @@
 import { ProgressBar } from "@/components/education/progress-bar";
-import { elevatedGlassCardClassName } from "@/components/education/glass-card";
+import { clickableGlassCardClassName, elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { getSubjectMark } from "@/components/education/subject-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ export function CourseCard({ course }: CourseCardProps) {
   const subjectMark = getSubjectMark(course.subject);
 
   return (
-    <Card className={`animate-widget overflow-hidden rounded-lg ${elevatedGlassCardClassName}`}>
+    <Card className={`animate-widget overflow-hidden rounded-lg ${elevatedGlassCardClassName} ${clickableGlassCardClassName}`}>
       <div className={`relative h-24 bg-gradient-to-br ${course.accent} dark:via-card/50`}>
         <div className="border-foreground/10 text-foreground/70 absolute right-5 bottom-4 grid size-12 place-items-center rounded-full border bg-white/45 text-2xl font-medium shadow-sm grayscale backdrop-blur dark:bg-black/20 dark:text-white/70">
           <span aria-hidden="true">{subjectMark}</span>

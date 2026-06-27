@@ -1,6 +1,6 @@
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
-import { glassCardClassName } from "@/components/education/glass-card";
+import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { PageShell } from "@/components/education/page-shell";
 import { StatCard } from "@/components/education/stat-card";
 import { StreakCard } from "@/components/education/streak-card";
@@ -68,7 +68,7 @@ export default function DashboardPage() {
                 <Link
                   key={lesson.id}
                   href={`/learn/${lesson.id}`}
-                  className="bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 transition-colors"
+                  className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
                 >
                   <SubjectMark
                     subject={courses.find((course) => course.id === lesson.courseId)?.subject ?? lesson.courseId}

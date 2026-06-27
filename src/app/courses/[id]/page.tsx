@@ -1,6 +1,6 @@
 import { PageShell } from "@/components/education/page-shell";
 import { ProgressBar } from "@/components/education/progress-bar";
-import { glassCardClassName } from "@/components/education/glass-card";
+import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +100,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <Link
                   key={lesson.id}
                   href={`/learn/${lesson.id}`}
-                  className="bg-secondary/40 hover:bg-secondary flex flex-col gap-3 rounded-lg p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                  className={`bg-secondary/40 hover:bg-secondary flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between ${clickableGlassCardClassName}`}
                 >
                   <div>
                     <p className="font-medium">
@@ -128,7 +128,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <Link
                   key={quiz.id}
                   href={`/quiz/${quiz.id}`}
-                  className="bg-secondary/40 hover:bg-secondary rounded-lg p-4 transition-colors"
+                  className={`bg-secondary/40 hover:bg-secondary rounded-lg p-4 ${clickableGlassCardClassName}`}
                 >
                   <p className="font-medium">{quiz.title}</p>
                   <p className="text-muted-foreground mt-1 text-sm">{quiz.estimatedTime}</p>
