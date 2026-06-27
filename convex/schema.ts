@@ -1,0 +1,103 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  users: defineTable({
+    name: v.string(),
+    role: v.string(),
+    avatar: v.optional(v.string()),
+  }),
+  courses: defineTable({
+    stableId: v.string(),
+    slug: v.string(),
+    title: v.string(),
+    description: v.string(),
+    subject: v.string(),
+    level: v.string(),
+    duration: v.string(),
+    accent: v.string(),
+  })
+    .index("by_stable_id", ["stableId"])
+    .index("by_slug", ["slug"]),
+  lessons: defineTable({
+    stableId: v.string(),
+    courseStableId: v.string(),
+    title: v.string(),
+    duration: v.string(),
+    summary: v.string(),
+    content: v.array(v.string()),
+    videoUrl: v.optional(v.string()),
+    posterUrl: v.optional(v.string()),
+    order: v.number(),
+  })
+    .index("by_stable_id", ["stableId"])
+    .index("by_course_stable_id", ["courseStableId"]),
+  quizzes: defineTable({
+    stableId: v.string(),
+    courseStableId: v.string(),
+    lessonStableId: v.optional(v.string()),
+    title: v.string(),
+    difficulty: v.string(),
+    estimatedTime: v.string(),
+  })
+    .index("by_stable_id", ["stableId"])
+    .index("by_course_stable_id", ["courseStableId"]),
+  questions: defineTable({
+    stableId: v.string(),
+    quizStableId: v.string(),
+    prompt: v.string(),
+    choices: v.array(v.string()),
+    answerIndex: v.number(),
+    explanation: v.string(),
+    order: v.number(),
+  })
+    .index("by_stable_id", ["stableId"])
+    .index("by_quiz_stable_id", ["quizStableId"]),
+  enrollments: defineTable({
+    userId: v.id("users"),
+    courseId: v.id("courses"),
+    progress: v.number(),
+    status: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_course", ["courseId"]),
+  lessonProgress: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    lessonId: v.string(),
+    status: v.string(),
+    progress: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userKey"])
+    .index("by_lesson", ["lessonId"]),
+  quizAttempts: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    quizId: v.string(),
+    score: v.number(),
+    totalQuestions: v.number(),
+    answers: v.array(v.number()),
+    completedAt: v.number(),
+  })
+    .index("by_user", ["userKey"])
+    .index("by_quiz", ["quizId"]),
+  studyStats: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    weeklyActiveDays: v.array(v.string()),
+    lastStudiedDate: v.string(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userKey"]),
+  notes: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    lessonId: v.string(),
+    body: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_lesson", ["userKey", "lessonId"])
+    .index("by_lesson", ["lessonId"]),
+});

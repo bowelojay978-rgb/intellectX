@@ -1,0 +1,114 @@
+import { CourseCard } from "@/components/education/course-card";
+import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { glassCardClassName } from "@/components/education/glass-card";
+import { PageShell } from "@/components/education/page-shell";
+import { StatCard } from "@/components/education/stat-card";
+import { StreakCard } from "@/components/education/streak-card";
+import { SubjectMark } from "@/components/education/subject-mark";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { courses } from "@/data/courses";
+import { lessons } from "@/data/lessons";
+import { quizzes } from "@/data/quizzes";
+import { userProgress } from "@/data/user-progress";
+import { BookOpenCheckIcon, FlameIcon, GraduationCapIcon, TargetIcon, TrophyIcon } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Dashboard - IntellectX",
+  description: "Track mock learning progress in IntellectX.",
+};
+
+export default function DashboardPage() {
+  const enrolledCourses = courses.filter((course) => userProgress.enrolledCourseIds.includes(course.id));
+  const recentLessons = lessons.filter((lesson) => userProgress.recentLessonIds.includes(lesson.id));
+
+  return (
+    <PageShell>
+      <section className="mb-8 flex flex-col gap-4">
+        <Badge variant="secondary" className="w-fit uppercase">
+          Dashboard
+        </Badge>
+        <DataSourceBadge />
+        <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+          Welcome back, {userProgress.name.split(" ")[0]}
+        </h1>
+        <p className="text-muted-foreground max-w-2xl leading-6">
+          Your learning cockpit for enrolled courses, recent lessons, quiz performance, and study consistency.
+        </p>
+      </section>
+      <section className="mb-8 grid gap-4 md:grid-cols-4">
+        <StatCard label="Study streak" value={`${userProgress.studyStreak} days`} icon={FlameIcon} />
+        <StatCard label="Total hours" value={`${userProgress.totalHours}h`} icon={GraduationCapIcon} />
+        <StatCard label="Lessons done" value={`${userProgress.completedLessons}`} icon={BookOpenCheckIcon} />
+        <StatCard label="Avg. quiz score" value={`${userProgress.averageQuizScore}%`} icon={TrophyIcon} />
+      </section>
+      <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Enrolled courses</h2>
+            <Link href="/courses" className="text-muted-foreground text-sm underline underline-offset-4">
+              Browse all
+            </Link>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {enrolledCourses.slice(0, 2).map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-5">
+          <Card className={`rounded-lg ${glassCardClassName}`}>
+            <CardHeader>
+              <CardTitle>Recent lessons</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {recentLessons.map((lesson) => (
+                <Link
+                  key={lesson.id}
+                  href={`/learn/${lesson.id}`}
+                  className="bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 transition-colors"
+                >
+                  <SubjectMark
+                    subject={courses.find((course) => course.id === lesson.courseId)?.subject ?? lesson.courseId}
+                    className="size-5 text-[10px]"
+                  />
+                  <div>
+                    <p className="font-medium">{lesson.title}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">{lesson.duration}</p>
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+          <StreakCard compact />
+          <Card className={`rounded-lg ${glassCardClassName}`}>
+            <CardHeader>
+              <CardTitle>Quiz performance</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {quizzes.map((quiz) => (
+                <div key={quiz.id} className="bg-secondary/40 flex items-center justify-between rounded-lg p-4">
+                  <span className="text-sm font-medium">{quiz.title}</span>
+                  <span className="font-semibold">{userProgress.quizScores[quiz.id]}%</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+          <Card className={`rounded-lg ${glassCardClassName}`}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TargetIcon className="size-5" />
+                Today&apos;s focus
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground text-sm leading-6">
+              Review Memory Systems, complete one knowledge check, and protect a 25-minute study block.
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </PageShell>
+  );
+}
