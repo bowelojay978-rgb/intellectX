@@ -46,3 +46,10 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Android / Capacitor local files
+android/local.properties
+android/.gradle/
+android/**/build/
+*.apk
+*.aab
