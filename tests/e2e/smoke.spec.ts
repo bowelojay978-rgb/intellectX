@@ -93,3 +93,19 @@ test("navbar remains fixed and keeps links as direct navigation items", async ({
   await expect(nav.getByRole("link", { name: "Courses" })).toBeVisible();
   await expect(nav.locator(".rounded-full").filter({ hasText: /Home|Courses|Quizzes|Progress|Dashboard|Pricing|Profile/ })).toHaveCount(0);
 });
+
+test("desktop navbar marks the current section active", async ({ page }) => {
+  await page.goto("/courses");
+  const nav = page.locator("nav:visible").filter({ has: page.getByRole("link", { name: "Signup" }) });
+  await expect(nav).toHaveCSS("position", "fixed");
+  await expect(nav.getByRole("link", { name: "Courses" })).toHaveAttribute("aria-current", "page");
+
+  await page.goto("/courses/ai-study-systems");
+  await expect(nav.getByRole("link", { name: "Courses" })).toHaveAttribute("aria-current", "page");
+
+  await page.goto("/quizzes");
+  await expect(nav.getByRole("link", { name: "Quizzes" })).toHaveAttribute("aria-current", "page");
+
+  await page.goto("/quiz/ai-study-systems-check");
+  await expect(nav.getByRole("link", { name: "Quizzes" })).toHaveAttribute("aria-current", "page");
+});

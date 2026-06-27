@@ -20,6 +20,18 @@ type Props = {
   className?: string;
 };
 
+function isActiveNavItem(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  if (href === "/quizzes") {
+    return pathname === "/quizzes" || pathname.startsWith("/quiz/");
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function DesktopNav({ items, className }: Props) {
   const pathname = usePathname();
 
@@ -39,20 +51,24 @@ export function DesktopNav({ items, className }: Props) {
         </Link>
         <NavigationMenu className="flex-none">
           <NavigationMenuList className="gap-5">
-            {items.map((item) => (
-              <NavigationMenuItem key={item.href}>
-                <NavigationMenuLink
-                  href={item.href}
-                  className={cn(
-                    "relative after:absolute after:right-3 after:-bottom-0.5 after:left-3 after:h-px after:origin-center after:scale-x-0 after:bg-white/85 after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100",
-                    (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) &&
-                      "text-foreground after:scale-x-100",
-                  )}
-                >
-                  {item.label}
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
+            {items.map((item) => {
+              const isActive = isActiveNavItem(pathname, item.href);
+
+              return (
+                <NavigationMenuItem key={item.href}>
+                  <NavigationMenuLink
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "relative after:absolute after:right-3 after:-bottom-0.5 after:left-3 after:h-px after:origin-center after:scale-x-0 after:bg-white/85 after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100",
+                      isActive && "text-foreground after:scale-x-100",
+                    )}
+                  >
+                    {item.label}
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              );
+            })}
           </NavigationMenuList>
         </NavigationMenu>
         <DemoAuthStatus />
