@@ -1,145 +1,139 @@
+import { courses } from "../src/data/courses";
+import { lessons } from "../src/data/lessons";
+import { quizzes } from "../src/data/quizzes";
 import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 
-const courses = [
-  {
-    stableId: "ai-study-systems",
-    slug: "ai-study-systems",
-    title: "AI Study Systems",
-    description: "Build a reliable study workflow with AI tutors, retrieval practice, and weekly planning.",
-    subject: "AI Productivity",
-    level: "Beginner",
-    duration: "4h 20m",
-    accent: "from-sky-500/20 via-white to-emerald-400/20",
-  },
-  {
-    stableId: "critical-thinking",
-    slug: "critical-thinking",
-    title: "Critical Thinking Lab",
-    description: "Practice evidence checks, argument mapping, and bias detection with guided AI feedback.",
-    subject: "Reasoning",
-    level: "Intermediate",
-    duration: "5h 10m",
-    accent: "from-violet-500/20 via-white to-amber-300/20",
-  },
-  {
-    stableId: "exam-accelerator",
-    slug: "exam-accelerator",
-    title: "Exam Accelerator",
-    description: "Turn course notes into adaptive revision plans, timed drills, and confidence tracking.",
-    subject: "Exam Prep",
-    level: "Advanced",
-    duration: "6h 45m",
-    accent: "from-rose-400/20 via-white to-cyan-400/20",
-  },
-];
+type CatalogTable = "courses" | "lessons" | "quizzes" | "questions";
 
-const lessons = [
-  {
-    stableId: "prompting-for-learning",
-    courseStableId: "ai-study-systems",
-    title: "Prompting for Learning",
-    duration: "18 min",
-    summary: "Use AI prompts that explain, challenge, and test instead of simply producing answers.",
-    content: [
-      "A strong learning prompt gives the AI a role, a target outcome, and a constraint.",
-      "Replace broad requests with focused loops: explain, question, diagnose, and suggest one next step.",
-    ],
-    posterUrl: "/app-image-1.png",
-    order: 1,
-  },
-  {
-    stableId: "memory-systems",
-    courseStableId: "ai-study-systems",
-    title: "Memory Systems",
-    duration: "22 min",
-    summary: "Combine spaced repetition and active recall into a weekly routine.",
-    content: ["Memory improves when retrieval is effortful.", "Schedule reviews before confidence drops too far."],
-    posterUrl: "/app-image-1.png",
-    order: 2,
-  },
-  {
-    stableId: "argument-maps",
-    courseStableId: "critical-thinking",
-    title: "Argument Maps",
-    duration: "24 min",
-    summary: "Break claims into evidence, assumptions, objections, and implications.",
-    content: ["An argument map separates the main claim from the reasons that support it."],
-    posterUrl: "/app-image-1.png",
-    order: 1,
-  },
-  {
-    stableId: "diagnostic-review",
-    courseStableId: "exam-accelerator",
-    title: "Diagnostic Review",
-    duration: "26 min",
-    summary: "Find the highest-value gaps before building an exam plan.",
-    content: ["Start with a timed diagnostic, not a reread."],
-    posterUrl: "/app-image-1.png",
-    order: 1,
-  },
-];
+const courseDocs = courses.map((course) => ({
+  stableId: course.id,
+  slug: course.slug,
+  title: course.title,
+  description: course.description,
+  subject: course.subject,
+  level: course.level,
+  duration: course.duration,
+  accent: course.accent,
+}));
 
-const quizzes = [
-  {
-    stableId: "ai-study-systems-check",
-    courseStableId: "ai-study-systems",
-    lessonStableId: "prompting-for-learning",
-    title: "AI Study Systems Check",
-    difficulty: "Foundational",
-    estimatedTime: "6 min",
-    questions: [
-      {
-        stableId: "ai-study-systems-check-q1",
-        prompt: "Which prompt pattern best supports learning?",
-        choices: [
-          "Give me the final answer only.",
-          "Explain, question me, diagnose gaps, then suggest one next step.",
-          "Rewrite my notes in a longer format.",
-          "Summarize every topic with no follow-up.",
-        ],
-        answerIndex: 1,
-        explanation: "A learning loop creates feedback and retrieval practice.",
-        order: 1,
-      },
-    ],
-  },
-];
+const lessonDocs = lessons.map((lesson) => ({
+  stableId: lesson.id,
+  courseStableId: lesson.courseId,
+  title: lesson.title,
+  duration: lesson.duration,
+  summary: lesson.summary,
+  content: lesson.content,
+  ...(lesson.videoUrl ? { videoUrl: lesson.videoUrl } : {}),
+  ...(lesson.posterUrl ? { posterUrl: lesson.posterUrl } : {}),
+  order: (courses.find((course) => course.id === lesson.courseId)?.lessonIds.indexOf(lesson.id) ?? -1) + 1,
+}));
 
-async function exists(ctx: any, table: string, stableId: string) {
+const quizDocs = quizzes.map((quiz) => ({
+  stableId: quiz.id,
+  courseStableId: quiz.courseId,
+  ...(quiz.lessonId ? { lessonStableId: quiz.lessonId } : {}),
+  title: quiz.title,
+  difficulty: quiz.difficulty,
+  estimatedTime: quiz.estimatedTime,
+}));
+
+const questionDocs = quizzes.flatMap((quiz) =>
+  quiz.questions.map((question, index) => ({
+    stableId: `${quiz.id}-${question.id}`,
+    quizStableId: quiz.id,
+    prompt: question.prompt,
+    choices: question.choices,
+    answerIndex: question.answerIndex,
+    explanation: question.explanation,
+    order: index,
+  })),
+);
+
+async function getByStableId(ctx: any, table: CatalogTable, stableId: string) {
   return await ctx.db
     .query(table)
     .withIndex("by_stable_id", (q: any) => q.eq("stableId", stableId))
     .first();
 }
 
+async function upsertByStableId(ctx: any, table: CatalogTable, doc: { stableId: string }) {
+  const existing = await getByStableId(ctx, table, doc.stableId);
+
+  if (existing) {
+    await ctx.db.patch(existing._id, doc);
+    return "updated";
+  }
+
+  await ctx.db.insert(table, doc);
+  return "inserted";
+}
+
+async function removeObsoleteCatalogDocs(ctx: any, table: CatalogTable, stableIds: Set<string>) {
+  const docs = await ctx.db.query(table).collect();
+  let removed = 0;
+
+  for (const doc of docs) {
+    if (!stableIds.has(doc.stableId)) {
+      await ctx.db.delete(doc._id);
+      removed += 1;
+    }
+  }
+
+  return removed;
+}
+
 export const seedEducationCatalog = mutationGeneric({
   args: { reset: v.optional(v.boolean()) },
   handler: async (ctx) => {
-    for (const course of courses) {
-      if (!(await exists(ctx, "courses", course.stableId))) {
-        await ctx.db.insert("courses", course);
-      }
+    const counts = {
+      courses: { seeded: courseDocs.length, inserted: 0, updated: 0, removed: 0 },
+      lessons: { seeded: lessonDocs.length, inserted: 0, updated: 0, removed: 0 },
+      quizzes: { seeded: quizDocs.length, inserted: 0, updated: 0, removed: 0 },
+      questions: { seeded: questionDocs.length, inserted: 0, updated: 0, removed: 0 },
+    };
+
+    for (const course of courseDocs) {
+      const result = await upsertByStableId(ctx, "courses", course);
+      counts.courses[result] += 1;
     }
 
-    for (const lesson of lessons) {
-      if (!(await exists(ctx, "lessons", lesson.stableId))) {
-        await ctx.db.insert("lessons", lesson);
-      }
+    for (const lesson of lessonDocs) {
+      const result = await upsertByStableId(ctx, "lessons", lesson);
+      counts.lessons[result] += 1;
     }
 
-    for (const quiz of quizzes) {
-      if (!(await exists(ctx, "quizzes", quiz.stableId))) {
-        const { questions, ...quizDoc } = quiz;
-        await ctx.db.insert("quizzes", quizDoc);
-        for (const question of questions) {
-          if (!(await exists(ctx, "questions", question.stableId))) {
-            await ctx.db.insert("questions", { ...question, quizStableId: quiz.stableId });
-          }
-        }
-      }
+    for (const quiz of quizDocs) {
+      const result = await upsertByStableId(ctx, "quizzes", quiz);
+      counts.quizzes[result] += 1;
     }
 
-    return { courses: courses.length, lessons: lessons.length, quizzes: quizzes.length };
+    for (const question of questionDocs) {
+      const result = await upsertByStableId(ctx, "questions", question);
+      counts.questions[result] += 1;
+    }
+
+    counts.questions.removed = await removeObsoleteCatalogDocs(
+      ctx,
+      "questions",
+      new Set(questionDocs.map((question) => question.stableId)),
+    );
+    counts.quizzes.removed = await removeObsoleteCatalogDocs(
+      ctx,
+      "quizzes",
+      new Set(quizDocs.map((quiz) => quiz.stableId)),
+    );
+    counts.lessons.removed = await removeObsoleteCatalogDocs(
+      ctx,
+      "lessons",
+      new Set(lessonDocs.map((lesson) => lesson.stableId)),
+    );
+    counts.courses.removed = await removeObsoleteCatalogDocs(
+      ctx,
+      "courses",
+      new Set(courseDocs.map((course) => course.stableId)),
+    );
+
+    return counts;
   },
 });

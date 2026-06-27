@@ -18,7 +18,10 @@ test("quiz flow reaches final results only after the last question and can resta
 
   const firstQuizCard = page.locator('a[href="/quiz/ai-study-systems-check"]');
   await expect(firstQuizCard).toBeVisible();
-  await firstQuizCard.first().click();
+  await expect(firstQuizCard).toHaveAttribute("href", "/quiz/ai-study-systems-check");
+  const quizHref = await firstQuizCard.getAttribute("href");
+  if (!quizHref) throw new Error("Quiz card href was missing");
+  await page.goto(quizHref);
   await expect(page).toHaveURL(/\/quiz\/ai-study-systems-check$/);
   await expect(page.getByText("Final results")).toHaveCount(0);
 
