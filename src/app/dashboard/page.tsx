@@ -1,5 +1,6 @@
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { EmptyState } from "@/components/education/empty-state";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { PageShell } from "@/components/education/page-shell";
 import { StatCard } from "@/components/education/stat-card";
@@ -11,7 +12,14 @@ import { courses } from "@/data/courses";
 import { lessons } from "@/data/lessons";
 import { quizzes } from "@/data/quizzes";
 import { userProgress } from "@/data/user-progress";
-import { BookOpenCheckIcon, FlameIcon, GraduationCapIcon, TargetIcon, TrophyIcon } from "lucide-react";
+import {
+  BookOpenCheckIcon,
+  BookOpenIcon,
+  FlameIcon,
+  GraduationCapIcon,
+  TargetIcon,
+  TrophyIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -52,11 +60,21 @@ export default function DashboardPage() {
               Browse all
             </Link>
           </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            {enrolledCourses.slice(0, 2).map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
+          {enrolledCourses.length > 0 ? (
+            <div className="grid gap-5 md:grid-cols-2">
+              {enrolledCourses.slice(0, 2).map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No enrolled courses yet"
+              description="Start with one course to turn this dashboard into a focused study plan."
+              actionHref="/courses"
+              actionLabel="Browse courses"
+              icon={BookOpenIcon}
+            />
+          )}
         </div>
         <div className="grid gap-5">
           <Card className={`rounded-lg ${glassCardClassName}`}>
@@ -64,22 +82,28 @@ export default function DashboardPage() {
               <CardTitle>Recent lessons</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {recentLessons.map((lesson) => (
-                <Link
-                  key={lesson.id}
-                  href={`/learn/${lesson.id}`}
-                  className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
-                >
-                  <SubjectMark
-                    subject={courses.find((course) => course.id === lesson.courseId)?.subject ?? lesson.courseId}
-                    className="size-5 text-[10px]"
-                  />
-                  <div>
-                    <p className="font-medium">{lesson.title}</p>
-                    <p className="text-muted-foreground mt-1 text-sm">{lesson.duration}</p>
-                  </div>
-                </Link>
-              ))}
+              {recentLessons.length > 0 ? (
+                recentLessons.map((lesson) => (
+                  <Link
+                    key={lesson.id}
+                    href={`/learn/${lesson.id}`}
+                    className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
+                  >
+                    <SubjectMark
+                      subject={courses.find((course) => course.id === lesson.courseId)?.subject ?? lesson.courseId}
+                      className="size-5 text-[10px]"
+                    />
+                    <div>
+                      <p className="font-medium">{lesson.title}</p>
+                      <p className="text-muted-foreground mt-1 text-sm">{lesson.duration}</p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
+                  Recent lessons will appear after study activity is available.
+                </div>
+              )}
             </CardContent>
           </Card>
           <StreakCard compact />
@@ -88,12 +112,18 @@ export default function DashboardPage() {
               <CardTitle>Quiz performance</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {quizzes.map((quiz) => (
-                <div key={quiz.id} className="bg-secondary/40 flex items-center justify-between rounded-lg p-4">
-                  <span className="text-sm font-medium">{quiz.title}</span>
-                  <span className="font-semibold">{userProgress.quizScores[quiz.id]}%</span>
+              {quizzes.length > 0 ? (
+                quizzes.map((quiz) => (
+                  <div key={quiz.id} className="bg-secondary/40 flex items-center justify-between rounded-lg p-4">
+                    <span className="text-sm font-medium">{quiz.title}</span>
+                    <span className="font-semibold">{userProgress.quizScores[quiz.id]}%</span>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
+                  Quiz scores will appear after knowledge checks are available.
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { EmptyState } from "@/components/education/empty-state";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -93,55 +94,67 @@ function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
       <div className="mb-4 flex justify-center">
         <DataSourceBadge />
       </div>
-      <section className="grid gap-5 md:grid-cols-3">
-        {quizzes.map((quiz) => {
-          const course = courses.find((item) => item.id === quiz.courseId);
-          const lesson = lessons.find((item) => item.id === quiz.lessonId);
-          const localAttempt = localAttempts[quiz.id];
-          const score = localAttempt?.percent;
-          const hasScore = typeof score === "number";
-          const status = localAttempt?.completed ? "Completed" : "Not started";
+      {quizzes.length > 0 ? (
+        <section className="grid gap-5 md:grid-cols-3">
+          {quizzes.map((quiz) => {
+            const course = courses.find((item) => item.id === quiz.courseId);
+            const lesson = lessons.find((item) => item.id === quiz.lessonId);
+            const localAttempt = localAttempts[quiz.id];
+            const score = localAttempt?.percent;
+            const hasScore = typeof score === "number";
+            const status = localAttempt?.completed ? "Completed" : "Not started";
 
-          return (
-            <Link key={quiz.id} href={`/quiz/${quiz.id}`} className="block">
-              <Card className={`animate-widget rounded-lg ${glassCardClassName} ${clickableGlassCardClassName}`}>
-                <CardHeader>
-                  <Badge variant="secondary" className="mb-2 w-fit">
-                    {status}
-                  </Badge>
-                  <CardTitle className="text-xl tracking-tight">{quiz.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <p className="text-muted-foreground leading-6">
-                    {course?.title ?? quiz.courseId}
-                    {lesson ? ` / ${lesson.title}` : ""}
-                  </p>
-                  <div className="text-muted-foreground flex flex-wrap gap-3">
-                    <span className="inline-flex items-center gap-1">
-                      <FileQuestionIcon className="size-4" />
-                      {quiz.questions.length} questions
+            return (
+              <Link key={quiz.id} href={`/quiz/${quiz.id}`} className="block">
+                <Card className={`animate-widget rounded-lg ${glassCardClassName} ${clickableGlassCardClassName}`}>
+                  <CardHeader>
+                    <Badge variant="secondary" className="mb-2 w-fit">
+                      {status}
+                    </Badge>
+                    <CardTitle className="text-xl tracking-tight">{quiz.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                    <p className="text-muted-foreground leading-6">
+                      {course?.title ?? quiz.courseId}
+                      {lesson ? ` / ${lesson.title}` : ""}
+                    </p>
+                    <div className="text-muted-foreground flex flex-wrap gap-3">
+                      <span className="inline-flex items-center gap-1">
+                        <FileQuestionIcon className="size-4" />
+                        {quiz.questions.length} questions
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <ClockIcon className="size-4" />
+                        {quiz.estimatedTime}
+                      </span>
+                    </div>
+                    <p>
+                      <span className="text-muted-foreground">Difficulty:</span> {quiz.difficulty}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Last score:</span>{" "}
+                      {hasScore ? `${score}%` : "No attempt yet"}
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <span className={buttonVariants({ className: "w-full" })}>
+                      {hasScore ? "Review quiz" : "Start quiz"}
                     </span>
-                    <span className="inline-flex items-center gap-1">
-                      <ClockIcon className="size-4" />
-                      {quiz.estimatedTime}
-                    </span>
-                  </div>
-                  <p>
-                    <span className="text-muted-foreground">Difficulty:</span> {quiz.difficulty}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Last score:</span>{" "}
-                    {hasScore ? `${score}%` : "No attempt yet"}
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <span className={buttonVariants({ className: "w-full" })}>{hasScore ? "Review quiz" : "Start quiz"}</span>
-                </CardFooter>
-              </Card>
-            </Link>
-          );
-        })}
-      </section>
+                  </CardFooter>
+                </Card>
+              </Link>
+            );
+          })}
+        </section>
+      ) : (
+        <EmptyState
+          title="No quizzes ready yet"
+          description="Knowledge checks will appear here when course practice is available."
+          actionHref="/courses"
+          actionLabel="Browse courses"
+          icon={FileQuestionIcon}
+        />
+      )}
     </>
   );
 }

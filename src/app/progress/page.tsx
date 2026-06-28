@@ -1,5 +1,6 @@
 import { glassCardClassName } from "@/components/education/glass-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { EmptyState } from "@/components/education/empty-state";
 import { PageShell } from "@/components/education/page-shell";
 import { ProgressCharts } from "@/components/education/progress-charts";
 import { ProgressBar } from "@/components/education/progress-bar";
@@ -103,16 +104,33 @@ export default function ProgressPage() {
               <CardTitle>Weak areas</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {summary.weakAreas.map((area) => (
-                <div key={area} className="bg-secondary/40 flex items-center gap-3 rounded-lg p-4 text-sm">
-                  <SubjectMark subject={area} className="size-5 text-[10px]" />
-                  {area}
+              {summary.weakAreas.length > 0 ? (
+                summary.weakAreas.map((area) => (
+                  <div key={area} className="bg-secondary/40 flex items-center gap-3 rounded-lg p-4 text-sm">
+                    <SubjectMark subject={area} className="size-5 text-[10px]" />
+                    {area}
+                  </div>
+                ))
+              ) : (
+                <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
+                  No weak areas are highlighted right now. Keep a steady rhythm with the next lesson or quiz.
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </div>
       </section>
+      {summary.courses.length === 0 && (
+        <section className="mt-8">
+          <EmptyState
+            title="No progress data yet"
+            description="Progress summaries will appear after courses are available and study activity has been recorded."
+            actionHref="/courses"
+            actionLabel="Browse courses"
+            icon={BookOpenCheckIcon}
+          />
+        </section>
+      )}
     </PageShell>
   );
 }

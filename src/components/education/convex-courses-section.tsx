@@ -2,9 +2,11 @@
 
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { EmptyState } from "@/components/education/empty-state";
 import type { Course } from "@/data/courses";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
+import { BookOpenIcon } from "lucide-react";
 import { useQuery } from "convex/react";
 
 type ConvexCourse = {
@@ -46,11 +48,21 @@ function FallbackCoursesSection({ fallbackCourses }: ConvexCoursesSectionProps) 
       <div className="mb-4 flex justify-center">
         <DataSourceBadge />
       </div>
-      <section className="grid gap-5 md:grid-cols-3">
-        {fallbackCourses.map((course) => (
-          <CourseCard key={course.id} course={course} />
-        ))}
-      </section>
+      {fallbackCourses.length > 0 ? (
+        <section className="grid gap-5 md:grid-cols-3">
+          {fallbackCourses.map((course) => (
+            <CourseCard key={course.id} course={course} />
+          ))}
+        </section>
+      ) : (
+        <EmptyState
+          title="No courses available yet"
+          description="The course catalog is being prepared. Check the dashboard for your current learning overview."
+          actionHref="/dashboard"
+          actionLabel="Go to dashboard"
+          icon={BookOpenIcon}
+        />
+      )}
     </>
   );
 }

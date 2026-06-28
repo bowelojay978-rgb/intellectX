@@ -1,6 +1,7 @@
 import { ProfileDemoSession } from "@/components/auth/profile-demo-session";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
+import { EmptyState } from "@/components/education/empty-state";
 import { glassCardClassName, elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { PageShell } from "@/components/education/page-shell";
 import { StatCard } from "@/components/education/stat-card";
@@ -10,7 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses } from "@/data/courses";
 import { userProgress } from "@/data/user-progress";
-import { BookOpenCheckIcon, CalendarCheckIcon, FlameIcon, SettingsIcon, ShieldIcon, TrophyIcon } from "lucide-react";
+import {
+  BookOpenCheckIcon,
+  BookOpenIcon,
+  CalendarCheckIcon,
+  FlameIcon,
+  SettingsIcon,
+  ShieldIcon,
+  TrophyIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -49,11 +58,21 @@ export default function ProfilePage() {
       <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <h2 className="mb-4 text-2xl font-semibold tracking-tight">Enrolled courses</h2>
-          <div className="grid gap-5 md:grid-cols-2">
-            {enrolledCourses.slice(0, 2).map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
+          {enrolledCourses.length > 0 ? (
+            <div className="grid gap-5 md:grid-cols-2">
+              {enrolledCourses.slice(0, 2).map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No courses on this profile"
+              description="Enroll in a course to make this profile reflect active learning progress."
+              actionHref="/courses"
+              actionLabel="Browse courses"
+              icon={BookOpenIcon}
+            />
+          )}
         </div>
         <div className="grid gap-5">
           <StreakCard />

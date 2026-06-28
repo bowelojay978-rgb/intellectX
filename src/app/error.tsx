@@ -28,7 +28,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         </p>
         <h1 className="text-4xl leading-tight font-medium tracking-tight md:text-5xl">Something needs a quick reset.</h1>
         <p className="text-muted-foreground mt-4 leading-7">
-          The prototype hit an unexpected client error. You can retry the current view or return home.
+          IntellectX hit an unexpected error. You can retry the current view or return to a stable starting point.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button type="button" onClick={reset}>
@@ -36,6 +36,9 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           </Button>
           <Button variant="outline" asChild>
             <Link href="/">Back home</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/courses">Courses</Link>
           </Button>
         </div>
       </section>
