@@ -10,8 +10,27 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "IntellectX",
-  description: "AI-powered learning paths, courses, quizzes, and study progress for modern learners.",
+  metadataBase: new URL("https://intellect-x-coral.vercel.app"),
+  applicationName: "IntellectX",
+  title: {
+    default: "IntellectX",
+    template: "%s",
+  },
+  description: "Premium learning paths, course lessons, quizzes, and progress tracking for focused study.",
+  creator: "IntellectX",
+  publisher: "IntellectX",
+  openGraph: {
+    type: "website",
+    url: "https://intellect-x-coral.vercel.app",
+    siteName: "IntellectX",
+    title: "IntellectX",
+    description: "Premium learning paths, course lessons, quizzes, and progress tracking for focused study.",
+  },
+  twitter: {
+    card: "summary",
+    title: "IntellectX",
+    description: "Premium learning paths, course lessons, quizzes, and progress tracking for focused study.",
+  },
 };
 
 export default function RootLayout({
