@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Mobile Flashcards - IntellectX",
-  description: "A mobile IntellectX hub for flashcard-style lesson review.",
+  description: "Review IntellectX lesson cards from a focused mobile flashcard hub.",
 };
 
 type FlashcardBlock = Extract<LessonBlock, { type: "visualMemoryCard" | "tapReveal" }>;

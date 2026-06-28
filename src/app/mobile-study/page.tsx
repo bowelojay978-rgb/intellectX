@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Study - IntellectX",
-  description: "A focused IntellectX mobile study entry point for quizzes, notes, and flashcards.",
+  description: "Open IntellectX mobile study tools for quizzes, lesson notes, and flashcard-style review.",
 };
 
 type StudyItem = {

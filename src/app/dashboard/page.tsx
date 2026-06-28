@@ -28,7 +28,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Dashboard - IntellectX",
-  description: "Track learning progress in IntellectX.",
+  description: "View IntellectX courses, recent lessons, quiz progress, and study focus.",
 };
 
 export default function DashboardPage() {
@@ -47,6 +47,7 @@ export default function DashboardPage() {
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
           Your learning cockpit for enrolled courses, recent lessons, quiz performance, and study consistency.
+          Learner identity is read from this browser session; progress metrics are seeded until account-level persistence is completed.
         </p>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
@@ -87,6 +88,7 @@ export default function DashboardPage() {
             <CardContent className="grid gap-3">
               <Link
                 href="/mobile-quizzes"
+                aria-label="Open mobile quizzes"
                 className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
               >
                 <BookOpenCheckIcon className="size-5" />
@@ -97,6 +99,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/mobile-notes"
+                aria-label="Open mobile notes"
                 className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
               >
                 <FileTextIcon className="size-5" />
@@ -107,6 +110,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/mobile-flashcards"
+                aria-label="Open mobile flashcards"
                 className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
               >
                 <Layers3Icon className="size-5" />

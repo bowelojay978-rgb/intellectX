@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type LearnerSessionStatusProps = {
@@ -12,7 +11,6 @@ type LearnerSessionStatusProps = {
 };
 
 export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusProps) {
-  const router = useRouter();
   const [session, setSession] = useState<LearnerSession | null>(null);
 
   useEffect(() => {
@@ -32,7 +30,7 @@ export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusPr
 
   function handleLogout() {
     clearLearnerSession();
-    router.push("/");
+    window.location.assign("/");
   }
 
   if (session) {
@@ -88,3 +86,4 @@ export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusPr
     </div>
   );
 }
+

@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Courses - IntellectX",
-  description: "Browse AI-powered education courses in IntellectX.",
+  description: "Browse IntellectX course tracks with lessons, progress, and quizzes.",
 };
 
 export default function CoursesPage() {

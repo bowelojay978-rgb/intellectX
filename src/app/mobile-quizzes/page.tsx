@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Quizzes - IntellectX",
-  description: "A mobile IntellectX hub for available quizzes.",
+  description: "Practice IntellectX knowledge checks from a focused mobile quiz hub.",
 };
 
 export default function MobileQuizzesPage() {

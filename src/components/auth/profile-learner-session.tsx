@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, MonitorCheckIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type ProfileLearnerSessionProps = {
@@ -13,7 +12,6 @@ type ProfileLearnerSessionProps = {
 };
 
 export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
-  const router = useRouter();
   const [session, setSession] = useState<LearnerSession | null>(null);
 
   useEffect(() => {
@@ -33,7 +31,7 @@ export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps)
 
   function handleLogout() {
     clearLearnerSession();
-    router.push("/");
+    window.location.assign("/");
   }
 
   return (
@@ -69,3 +67,4 @@ export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps)
     </Card>
   );
 }
+

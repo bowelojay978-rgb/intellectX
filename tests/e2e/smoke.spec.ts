@@ -40,7 +40,7 @@ test.describe("production support routes", () => {
     });
   }
 
-  test("custom 404 page loads for a fake route", async ({ page }) => {
+  test("custom 404 page loads for a missing route", async ({ page }) => {
     const response = await page.goto("/this-route-should-not-exist");
 
     expect(response?.status()).toBe(404);
@@ -200,25 +200,42 @@ test("quiz flow reaches final results only after the last question and can resta
   await expect(page.getByText(/of 3 correct/).first()).toBeVisible();
 });
 
-test("learner session creates, persists, and clears a local session", async ({ page }) => {
-  await page.goto("/login");
+test("learner session creates, personalizes dashboard and profile, and clears on logout", async ({ page }) => {
+  const learnerName = `Playwright Learner ${Date.now()}`;
+  const learnerEmail = "playwright.learner@intellectx.local";
 
-  await page.getByLabel("Email").fill("learner@intellectx.local");
+  await page.goto("/signup", { waitUntil: "domcontentloaded" });
+
+  await page.getByLabel("Name").fill(learnerName);
+  await page.getByLabel("Email").fill(learnerEmail);
+  await page.getByLabel("Password").fill("anything");
+  await page.getByRole("button", { name: /Create learner session/i }).click();
+
+  await expect(page).toHaveURL(/\/profile#study-profile$/);
+  await expect(page.getByRole("heading", { name: learnerName })).toBeVisible();
+
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+  await page.getByLabel("Email").fill(learnerEmail);
   await page.getByLabel("Password").fill("anything");
   await page.getByRole("button", { name: /Continue to dashboard/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /Welcome back, playwright\.learner/i })).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
-    .toContain("learner@intellectx.local");
+    .toContain(learnerEmail);
 
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /Welcome back, playwright\.learner/i })).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
-    .toContain("learner@intellectx.local");
+    .toContain(learnerEmail);
 
-  await page.goto("/profile");
+  await page.goto("/profile", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "playwright.learner" })).toBeVisible();
+  await expect(page.getByText(learnerEmail)).toBeVisible();
   await page.getByRole("button", { name: "Logout" }).first().click();
 
   await expect(page).toHaveURL("/");
@@ -319,7 +336,7 @@ test("dashboard exposes study shortcuts without hiding web dashboard content", a
 
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
   await expect(page.getByText("Study shortcuts")).toBeVisible();
-  await expect(page.locator('a[href="/mobile-quizzes"]')).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.locator('a[href="/mobile-notes"]')).toBeVisible();
   await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: "Enrolled courses" })).toBeVisible();

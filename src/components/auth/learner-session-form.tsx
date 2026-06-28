@@ -19,19 +19,19 @@ const contentByMode = {
   login: {
     eyebrow: "Learner access",
     title: "Welcome back",
-    description: "Use any email and password to enter your learner session on this device.",
+    description: "Use your learner email and password to continue with a browser-backed session on this device.",
     submitLabel: "Continue to dashboard",
   },
   signup: {
-    eyebrow: "Local profile",
+    eyebrow: "Learner profile",
     title: "Create your learner session",
-    description: "Use any details. This stores a local browser session for this device.",
+    description: "Create a browser-backed learner session for this device. You can clear it from your profile.",
     submitLabel: "Create learner session",
   },
   "forgot-password": {
-    eyebrow: "Local reset",
-    title: "Reset without the ceremony",
-    description: "No real password reset is sent. This keeps local testing frictionless.",
+    eyebrow: "Account recovery",
+    title: "Return to learner access",
+    description: "Password recovery is not available for browser-backed sessions yet. Return to login to continue.",
     submitLabel: "Return to login",
   },
 } satisfies Record<LearnerSessionMode, { eyebrow: string; title: string; description: string; submitLabel: string }>;
@@ -109,7 +109,7 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
             />
           ) : null}
           <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-            Local only: this stores a learner session in your browser. No Clerk, NextAuth, backend auth, or password security is active.
+            Browser-backed session: learner details stay on this device until logout or browser storage is cleared.
           </div>
           <Button type="submit" size="lg" className="mt-2 w-full">
             {content.submitLabel}

@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Notes - IntellectX",
-  description: "A mobile IntellectX hub for lesson notes.",
+  description: "Open lesson-attached IntellectX notes from a focused mobile notes hub.",
 };
 
 export default function MobileNotesPage() {

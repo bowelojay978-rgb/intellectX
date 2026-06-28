@@ -1,8 +1,8 @@
 # IntellectX
 
-IntellectX is a premium AI-powered education web app prototype built with Next.js, React, Tailwind CSS, Convex, and the preserved Paddle checkout starter code.
+IntellectX is a premium AI-powered education web app built with Next.js, React, Tailwind CSS, Convex, and the preserved Paddle checkout starter code.
 
-The current app includes a polished learner-facing frontend for courses, lessons, quizzes, progress, dashboard, profile, notes, video placeholders, and study streaks. Convex is being introduced as the production data layer for catalog data while the app keeps a safe mock/local fallback when Convex is not configured.
+The current app includes a polished learner-facing frontend for courses, lessons, quizzes, progress, dashboard, profile, notes, video placeholders, and study streaks. Convex is being introduced as the production data layer for catalog data while the app keeps a safe local catalog fallback when Convex is not configured.
 
 ## Tech Stack
 
@@ -40,7 +40,7 @@ npm run convex:codegen
 
 Then copy the generated `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` values into `.env.local`.
 
-If `NEXT_PUBLIC_CONVEX_URL` is missing, IntellectX intentionally falls back to `src/data` mock catalog data and local browser state for notes and quiz attempts.
+If `NEXT_PUBLIC_CONVEX_URL` is missing, IntellectX intentionally falls back to `src/data` catalog data and local browser state for notes and quiz attempts.
 
 ## Environment Variables
 

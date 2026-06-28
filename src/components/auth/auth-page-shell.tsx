@@ -19,11 +19,11 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
               IntellectX learner access
             </p>
             <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">
-              Premium learning access, minus the production auth setup.
+              Premium learning access for this browser.
             </h1>
             <p className="text-muted-foreground mt-5 max-w-xl leading-7">
-              These pages create a local learner session for fast navigation and testing while the product experience is being shaped.
-              Credentials are accepted locally and can be cleared from the profile page.
+              These pages create a learner session stored on this device while account-level persistence is being completed.
+              Session details can be cleared from the profile page.
             </p>
           </section>
           <LearnerSessionForm mode={mode} />

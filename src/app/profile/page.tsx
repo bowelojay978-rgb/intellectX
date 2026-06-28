@@ -26,7 +26,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Profile - IntellectX",
-  description: "View your learner profile in IntellectX.",
+  description: "View IntellectX learner profile details, study preferences, and session status.",
 };
 
 export default function ProfilePage() {
@@ -45,7 +45,7 @@ export default function ProfilePage() {
           </Badge>
           <DataSourceBadge />
           <h1 className="text-4xl font-medium tracking-tight"><LearnerSessionName /></h1>
-          <p className="text-muted-foreground mt-1">{userProgress.role}</p>
+          <p className="text-muted-foreground mt-1">Browser-backed learner profile</p>
         </div>
         <div className="grid gap-1 text-sm md:text-right">
           <span className="text-muted-foreground">Learning goal</span>
@@ -90,9 +90,9 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
-              <p>Plan: Scholar preview</p>
+              <p>Plan: Learner access</p>
               <p>Preferred pace: 25-minute study blocks</p>
-              <p>Learner sessions currently use browser storage while account-level persistence is being completed.</p>
+              <p>Session details use browser storage while account-level persistence is being completed. Study stats shown here are seeded learning metrics.</p>
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>
