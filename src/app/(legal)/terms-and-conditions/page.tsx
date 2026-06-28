@@ -15,22 +15,22 @@ export default function TermsAndConditions() {
         {
           title: "Overview",
           body: [
-            "IntellectX is an education SaaS/MVP available at https://intellect-x-coral.vercel.app. By using the product, you agree to use it responsibly and only for lawful learning, study, and productivity purposes.",
+            "IntellectX is an education platform available at https://intellect-x-coral.vercel.app. By using the product, you agree to use it responsibly and only for lawful learning, study, and productivity purposes.",
             "These terms are general product terms and should be reviewed by a qualified legal professional before a full commercial launch.",
           ],
         },
         {
           title: "Product Status",
           body: [
-            "Some IntellectX features may be prototypes, demos, or previews. Demo data, local browser storage, sample course content, and experimental interfaces may change without notice.",
-            "We aim to keep the product useful and reliable, but we do not guarantee uninterrupted availability, permanent access to prototype data, or that every feature will remain available in the same form.",
+            "Some IntellectX features may be previews or early-access experiences. Local browser storage, sample course content, and evolving interfaces may change without notice.",
+            "We aim to keep the product useful and reliable, but we do not guarantee uninterrupted availability, permanent access to locally stored data, or that every feature will remain available in the same form.",
           ],
         },
         {
           title: "Accounts and Access",
           body: [
             "If account features are enabled, you are responsible for keeping your login details secure and for activity that occurs through your account.",
-            "You should provide accurate information where required and avoid impersonating another person or misusing demo authentication flows.",
+            "You should provide accurate information where required and avoid impersonating another person or misusing learner session flows.",
           ],
         },
         {
@@ -72,7 +72,7 @@ export default function TermsAndConditions() {
           title: "Limitation of Liability",
           body: [
             "To the extent permitted by applicable law, IntellectX is provided without promises that it will meet every requirement or be error-free.",
-            "IntellectX should not be liable for indirect losses, lost data, missed learning goals, or decisions made based on prototype content, except where liability cannot legally be limited.",
+            "IntellectX should not be liable for indirect losses, lost data, missed learning goals, or decisions made based on educational content, except where liability cannot legally be limited.",
           ],
         },
         {
@@ -86,3 +86,8 @@ export default function TermsAndConditions() {
     />
   );
 }
+
+
+
+
+

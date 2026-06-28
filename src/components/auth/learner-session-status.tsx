@@ -1,38 +1,36 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { clearDemoSession, getDemoSession, type DemoSession } from "@/lib/demo-auth";
+import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type DemoAuthStatusProps = {
+type LearnerSessionStatusProps = {
   compact?: boolean;
 };
 
-export function DemoAuthStatus({ compact = false }: DemoAuthStatusProps) {
-  const router = useRouter();
-  const [session, setSession] = useState<DemoSession | null>(null);
+export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusProps) {
+  const [session, setSession] = useState<LearnerSession | null>(null);
 
   useEffect(() => {
     function syncSession() {
-      setSession(getDemoSession());
+      setSession(getLearnerSession());
     }
 
     syncSession();
     window.addEventListener("storage", syncSession);
-    window.addEventListener("intellectx-demo-session-change", syncSession);
+    window.addEventListener("intellectx:learner-session-change", syncSession);
 
     return () => {
       window.removeEventListener("storage", syncSession);
-      window.removeEventListener("intellectx-demo-session-change", syncSession);
+      window.removeEventListener("intellectx:learner-session-change", syncSession);
     };
   }, []);
 
   function handleLogout() {
-    clearDemoSession();
-    router.push("/");
+    clearLearnerSession();
+    window.location.assign("/");
   }
 
   if (session) {
@@ -88,3 +86,4 @@ export function DemoAuthStatus({ compact = false }: DemoAuthStatusProps) {
     </div>
   );
 }
+

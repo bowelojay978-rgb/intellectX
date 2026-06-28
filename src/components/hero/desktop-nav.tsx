@@ -1,6 +1,6 @@
 "use client";
 
-import { DemoAuthStatus } from "@/components/auth/demo-auth-status";
+import { LearnerSessionStatus } from "@/components/auth/learner-session-status";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -71,7 +71,7 @@ export function DesktopNav({ items, className }: Props) {
             })}
           </NavigationMenuList>
         </NavigationMenu>
-        <DemoAuthStatus />
+        <LearnerSessionStatus />
       </div>
     </nav>
   );

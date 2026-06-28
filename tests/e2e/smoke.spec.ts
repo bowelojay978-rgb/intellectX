@@ -40,7 +40,7 @@ test.describe("production support routes", () => {
     });
   }
 
-  test("custom 404 page loads for a fake route", async ({ page }) => {
+  test("custom 404 page loads for a missing route", async ({ page }) => {
     const response = await page.goto("/this-route-should-not-exist");
 
     expect(response?.status()).toBe(404);
@@ -120,9 +120,9 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
   const noteBody = `Playwright note ${Date.now()}`;
   const otherLessonNote = `Other lesson note ${Date.now()}`;
 
-  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.localStorage.clear());
-  await page.reload();
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
 
   const noteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
   await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
@@ -132,16 +132,16 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
   await noteInput.fill(noteBody);
   await page.getByRole("button", { name: "Save" }).click();
 
-  await page.reload();
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await expect(noteInput).toHaveValue(noteBody);
 
-  await page.goto("/learn/memory-systems#lesson-notes");
+  await page.goto("/learn/memory-systems#lesson-notes", { waitUntil: "domcontentloaded" });
   const otherNoteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
   await expect(otherNoteInput).not.toHaveValue(noteBody);
   await otherNoteInput.fill(otherLessonNote);
   await page.getByRole("button", { name: "Save" }).click();
 
-  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await expect(noteInput).toHaveValue(noteBody);
 });
 
@@ -200,29 +200,46 @@ test("quiz flow reaches final results only after the last question and can resta
   await expect(page.getByText(/of 3 correct/).first()).toBeVisible();
 });
 
-test("demo auth creates, persists, and clears a local session", async ({ page }) => {
-  await page.goto("/login");
+test("learner session creates, personalizes dashboard and profile, and clears on logout", async ({ page }) => {
+  const learnerName = `Playwright Learner ${Date.now()}`;
+  const learnerEmail = "playwright.learner@intellectx.local";
 
-  await page.getByLabel("Email").fill("learner@intellectx.demo");
+  await page.goto("/signup", { waitUntil: "domcontentloaded" });
+
+  await page.getByLabel("Name").fill(learnerName);
+  await page.getByLabel("Email").fill(learnerEmail);
+  await page.getByLabel("Password").fill("anything");
+  await page.getByRole("button", { name: /Create learner session/i }).click();
+
+  await expect(page).toHaveURL(/\/profile#study-profile$/);
+  await expect(page.getByRole("heading", { name: learnerName })).toBeVisible();
+
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+  await page.getByLabel("Email").fill(learnerEmail);
   await page.getByLabel("Password").fill("anything");
   await page.getByRole("button", { name: /Continue to dashboard/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /Welcome back, playwright\.learner/i })).toBeVisible();
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session")))
-    .toContain("learner@intellectx.demo");
+    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
+    .toContain(learnerEmail);
 
-  await page.reload();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /Welcome back, playwright\.learner/i })).toBeVisible();
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session")))
-    .toContain("learner@intellectx.demo");
+    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
+    .toContain(learnerEmail);
 
-  await page.goto("/profile");
+  await page.goto("/profile", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "playwright.learner" })).toBeVisible();
+  await expect(page.getByText(learnerEmail)).toBeVisible();
   await page.getByRole("button", { name: "Logout" }).first().click();
 
   await expect(page).toHaveURL("/");
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session"))).toBeNull();
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session"))).toBeNull();
 });
 
 test("study profile saves and personalizes courses and quizzes", async ({ page }) => {
@@ -276,9 +293,9 @@ test("progress page renders the subject progress chart without runtime errors", 
 });
 
 test("progress page shows a safe empty state before local quiz attempts exist", async ({ page }) => {
-  await page.goto("/progress");
-  await page.evaluate(() => window.localStorage.removeItem("intellectx:quiz-attempt-history"));
-  await page.reload();
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.localStorage.clear());
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Recent quiz attempts")).toBeVisible();
   await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
@@ -319,7 +336,7 @@ test("dashboard exposes study shortcuts without hiding web dashboard content", a
 
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
   await expect(page.getByText("Study shortcuts")).toBeVisible();
-  await expect(page.locator('a[href="/mobile-quizzes"]')).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.locator('a[href="/mobile-notes"]')).toBeVisible();
   await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: "Enrolled courses" })).toBeVisible();
@@ -359,3 +376,10 @@ test.describe("mobile smoke", () => {
     );
   });
 });
+
+
+
+
+
+
+

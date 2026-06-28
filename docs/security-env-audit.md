@@ -14,7 +14,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 
 - ☐ Confirm Convex deployment points to the intended project.
 - ☐ Confirm read/write functions expose only the intended data.
-- ☐ Confirm seed data is demo-safe.
+- ☐ Confirm seed data is safe for the intended release audience.
 - ☐ Confirm generated Convex files are not manually edited.
 - ☐ Confirm production data access is reviewed before launch.
 

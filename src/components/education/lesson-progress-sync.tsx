@@ -22,7 +22,7 @@ function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
 
   useEffect(() => {
     updateProgress({
-      userKey: "demo-user",
+      userKey: "local-learner",
       lessonId,
       status: "in_progress",
       progress: 25,
@@ -33,3 +33,4 @@ function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
 
   return null;
 }
+

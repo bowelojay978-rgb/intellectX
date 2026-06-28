@@ -33,7 +33,7 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
       quiz={quiz}
       onComplete={(answers, score) =>
         saveAttempt({
-          userKey: "demo-user",
+          userKey: "local-learner",
           quizId: quiz.id,
           score,
           totalQuestions: quiz.questions.length,
@@ -218,3 +218,4 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
     </Card>
   );
 }
+

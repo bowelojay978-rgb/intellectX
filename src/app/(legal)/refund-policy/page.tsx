@@ -15,7 +15,7 @@ export default function RefundPolicy() {
         {
           title: "Overview",
           body: [
-            "IntellectX is an education SaaS/MVP available at https://intellect-x-coral.vercel.app. Some releases may include paid plans, checkout, subscriptions, or preview pricing.",
+            "IntellectX is an education platform available at https://intellect-x-coral.vercel.app. Some releases may include paid plans, checkout, subscriptions, or preview pricing.",
             "This refund policy is general product guidance and should be reviewed by a qualified legal professional before a full commercial launch.",
           ],
         },
@@ -72,3 +72,4 @@ export default function RefundPolicy() {
     />
   );
 }
+

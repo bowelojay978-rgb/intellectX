@@ -1,18 +1,18 @@
-# IntellectX MVP Release Notes
+# IntellectX Release Notes
 
-## Current MVP Checkpoint
+## Current Release Checkpoint
 
 IntellectX is deployed at https://intellect-x-coral.vercel.app with a local preview target of http://10.156.53.238:3000.
 
 This checkpoint includes:
 
-- Premium course, lesson, quiz, dashboard, progress, profile, pricing, and auth-demo frontend flows.
+- Premium course, lesson, quiz, dashboard, progress, profile, pricing, and learner-session frontend flows.
 - Convex catalog seed parity for course, lesson, quiz, notes, and progress data.
 - Navbar active-state polish across course and quiz detail routes.
 - Card hover polish for course and quiz surfaces.
 - Production microtasks: custom 404, metadata baseline, robots, sitemap, security headers, release safety docs, and smoke test docs.
 - Loading, error, and empty states for core education and legal routes.
-- Completed Privacy Policy, Terms and Conditions, and Refund Policy pages for MVP review.
+- Completed Privacy Policy, Terms and Conditions, and Refund Policy pages for release review.
 - Phase 1 academic profile personalization using local browser storage to prioritize matching courses and quizzes.
 - Android debug APK milestone for device testing.
 - Vercel production deployment.

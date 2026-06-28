@@ -1,4 +1,5 @@
-import { ProfileDemoSession } from "@/components/auth/profile-demo-session";
+import { LearnerSessionName } from "@/components/auth/learner-session-name";
+import { ProfileLearnerSession } from "@/components/auth/profile-learner-session";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
@@ -25,7 +26,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Profile - IntellectX",
-  description: "View a mock learner profile in IntellectX.",
+  description: "View IntellectX learner profile details, study preferences, and session status.",
 };
 
 export default function ProfilePage() {
@@ -35,16 +36,16 @@ export default function ProfilePage() {
     <PageShell>
       <section className={`animate-widget mb-8 flex flex-col gap-6 rounded-lg p-6 md:flex-row md:items-center md:p-8 ${elevatedGlassCardClassName}`}>
         <Avatar className="size-20">
-          <AvatarImage src={userProgress.avatar} alt={userProgress.name} />
-          <AvatarFallback>MC</AvatarFallback>
+          <AvatarImage src={userProgress.avatar} alt="Learner profile avatar" />
+          <AvatarFallback>IX</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <Badge variant="secondary" className="mb-3">
             Profile
           </Badge>
           <DataSourceBadge />
-          <h1 className="text-4xl font-medium tracking-tight">{userProgress.name}</h1>
-          <p className="text-muted-foreground mt-1">{userProgress.role}</p>
+          <h1 className="text-4xl font-medium tracking-tight"><LearnerSessionName /></h1>
+          <p className="text-muted-foreground mt-1">Browser-backed learner profile</p>
         </div>
         <div className="grid gap-1 text-sm md:text-right">
           <span className="text-muted-foreground">Learning goal</span>
@@ -80,7 +81,7 @@ export default function ProfilePage() {
         </div>
         <div className="grid gap-5">
           <StreakCard />
-          <ProfileDemoSession className={`rounded-lg ${glassCardClassName}`} />
+          <ProfileLearnerSession className={`rounded-lg ${glassCardClassName}`} />
           <Card className={`rounded-lg ${glassCardClassName}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -89,9 +90,9 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
-              <p>Plan: Scholar preview</p>
+              <p>Plan: Learner access</p>
               <p>Preferred pace: 25-minute study blocks</p>
-              <p>No authentication or account persistence has been added in this prototype.</p>
+              <p>Session details use browser storage while account-level persistence is being completed. Study stats shown here are seeded learning metrics.</p>
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>
@@ -121,3 +122,5 @@ export default function ProfilePage() {
     </PageShell>
   );
 }
+
+

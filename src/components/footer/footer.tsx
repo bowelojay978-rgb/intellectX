@@ -120,6 +120,7 @@ export function Footer() {
                     href={link.href}
                     title={link.title}
                     target={link.href.startsWith("https://") ? "_blank" : undefined}
+                    rel={link.href.startsWith("https://") ? "noopener noreferrer" : undefined}
                   >
                     {link.label}
                   </Link>

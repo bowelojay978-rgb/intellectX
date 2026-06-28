@@ -1,4 +1,4 @@
-import { DemoAuthForm } from "@/components/auth/demo-auth-form";
+import { LearnerSessionForm } from "@/components/auth/learner-session-form";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
@@ -16,17 +16,17 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
         <main className="mx-auto grid min-h-[calc(100vh-11rem)] w-full max-w-6xl items-center gap-10 lg:grid-cols-[1fr_440px]">
           <section className="max-w-2xl">
             <p className="text-muted-foreground mb-4 text-xs font-semibold tracking-[0.18em] uppercase">
-              IntellectX prototype
+              IntellectX learner access
             </p>
             <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">
-              Premium learning access, minus the production auth setup.
+              Premium learning access for this browser.
             </h1>
             <p className="text-muted-foreground mt-5 max-w-xl leading-7">
-              These pages exist for fast navigation and testing while the product experience is being shaped.
-              Credentials are accepted locally and can be cleared from the profile page.
+              These pages create a learner session stored on this device while account-level persistence is being completed.
+              Session details can be cleared from the profile page.
             </p>
           </section>
-          <DemoAuthForm mode={mode} />
+          <LearnerSessionForm mode={mode} />
         </main>
       </div>
       <Footer />

@@ -218,7 +218,7 @@ function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
         <>
           <EmptyState
             title="No exact quiz matches yet"
-            description="The demo catalog is still small. Edit your study profile or use the available quizzes below."
+            description="The catalog is still growing. Edit your study profile or use the available quizzes below."
             actionHref="/profile#study-profile"
             actionLabel="Edit study profile"
             icon={FileQuestionIcon}
@@ -265,3 +265,4 @@ export function ConvexQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionPr
 
   return <LiveQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
 }
+

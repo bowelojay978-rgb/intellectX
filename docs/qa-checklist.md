@@ -28,7 +28,7 @@ Use this checklist for manual production review. Do not mark items complete unti
 
 - ☐ Production URL loads: https://intellect-x-coral.vercel.app.
 - ☐ Local preview loads when needed: http://10.156.53.238:3000.
-- ☐ Custom 404 page appears for a fake route.
+- ☐ Custom 404 page appears for a missing route.
 - ☐ robots.txt loads.
 - ☐ sitemap.xml loads.
 - ☐ Security headers are present on a normal app route.

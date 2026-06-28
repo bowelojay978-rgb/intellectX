@@ -129,7 +129,7 @@ function NotesEditorCore({ lessonId, initialBody, isLoading = false, onSave }: N
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           <h2 className="font-semibold tracking-tight">Lesson notes</h2>
-          <p className="text-muted-foreground text-sm" aria-live="polite">
+          <p className="text-muted-foreground text-sm" role="status" aria-live="polite">
             {statusText}
           </p>
         </div>
