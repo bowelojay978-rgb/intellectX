@@ -110,10 +110,10 @@ test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await page.goto("/mobile-flashcards");
   await expect(page.getByRole("heading", { name: "Flashcards from lesson cards" })).toBeVisible();
   await expect(page.getByText("Tutor, not answer machine")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open in lesson" }).first()).toHaveAttribute(
-    "href",
-    /\/learn\/.+#lesson-flashcards/,
-  );
+  await expect(page.getByText("Card 1 of")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Source lesson" })).toHaveAttribute("href", /\/learn\/.+#lesson-flashcards/);
+  await page.getByRole("button", { name: "Reveal answer" }).click();
+  await expect(page.getByRole("button", { name: "Hide answer" })).toBeVisible();
 });
 
 test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) => {

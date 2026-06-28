@@ -1,12 +1,8 @@
-import { TapReveal } from "@/components/education/tap-reveal";
-import { VisualMemoryCard } from "@/components/education/visual-memory-card";
+import { MobileFlashcardReview } from "@/components/education/mobile-flashcard-review";
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { lessons, type LessonBlock } from "@/data/lessons";
-import { ArrowRightIcon, Layers3Icon } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Flashcards - IntellectX",
@@ -15,13 +11,17 @@ export const metadata: Metadata = {
 
 type FlashcardBlock = Extract<LessonBlock, { type: "visualMemoryCard" | "tapReveal" }>;
 
-const flashcardLessons = lessons.flatMap((lesson) => {
+const reviewCards = lessons.flatMap((lesson) => {
   const blocks =
     lesson.blocks?.filter(
       (block): block is FlashcardBlock => block.type === "visualMemoryCard" || block.type === "tapReveal",
     ) ?? [];
 
-  return blocks.length > 0 ? [{ lesson, blocks }] : [];
+  return blocks.map((block) => ({
+    lessonId: lesson.id,
+    lessonTitle: lesson.title,
+    block,
+  }));
 });
 
 export default function MobileFlashcardsPage() {
@@ -40,39 +40,7 @@ export default function MobileFlashcardsPage() {
         </p>
       </section>
 
-      <section className="space-y-5">
-        {flashcardLessons.map(({ lesson, blocks }) => (
-          <article
-            key={lesson.id}
-            className="animate-widget rounded-lg border border-white/70 bg-white/60 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60"
-          >
-            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-muted-foreground flex items-center gap-2 text-sm">
-                  <Layers3Icon className="size-4" />
-                  {blocks.length} review cards
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">{lesson.title}</h2>
-              </div>
-              <Button variant="outline" asChild>
-                <Link href={`/learn/${lesson.id}#lesson-flashcards`}>
-                  Open in lesson
-                  <ArrowRightIcon />
-                </Link>
-              </Button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {blocks.map((block, index) => {
-                if (block.type === "visualMemoryCard") {
-                  return <VisualMemoryCard key={`${lesson.id}-${index}`} {...block} />;
-                }
-
-                return <TapReveal key={`${lesson.id}-${index}`} {...block} />;
-              })}
-            </div>
-          </article>
-        ))}
-      </section>
+      <MobileFlashcardReview cards={reviewCards} />
     </PageShell>
   );
 }
