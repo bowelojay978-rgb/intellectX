@@ -24,7 +24,7 @@ export const userProgress: UserProgress = {
   averageQuizScore: 0,
   longestStreak: 0,
   weeklyActiveDays: [],
-  lastStudiedDate: "Sync pending",
+  lastStudiedDate: "",
   enrolledCourseIds: ["ai-study-systems", "critical-thinking", "exam-accelerator"],
   recentLessonIds: ["memory-systems", "source-quality", "diagnostic-review"],
   quizScores: {
@@ -33,5 +33,6 @@ export const userProgress: UserProgress = {
     "exam-accelerator-check": 0,
   },
 };
+
 
 

@@ -1,6 +1,5 @@
 import { glassCardClassName } from "@/components/education/glass-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { userProgress } from "@/data/user-progress";
 import { FlameIcon } from "lucide-react";
 
 type StreakCardProps = {
@@ -18,8 +17,8 @@ export function StreakCard({ compact = false }: StreakCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-3xl font-semibold tracking-tight">Sync pending</p>
-          <p className="text-muted-foreground text-sm">Streak history will appear after account sync.</p>
+          <p className="text-3xl font-semibold tracking-tight">No activity yet</p>
+          <p className="text-muted-foreground text-sm">Streak history starts after recorded study activity.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
@@ -37,10 +36,12 @@ export function StreakCard({ compact = false }: StreakCardProps) {
           })}
         </div>
         {!compact && (
-          <p className="text-muted-foreground text-sm">Last studied: Sync pending</p>
+          <p className="text-muted-foreground text-sm">Last studied: Not recorded yet</p>
         )}
       </CardContent>
     </Card>
   );
 }
+
+
 

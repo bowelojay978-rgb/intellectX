@@ -23,7 +23,7 @@ export function LocalQuizAverageStat() {
   if (summary.attemptCount === 0) {
     return (
       <>
-        <p className="text-3xl font-semibold tracking-tight">Sync pending</p>
+        <p className="text-3xl font-semibold tracking-tight">No attempts yet</p>
         <p className="text-muted-foreground text-sm">Average quiz performance</p>
       </>
     );
@@ -38,3 +38,4 @@ export function LocalQuizAverageStat() {
     </>
   );
 }
+

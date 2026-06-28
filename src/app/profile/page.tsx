@@ -53,9 +53,9 @@ export default function ProfilePage() {
         </div>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-3">
-        <StatCard label="Study streak" value="Sync pending" icon={FlameIcon} />
-        <StatCard label="Completed lessons" value="Sync pending" icon={BookOpenCheckIcon} />
-        <StatCard label="Average score" value="Sync pending" icon={TrophyIcon} />
+        <StatCard label="Study streak" value="No activity yet" icon={FlameIcon} />
+        <StatCard label="Completed lessons" value="No activity yet" icon={BookOpenCheckIcon} />
+        <StatCard label="Average score" value="No attempts yet" icon={TrophyIcon} />
       </section>
       <section className="mb-8">
         <StudyProfileCard />
@@ -92,7 +92,7 @@ export default function ProfilePage() {
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
               <p>Plan: Learner access</p>
               <p>Preferred pace: 25-minute study blocks</p>
-              <p>Session details use browser storage while account-level persistence is being completed. Study stats shown here are seeded learning metrics.</p>
+              <p>Session details use browser storage while account-level persistence is being completed. Study stats will update as learning activity is recorded.</p>
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>
@@ -122,6 +122,7 @@ export default function ProfilePage() {
     </PageShell>
   );
 }
+
 
 
 

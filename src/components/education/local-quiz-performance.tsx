@@ -47,7 +47,7 @@ export function LocalQuizPerformance() {
                   ) : null}
                 </div>
                 <span className={attempt ? "font-semibold" : "text-muted-foreground text-sm"}>
-                  {attempt ? `${attempt.percentage}%` : "Sync pending"}
+                  {attempt ? `${attempt.percentage}%` : "No attempt yet"}
                 </span>
               </div>
             );
@@ -61,3 +61,4 @@ export function LocalQuizPerformance() {
     </Card>
   );
 }
+

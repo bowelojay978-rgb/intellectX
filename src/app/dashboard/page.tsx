@@ -51,10 +51,10 @@ export default function DashboardPage() {
         </p>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <StatCard label="Study streak" value="Sync pending" icon={FlameIcon} />
-        <StatCard label="Total hours" value="Sync pending" icon={GraduationCapIcon} />
-        <StatCard label="Lessons done" value="Sync pending" icon={BookOpenCheckIcon} />
-        <StatCard label="Avg. quiz score" value="Sync pending" icon={TrophyIcon} />
+        <StatCard label="Study streak" value="No activity yet" icon={FlameIcon} />
+        <StatCard label="Total hours" value="No activity yet" icon={GraduationCapIcon} />
+        <StatCard label="Lessons done" value="No activity yet" icon={BookOpenCheckIcon} />
+        <StatCard label="Avg. quiz score" value="No attempts yet" icon={TrophyIcon} />
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div>
@@ -168,6 +168,7 @@ export default function DashboardPage() {
     </PageShell>
   );
 }
+
 
 
 
