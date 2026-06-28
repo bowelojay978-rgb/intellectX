@@ -16,6 +16,7 @@ export const convexApi = {
     submitQuizAttempt: makeFunctionReference<"mutation">("quizzes:submitQuizAttempt"),
   },
   notes: {
+    getLessonNote: makeFunctionReference<"query">("notes:getLessonNote"),
     upsertLessonNote: makeFunctionReference<"mutation">("notes:upsertLessonNote"),
   },
   seed: {

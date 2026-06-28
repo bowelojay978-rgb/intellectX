@@ -8,6 +8,7 @@ const coreRoutes = [
   "/quizzes",
   "/profile",
   "/mobile-study",
+  "/mobile-quizzes",
   "/mobile-notes",
   "/mobile-flashcards",
 ];
@@ -82,9 +83,20 @@ test("mobile study entry route exposes the limited mobile scope", async ({ page 
   await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Flashcards" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/quizzes");
+  await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.getByRole("link", { name: "Open notes" })).toHaveAttribute("href", "/mobile-notes");
   await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
+});
+
+test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
+  await page.goto("/mobile-quizzes");
+
+  await expect(page.getByRole("heading", { name: "Practice with focused quizzes" })).toBeVisible();
+  await expect(page.getByText("AI Study Systems Check")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Start quiz/i }).first()).toHaveAttribute(
+    "href",
+    /\/quiz\/.+/,
+  );
 });
 
 test("mobile notes and flashcards entry routes load", async ({ page }) => {
@@ -102,6 +114,35 @@ test("mobile notes and flashcards entry routes load", async ({ page }) => {
     "href",
     /\/learn\/.+#lesson-flashcards/,
   );
+});
+
+test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) => {
+  const noteBody = `Playwright note ${Date.now()}`;
+  const otherLessonNote = `Other lesson note ${Date.now()}`;
+
+  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+
+  const noteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
+  await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
+  await expect(noteInput).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save" })).toBeEnabled();
+
+  await noteInput.fill(noteBody);
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await page.reload();
+  await expect(noteInput).toHaveValue(noteBody);
+
+  await page.goto("/learn/memory-systems#lesson-notes");
+  const otherNoteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
+  await expect(otherNoteInput).not.toHaveValue(noteBody);
+  await otherNoteInput.fill(otherLessonNote);
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await expect(noteInput).toHaveValue(noteBody);
 });
 
 test("quiz flow reaches final results only after the last question and can restart", async ({ page }) => {
@@ -243,6 +284,17 @@ test("desktop navbar marks the current section active", async ({ page }) => {
 
   await page.goto("/quiz/ai-study-systems-check");
   await expect(nav.getByRole("link", { name: "Quizzes" })).toHaveAttribute("aria-current", "page");
+});
+
+test("dashboard exposes study shortcuts without hiding web dashboard content", async ({ page }) => {
+  await page.goto("/dashboard");
+
+  await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
+  await expect(page.getByText("Study shortcuts")).toBeVisible();
+  await expect(page.locator('a[href="/mobile-quizzes"]')).toBeVisible();
+  await expect(page.locator('a[href="/mobile-notes"]')).toBeVisible();
+  await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Enrolled courses" })).toBeVisible();
 });
 
 test.describe("mobile smoke", () => {

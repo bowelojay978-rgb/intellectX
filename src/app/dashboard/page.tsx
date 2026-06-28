@@ -15,8 +15,10 @@ import { userProgress } from "@/data/user-progress";
 import {
   BookOpenCheckIcon,
   BookOpenIcon,
+  FileTextIcon,
   FlameIcon,
   GraduationCapIcon,
+  Layers3Icon,
   TargetIcon,
   TrophyIcon,
 } from "lucide-react";
@@ -77,6 +79,43 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="grid gap-5">
+          <Card className={`rounded-lg ${glassCardClassName}`}>
+            <CardHeader>
+              <CardTitle>Study shortcuts</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Link
+                href="/mobile-quizzes"
+                className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
+              >
+                <BookOpenCheckIcon className="size-5" />
+                <div>
+                  <p className="font-medium">Quizzes</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Start your next knowledge check.</p>
+                </div>
+              </Link>
+              <Link
+                href="/mobile-notes"
+                className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
+              >
+                <FileTextIcon className="size-5" />
+                <div>
+                  <p className="font-medium">Notes</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Open lesson notes for focused review.</p>
+                </div>
+              </Link>
+              <Link
+                href="/mobile-flashcards"
+                className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
+              >
+                <Layers3Icon className="size-5" />
+                <div>
+                  <p className="font-medium">Flashcards</p>
+                  <p className="text-muted-foreground mt-1 text-sm">Review flashcard-style lesson cards.</p>
+                </div>
+              </Link>
+            </CardContent>
+          </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>
             <CardHeader>
               <CardTitle>Recent lessons</CardTitle>

@@ -25,8 +25,8 @@ export default function MobileStudyPage() {
     {
       feature: "quizzes" as const,
       title: "Quizzes",
-      description: "Practice with short checks and clear explanations.",
-      href: "/quizzes",
+      description: "Open the mobile quiz hub and practice with the existing quiz system.",
+      href: "/mobile-quizzes",
       cta: "Open quizzes",
       icon: BookOpenTextIcon,
     },

@@ -6,6 +6,7 @@ const mobileStudyFeatures = ["quizzes", "notes", "flashcards"] as const satisfie
 
 const mobileAllowedRoutePrefixes = [
   "/mobile-study",
+  "/mobile-quizzes",
   "/mobile-notes",
   "/mobile-flashcards",
   "/quizzes",

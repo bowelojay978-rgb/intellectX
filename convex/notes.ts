@@ -1,5 +1,21 @@
-import { mutationGeneric } from "convex/server";
+import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+
+export const getLessonNote = queryGeneric({
+  args: {
+    userKey: v.string(),
+    lessonStableId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const notes = await ctx.db
+      .query("notes")
+      .withIndex("by_user_lesson", (q) => q.eq("userKey", args.userKey))
+      .filter((q) => q.eq(q.field("lessonId"), args.lessonStableId))
+      .collect();
+
+    return notes.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
+  },
+});
 
 export const upsertLessonNote = mutationGeneric({
   args: {
@@ -8,14 +24,16 @@ export const upsertLessonNote = mutationGeneric({
     body: v.string(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
+    const existingNotes = await ctx.db
       .query("notes")
       .withIndex("by_user_lesson", (q) => q.eq("userKey", args.userKey))
-      .collect()
-      .then((notes) => notes.find((note) => note.lessonId === args.lessonStableId));
+      .filter((q) => q.eq(q.field("lessonId"), args.lessonStableId))
+      .collect();
+    const [existing, ...duplicates] = existingNotes.sort((left, right) => right.updatedAt - left.updatedAt);
 
     if (existing) {
       await ctx.db.patch(existing._id, { body: args.body, updatedAt: Date.now() });
+      await Promise.all(duplicates.map((note) => ctx.db.delete(note._id)));
       return existing._id;
     }
 
