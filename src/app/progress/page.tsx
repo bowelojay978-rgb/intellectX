@@ -47,7 +47,7 @@ export default function ProgressPage() {
         <Card className={`rounded-lg ${glassCardClassName}`}>
           <CardContent>
             <TrophyIcon className="mb-3 size-5" />
-            <p className="text-3xl font-semibold tracking-tight">{summary.user.averageQuizScore}%</p>
+            <p className="text-3xl font-semibold tracking-tight">Sync pending</p>
             <p className="text-muted-foreground text-sm">Average quiz performance</p>
           </CardContent>
         </Card>
@@ -136,3 +136,4 @@ export default function ProgressPage() {
     </PageShell>
   );
 }
+

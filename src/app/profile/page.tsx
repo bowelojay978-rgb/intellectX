@@ -53,9 +53,9 @@ export default function ProfilePage() {
         </div>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-3">
-        <StatCard label="Study streak" value={`${userProgress.studyStreak} days`} icon={FlameIcon} />
-        <StatCard label="Completed lessons" value={`${userProgress.completedLessons}`} icon={BookOpenCheckIcon} />
-        <StatCard label="Average score" value={`${userProgress.averageQuizScore}%`} icon={TrophyIcon} />
+        <StatCard label="Study streak" value="Sync pending" icon={FlameIcon} />
+        <StatCard label="Completed lessons" value="Sync pending" icon={BookOpenCheckIcon} />
+        <StatCard label="Average score" value="Sync pending" icon={TrophyIcon} />
       </section>
       <section className="mb-8">
         <StudyProfileCard />
@@ -122,5 +122,7 @@ export default function ProfilePage() {
     </PageShell>
   );
 }
+
+
 
 

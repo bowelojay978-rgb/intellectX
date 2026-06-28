@@ -18,12 +18,12 @@ export function StreakCard({ compact = false }: StreakCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <p className="text-3xl font-semibold tracking-tight">{userProgress.studyStreak} days</p>
-          <p className="text-muted-foreground text-sm">Longest streak: {userProgress.longestStreak} days</p>
+          <p className="text-3xl font-semibold tracking-tight">Sync pending</p>
+          <p className="text-muted-foreground text-sm">Streak history will appear after account sync.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
-            const active = userProgress.weeklyActiveDays.includes(day);
+            const active = false;
             return (
               <span
                 key={day}
@@ -37,9 +37,10 @@ export function StreakCard({ compact = false }: StreakCardProps) {
           })}
         </div>
         {!compact && (
-          <p className="text-muted-foreground text-sm">Last studied: {userProgress.lastStudiedDate}</p>
+          <p className="text-muted-foreground text-sm">Last studied: Sync pending</p>
         )}
       </CardContent>
     </Card>
   );
 }
+
