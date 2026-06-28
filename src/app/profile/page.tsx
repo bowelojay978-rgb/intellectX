@@ -1,3 +1,4 @@
+import { LearnerSessionName } from "@/components/auth/learner-session-name";
 import { ProfileLearnerSession } from "@/components/auth/profile-learner-session";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
@@ -35,15 +36,15 @@ export default function ProfilePage() {
     <PageShell>
       <section className={`animate-widget mb-8 flex flex-col gap-6 rounded-lg p-6 md:flex-row md:items-center md:p-8 ${elevatedGlassCardClassName}`}>
         <Avatar className="size-20">
-          <AvatarImage src={userProgress.avatar} alt={userProgress.name} />
-          <AvatarFallback>MC</AvatarFallback>
+          <AvatarImage src={userProgress.avatar} alt="Learner profile avatar" />
+          <AvatarFallback>IX</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <Badge variant="secondary" className="mb-3">
             Profile
           </Badge>
           <DataSourceBadge />
-          <h1 className="text-4xl font-medium tracking-tight">{userProgress.name}</h1>
+          <h1 className="text-4xl font-medium tracking-tight"><LearnerSessionName /></h1>
           <p className="text-muted-foreground mt-1">{userProgress.role}</p>
         </div>
         <div className="grid gap-1 text-sm md:text-right">
@@ -91,7 +92,7 @@ export default function ProfilePage() {
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
               <p>Plan: Scholar preview</p>
               <p>Preferred pace: 25-minute study blocks</p>
-              <p>No authentication or account persistence has been added yet.</p>
+              <p>Learner sessions currently use browser storage while account-level persistence is being completed.</p>
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>
@@ -121,4 +122,5 @@ export default function ProfilePage() {
     </PageShell>
   );
 }
+
 

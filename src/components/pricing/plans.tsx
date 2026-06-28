@@ -8,7 +8,7 @@ const plans = [
     name: "Explorer",
     price: "Free",
     description: "Preview AI-guided learning with starter courses and progress tracking.",
-    features: ["Browse available courses", "Try lesson and quiz flows", "View sample dashboard stats"],
+    features: ["Browse available courses", "Try lesson and quiz flows", "View learning dashboard stats"],
     cta: "Browse Courses",
     href: "/courses",
   },
@@ -71,6 +71,7 @@ export function Plans() {
     </div>
   );
 }
+
 
 
 

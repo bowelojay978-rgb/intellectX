@@ -1,3 +1,4 @@
+import { LearnerSessionName } from "@/components/auth/learner-session-name";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
@@ -42,7 +43,7 @@ export default function DashboardPage() {
         </Badge>
         <DataSourceBadge />
         <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
-          Welcome back, {userProgress.name.split(" ")[0]}
+          Welcome back, <LearnerSessionName firstNameOnly />
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
           Your learning cockpit for enrolled courses, recent lessons, quiz performance, and study consistency.
@@ -181,4 +182,5 @@ export default function DashboardPage() {
     </PageShell>
   );
 }
+
 

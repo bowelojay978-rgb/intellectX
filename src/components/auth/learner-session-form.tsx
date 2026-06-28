@@ -82,7 +82,7 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
             <AuthField
               label="Name"
               name="name"
-              placeholder="Maya Chen"
+              placeholder="Your name"
               autoComplete="name"
               value={name}
               onChange={setName}
@@ -188,4 +188,5 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
     </p>
   );
 }
+
 

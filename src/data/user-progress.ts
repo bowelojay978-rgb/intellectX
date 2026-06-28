@@ -15,7 +15,7 @@ export type UserProgress = {
 };
 
 export const userProgress: UserProgress = {
-  name: "Maya Chen",
+  name: "IntellectX Learner",
   role: "AI Learning Explorer",
   avatar: "/avatars/2.jpg",
   studyStreak: 12,
@@ -33,3 +33,4 @@ export const userProgress: UserProgress = {
     "exam-accelerator-check": 78,
   },
 };
+
