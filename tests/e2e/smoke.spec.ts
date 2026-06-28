@@ -120,9 +120,9 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
   const noteBody = `Playwright note ${Date.now()}`;
   const otherLessonNote = `Other lesson note ${Date.now()}`;
 
-  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.localStorage.clear());
-  await page.reload();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
   const noteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
   await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
@@ -132,16 +132,16 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
   await noteInput.fill(noteBody);
   await page.getByRole("button", { name: "Save" }).click();
 
-  await page.reload();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(noteInput).toHaveValue(noteBody);
 
-  await page.goto("/learn/memory-systems#lesson-notes");
+  await page.goto("/learn/memory-systems#lesson-notes", { waitUntil: "domcontentloaded" });
   const otherNoteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
   await expect(otherNoteInput).not.toHaveValue(noteBody);
   await otherNoteInput.fill(otherLessonNote);
   await page.getByRole("button", { name: "Save" }).click();
 
-  await page.goto("/learn/prompting-for-learning#lesson-notes");
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await expect(noteInput).toHaveValue(noteBody);
 });
 
@@ -200,29 +200,29 @@ test("quiz flow reaches final results only after the last question and can resta
   await expect(page.getByText(/of 3 correct/).first()).toBeVisible();
 });
 
-test("demo auth creates, persists, and clears a local session", async ({ page }) => {
+test("learner session creates, persists, and clears a local session", async ({ page }) => {
   await page.goto("/login");
 
-  await page.getByLabel("Email").fill("learner@intellectx.demo");
+  await page.getByLabel("Email").fill("learner@intellectx.local");
   await page.getByLabel("Password").fill("anything");
   await page.getByRole("button", { name: /Continue to dashboard/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session")))
-    .toContain("learner@intellectx.demo");
+    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
+    .toContain("learner@intellectx.local");
 
-  await page.reload();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session")))
-    .toContain("learner@intellectx.demo");
+    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
+    .toContain("learner@intellectx.local");
 
   await page.goto("/profile");
   await page.getByRole("button", { name: "Logout" }).first().click();
 
   await expect(page).toHaveURL("/");
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session"))).toBeNull();
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session"))).toBeNull();
 });
 
 test("study profile saves and personalizes courses and quizzes", async ({ page }) => {
@@ -278,7 +278,7 @@ test("progress page renders the subject progress chart without runtime errors", 
 test("progress page shows a safe empty state before local quiz attempts exist", async ({ page }) => {
   await page.goto("/progress");
   await page.evaluate(() => window.localStorage.removeItem("intellectx:quiz-attempt-history"));
-  await page.reload();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Recent quiz attempts")).toBeVisible();
   await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
@@ -359,3 +359,5 @@ test.describe("mobile smoke", () => {
     );
   });
 });
+
+

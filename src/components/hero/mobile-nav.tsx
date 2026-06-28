@@ -1,4 +1,4 @@
-import { DemoAuthStatus } from "@/components/auth/demo-auth-status";
+import { LearnerSessionStatus } from "@/components/auth/learner-session-status";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerTitle } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { Menu, SparklesIcon } from "lucide-react";
@@ -39,7 +39,7 @@ export function MobileNav({ items, className }: Props) {
                 {item.label}
               </Link>
             ))}
-            <DemoAuthStatus compact />
+            <LearnerSessionStatus compact />
           </DrawerContent>
         </Drawer>
       </div>

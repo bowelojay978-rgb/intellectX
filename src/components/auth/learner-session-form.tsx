@@ -2,41 +2,41 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createDemoSession } from "@/lib/demo-auth";
+import { createLearnerSession } from "@/lib/learner-session";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon, MailIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type InputHTMLAttributes, useState } from "react";
 
-type DemoAuthMode = "login" | "signup" | "forgot-password";
+type LearnerSessionMode = "login" | "signup" | "forgot-password";
 
-type DemoAuthFormProps = {
-  mode: DemoAuthMode;
+type LearnerSessionFormProps = {
+  mode: LearnerSessionMode;
 };
 
 const contentByMode = {
   login: {
-    eyebrow: "Demo access",
+    eyebrow: "Learner access",
     title: "Welcome back",
-    description: "Use any email and password to enter the IntellectX prototype.",
+    description: "Use any email and password to enter your learner session on this device.",
     submitLabel: "Continue to dashboard",
   },
   signup: {
-    eyebrow: "Prototype account",
-    title: "Create your demo profile",
-    description: "Use any details. This only creates a local browser session for testing.",
-    submitLabel: "Create demo session",
+    eyebrow: "Local profile",
+    title: "Create your learner session",
+    description: "Use any details. This stores a local browser session for this device.",
+    submitLabel: "Create learner session",
   },
   "forgot-password": {
-    eyebrow: "Demo reset",
+    eyebrow: "Local reset",
     title: "Reset without the ceremony",
-    description: "No real password reset is sent. This keeps prototype testing frictionless.",
+    description: "No real password reset is sent. This keeps local testing frictionless.",
     submitLabel: "Return to login",
   },
-} satisfies Record<DemoAuthMode, { eyebrow: string; title: string; description: string; submitLabel: string }>;
+} satisfies Record<LearnerSessionMode, { eyebrow: string; title: string; description: string; submitLabel: string }>;
 
-export function DemoAuthForm({ mode }: DemoAuthFormProps) {
+export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -53,13 +53,13 @@ export function DemoAuthForm({ mode }: DemoAuthFormProps) {
       return;
     }
 
-    createDemoSession({
-      name: isSignup ? name.trim() || "Demo learner" : email.split("@")[0] || "Demo learner",
-      email: email.trim() || "learner@intellectx.demo",
+    createLearnerSession({
+      name: isSignup ? name.trim() || "Learner" : email.split("@")[0] || "Learner",
+      email: email.trim() || "learner@intellectx.local",
       role: "student",
     });
 
-    router.push(isSignup ? "/profile#study-profile" : "/dashboard");
+    window.location.assign(isSignup ? "/profile#study-profile" : "/dashboard");
   }
 
   return (
@@ -92,7 +92,7 @@ export function DemoAuthForm({ mode }: DemoAuthFormProps) {
             label="Email"
             name="email"
             type="email"
-            placeholder="learner@intellectx.demo"
+            placeholder="learner@intellectx.local"
             autoComplete="email"
             value={email}
             onChange={setEmail}
@@ -109,7 +109,7 @@ export function DemoAuthForm({ mode }: DemoAuthFormProps) {
             />
           ) : null}
           <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-            Prototype only: this stores a local demo session in your browser. No Clerk, NextAuth, backend auth, or password security is active.
+            Local only: this stores a learner session in your browser. No Clerk, NextAuth, backend auth, or password security is active.
           </div>
           <Button type="submit" size="lg" className="mt-2 w-full">
             {content.submitLabel}
@@ -148,7 +148,7 @@ function AuthField({ label, name, value, onChange, ...props }: AuthFieldProps) {
   );
 }
 
-function AuthFooter({ mode }: { mode: DemoAuthMode }) {
+function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
   if (mode === "login") {
     return (
       <div className="text-muted-foreground mt-6 flex flex-col gap-2 text-center text-sm sm:flex-row sm:justify-between">
@@ -170,7 +170,7 @@ function AuthFooter({ mode }: { mode: DemoAuthMode }) {
       <div className="text-muted-foreground mt-6 grid gap-2 text-center text-sm">
         <p>After signup, complete your study profile to prioritize relevant courses and quizzes.</p>
         <p>
-          Already have demo access?{" "}
+          Already have a learner session?{" "}
           <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
             Log in
           </Link>
@@ -188,3 +188,4 @@ function AuthFooter({ mode }: { mode: DemoAuthMode }) {
     </p>
   );
 }
+

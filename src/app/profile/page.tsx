@@ -1,4 +1,4 @@
-import { ProfileDemoSession } from "@/components/auth/profile-demo-session";
+import { ProfileLearnerSession } from "@/components/auth/profile-learner-session";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
@@ -80,7 +80,7 @@ export default function ProfilePage() {
         </div>
         <div className="grid gap-5">
           <StreakCard />
-          <ProfileDemoSession className={`rounded-lg ${glassCardClassName}`} />
+          <ProfileLearnerSession className={`rounded-lg ${glassCardClassName}`} />
           <Card className={`rounded-lg ${glassCardClassName}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export default function ProfilePage() {
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
               <p>Plan: Scholar preview</p>
               <p>Preferred pace: 25-minute study blocks</p>
-              <p>No authentication or account persistence has been added in this prototype.</p>
+              <p>No authentication or account persistence has been added yet.</p>
             </CardContent>
           </Card>
           <Card className={`rounded-lg ${glassCardClassName}`}>

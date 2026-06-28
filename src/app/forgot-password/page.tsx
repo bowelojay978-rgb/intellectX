@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Forgot password - IntellectX",
-  description: "Prototype demo password reset for IntellectX.",
+  description: "Learner password reset for IntellectX.",
 };
 
 export default function ForgotPasswordPage() {

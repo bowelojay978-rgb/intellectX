@@ -2,37 +2,37 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { clearDemoSession, getDemoSession, type DemoSession } from "@/lib/demo-auth";
+import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, MonitorCheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type ProfileDemoSessionProps = {
+type ProfileLearnerSessionProps = {
   className?: string;
 };
 
-export function ProfileDemoSession({ className }: ProfileDemoSessionProps) {
+export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
   const router = useRouter();
-  const [session, setSession] = useState<DemoSession | null>(null);
+  const [session, setSession] = useState<LearnerSession | null>(null);
 
   useEffect(() => {
     function syncSession() {
-      setSession(getDemoSession());
+      setSession(getLearnerSession());
     }
 
     syncSession();
     window.addEventListener("storage", syncSession);
-    window.addEventListener("intellectx-demo-session-change", syncSession);
+    window.addEventListener("intellectx:learner-session-change", syncSession);
 
     return () => {
       window.removeEventListener("storage", syncSession);
-      window.removeEventListener("intellectx-demo-session-change", syncSession);
+      window.removeEventListener("intellectx:learner-session-change", syncSession);
     };
   }, []);
 
   function handleLogout() {
-    clearDemoSession();
+    clearLearnerSession();
     router.push("/");
   }
 
@@ -41,7 +41,7 @@ export function ProfileDemoSession({ className }: ProfileDemoSessionProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MonitorCheckIcon className="size-5" />
-          Demo session
+          Learner session
         </CardTitle>
       </CardHeader>
       <CardContent className="text-muted-foreground grid gap-4 text-sm leading-6">
@@ -59,7 +59,7 @@ export function ProfileDemoSession({ className }: ProfileDemoSessionProps) {
           </>
         ) : (
           <>
-            <p>No local demo session is active. Login or signup will create one in this browser only.</p>
+            <p>No local learner session is active. Login or signup will create one in this browser only.</p>
             <Button asChild className="w-fit">
               <Link href="/login">Login</Link>
             </Button>
