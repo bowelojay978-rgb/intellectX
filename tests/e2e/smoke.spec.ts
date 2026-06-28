@@ -122,7 +122,7 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
 
   await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.localStorage.clear());
-  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
 
   const noteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
   await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
@@ -132,7 +132,7 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
   await noteInput.fill(noteBody);
   await page.getByRole("button", { name: "Save" }).click();
 
-  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
   await expect(noteInput).toHaveValue(noteBody);
 
   await page.goto("/learn/memory-systems#lesson-notes", { waitUntil: "domcontentloaded" });
@@ -276,9 +276,9 @@ test("progress page renders the subject progress chart without runtime errors", 
 });
 
 test("progress page shows a safe empty state before local quiz attempts exist", async ({ page }) => {
-  await page.goto("/progress");
-  await page.evaluate(() => window.localStorage.removeItem("intellectx:quiz-attempt-history"));
-  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.localStorage.clear());
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Recent quiz attempts")).toBeVisible();
   await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
@@ -359,5 +359,9 @@ test.describe("mobile smoke", () => {
     );
   });
 });
+
+
+
+
 
 
