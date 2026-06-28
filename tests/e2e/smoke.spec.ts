@@ -184,4 +184,18 @@ test.describe("mobile smoke", () => {
       await expect(page.locator("body")).not.toContainText("Unhandled Runtime Error");
     });
   }
+
+  test("lesson page keeps notes and quiz access visible while hiding video on mobile", async ({ page }) => {
+    await page.goto("/learn/prompting-for-learning");
+
+    await expect(page.getByRole("heading", { name: "Prompting for Learning" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
+    await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toBeVisible();
+    await expect(page.getByText("Video lesson preview")).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Play lesson" })).not.toBeVisible();
+    await expect(page.getByRole("link", { name: /Related quiz/i })).toHaveAttribute(
+      "href",
+      "/quiz/ai-study-systems-check",
+    );
+  });
 });

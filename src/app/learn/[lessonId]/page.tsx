@@ -66,7 +66,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
         </section>
         <section className="space-y-6">
           <div className="space-y-6">
-            <VideoPlayer title={lesson.title} videoUrl={lesson.videoUrl} posterUrl={lesson.posterUrl} />
+            <div className="hidden lg:block">
+              <VideoPlayer title={lesson.title} videoUrl={lesson.videoUrl} posterUrl={lesson.posterUrl} />
+            </div>
             <Card className={`rounded-lg ${elevatedGlassCardClassName}`}>
               <CardContent className="space-y-6 py-8 text-base leading-8 md:text-lg">
                 {lesson.content.map((paragraph) => (
