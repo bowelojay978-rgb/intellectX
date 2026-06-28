@@ -45,7 +45,7 @@ export default async function QuizPage({ params }: QuizPageProps) {
         <h1 className="mb-4 text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{quiz.title}</h1>
         <p className="text-muted-foreground mb-8 leading-6">
           Select an answer, check your result, and use the feedback to close the learning loop. Scores are not saved in
-          Convex until your environment is configured, so this prototype stores attempts locally in the browser.
+          Convex until your environment is configured, so this release stores attempts locally in the browser.
         </p>
         <QuizPlayer quiz={quiz} />
         {course && (
@@ -57,3 +57,4 @@ export default async function QuizPage({ params }: QuizPageProps) {
     </PageShell>
   );
 }
+

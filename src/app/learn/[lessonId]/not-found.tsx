@@ -9,7 +9,7 @@ export default function LessonNotFound() {
         <p className="text-muted-foreground text-sm font-medium uppercase tracking-normal">Lesson</p>
         <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">Lesson not found</h1>
         <p className="text-muted-foreground leading-6">
-          This lesson is not available in the current mock curriculum.
+          This lesson is not available in the current curriculum.
         </p>
         <Button asChild>
           <Link href="/courses">Browse courses</Link>
@@ -18,3 +18,4 @@ export default function LessonNotFound() {
     </PageShell>
   );
 }
+

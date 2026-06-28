@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Pricing - IntellectX",
-  description: "Mock education pricing for the IntellectX prototype",
+  description: "Education pricing for IntellectX",
 };
 
 export default function Pricing() {
@@ -17,3 +17,4 @@ export default function Pricing() {
     </div>
   );
 }
+

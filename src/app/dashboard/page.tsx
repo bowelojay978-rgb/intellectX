@@ -27,7 +27,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Dashboard - IntellectX",
-  description: "Track mock learning progress in IntellectX.",
+  description: "Track learning progress in IntellectX.",
 };
 
 export default function DashboardPage() {
@@ -181,3 +181,4 @@ export default function DashboardPage() {
     </PageShell>
   );
 }
+

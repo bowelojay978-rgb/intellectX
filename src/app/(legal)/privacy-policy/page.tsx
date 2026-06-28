@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
         {
           title: "Overview",
           body: [
-            "IntellectX is an education SaaS/MVP available at https://intellect-x-coral.vercel.app. The product provides learning pages, course content, quizzes, notes, profile views, and progress experiences.",
+            "IntellectX is an education platform available at https://intellect-x-coral.vercel.app. The product provides learning pages, course content, quizzes, notes, profile views, and progress experiences.",
             "This policy is written in plain language for product transparency. It should be reviewed by a qualified legal professional before a full commercial launch.",
           ],
         },
@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
           title: "Notes, Quiz Activity, and Learning Progress",
           body: [
             "Notes and quiz activity are meant for study support. Users should avoid adding sensitive personal data, financial information, health information, government identifiers, or confidential third-party content unless clearly necessary and appropriate.",
-            "Learning progress may be shown inside dashboard, progress, profile, lesson, and quiz views. Some MVP experiences may rely on local browser storage or demo data until production persistence is configured.",
+            "Learning progress may be shown inside dashboard, progress, profile, lesson, and quiz views. Some learning experiences may rely on local browser storage until account-level persistence is configured.",
           ],
         },
         {
@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
         {
           title: "Your Choices",
           body: [
-            "Users can choose what they enter into notes, quizzes, and profile fields. Browser storage can often be cleared through browser settings, although that may remove local demo progress.",
+            "Users can choose what they enter into notes, quizzes, and profile fields. Browser storage can often be cleared through browser settings, although that may remove locally stored progress.",
             "If account data controls are added, they should provide a practical way to update, export, or delete relevant account information where appropriate.",
           ],
         },
@@ -80,3 +80,6 @@ export default function PrivacyPolicy() {
     />
   );
 }
+
+
+

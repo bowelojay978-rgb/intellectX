@@ -9,7 +9,7 @@ export default function CourseNotFound() {
         <p className="text-muted-foreground text-sm font-medium uppercase tracking-normal">Course</p>
         <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">Course not found</h1>
         <p className="text-muted-foreground leading-6">
-          This learning path is not available in the current IntellectX prototype.
+          This learning path is not available in the current IntellectX catalog.
         </p>
         <Button asChild>
           <Link href="/courses">Browse courses</Link>
@@ -18,3 +18,4 @@ export default function CourseNotFound() {
     </PageShell>
   );
 }
+

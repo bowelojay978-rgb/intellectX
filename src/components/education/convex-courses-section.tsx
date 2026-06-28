@@ -118,7 +118,7 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
         <>
           <EmptyState
             title="No exact course matches yet"
-            description="The demo catalog is still small. Edit your study profile or browse all available courses below."
+            description="The catalog is still growing. Edit your study profile or browse all available courses below."
             actionHref="/profile#study-profile"
             actionLabel="Edit study profile"
             icon={BookOpenIcon}
@@ -173,3 +173,4 @@ export function ConvexCoursesSection({ fallbackCourses }: ConvexCoursesSectionPr
 
   return <LiveCoursesSection fallbackCourses={fallbackCourses} />;
 }
+

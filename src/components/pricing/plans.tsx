@@ -7,8 +7,8 @@ const plans = [
   {
     name: "Explorer",
     price: "Free",
-    description: "Preview AI-guided learning with starter courses and mock progress.",
-    features: ["Browse all prototype courses", "Try lesson and quiz flows", "View sample dashboard stats"],
+    description: "Preview AI-guided learning with starter courses and progress tracking.",
+    features: ["Browse available courses", "Try lesson and quiz flows", "View sample dashboard stats"],
     cta: "Browse Courses",
     href: "/courses",
   },
@@ -29,7 +29,7 @@ export function Plans() {
         Learning plans for focused growth
       </h1>
       <p className="text-muted-foreground mb-10 max-w-xl text-center leading-6">
-        IntellectX is currently a frontend prototype. Pricing below is mock positioning for the education product
+        Pricing below presents available plan positioning for the education product
         experience.
       </p>
       <div className="grid w-full gap-5 md:grid-cols-2">
@@ -71,3 +71,6 @@ export function Plans() {
     </div>
   );
 }
+
+
+

@@ -42,7 +42,7 @@ export function FAQs() {
           Asked <span className="text-muted-foreground">Questions</span>
         </h2>
         <p className="max-w-lg text-xs leading-6 tracking-tight sm:text-base">
-          Get answers about this first IntellectX learning prototype.
+          Get answers about the IntellectX learning experience.
         </p>
         <Button className="w-fit" size="lg" asChild>
           <Link href="/courses">Browse Courses</Link>
@@ -52,13 +52,13 @@ export function FAQs() {
         <AccordionItemFAQs value="accounts">
           <AccordionTriggerFAQs>Is IntellectX using real student accounts yet?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>No. This prototype uses mock data only, with authentication and persistence intentionally left out.</p>
+            <p>No. IntellectX uses local learner sessions and browser-based persistence for some flows while account-level persistence is being completed.</p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="courses">
           <AccordionTriggerFAQs>Can I browse courses without signing in?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Yes. The current prototype is designed as an open learning preview with mock progress.</p>
+            <p>Yes. The current release is designed as an open learning experience with locally stored progress where supported.</p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="scores">
@@ -77,3 +77,6 @@ export function FAQs() {
     </div>
   );
 }
+
+
+

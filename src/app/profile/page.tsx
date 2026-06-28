@@ -25,7 +25,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Profile - IntellectX",
-  description: "View a mock learner profile in IntellectX.",
+  description: "View your learner profile in IntellectX.",
 };
 
 export default function ProfilePage() {
@@ -121,3 +121,4 @@ export default function ProfilePage() {
     </PageShell>
   );
 }
+
