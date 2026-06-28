@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 const coreRoutes = ["/", "/courses", "/dashboard", "/progress", "/quizzes", "/profile"];
+const legalRoutes = [
+  { route: "/privacy-policy", heading: "Privacy Policy" },
+  { route: "/terms-and-conditions", heading: "Terms and Conditions" },
+  { route: "/refund-policy", heading: "Refund Policy" },
+];
 
 test.describe("core routes", () => {
   for (const route of coreRoutes) {
@@ -11,6 +16,53 @@ test.describe("core routes", () => {
       await expect(page.locator("body")).not.toContainText("Unhandled Runtime Error");
     });
   }
+});
+
+test.describe("production support routes", () => {
+  for (const { route, heading } of legalRoutes) {
+    test(`${route} loads`, async ({ page }) => {
+      await page.goto(route);
+
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expect(page.getByText("Effective date: June 28, 2026")).toBeVisible();
+      await expect(page.locator("body")).not.toContainText("Application error");
+    });
+  }
+
+  test("custom 404 page loads for a fake route", async ({ page }) => {
+    const response = await page.goto("/this-route-should-not-exist");
+
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    await expect(page.getByRole("main").getByRole("link", { name: "Courses" })).toHaveAttribute("href", "/courses");
+  });
+
+  test("robots.txt and sitemap.xml load", async ({ request }) => {
+    const robots = await request.get("/robots.txt");
+    expect(robots.ok()).toBeTruthy();
+    const robotsText = await robots.text();
+    expect(robotsText).toContain("User-Agent: *");
+    expect(robotsText).toContain("Sitemap: https://intellect-x-coral.vercel.app/sitemap.xml");
+
+    const sitemap = await request.get("/sitemap.xml");
+    expect(sitemap.ok()).toBeTruthy();
+    const sitemapText = await sitemap.text();
+    expect(sitemapText).toContain("https://intellect-x-coral.vercel.app/courses");
+    expect(sitemapText).toContain("https://intellect-x-coral.vercel.app/quiz/ai-study-systems-check");
+  });
+
+  test("low-risk security headers are present", async ({ request }) => {
+    const response = await request.get("/");
+    const headers = response.headers();
+
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["x-frame-options"]).toBe("DENY");
+    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(headers["permissions-policy"]).toContain("camera=()");
+    expect(headers["permissions-policy"]).toContain("microphone=()");
+    expect(headers["permissions-policy"]).toContain("geolocation=()");
+  });
 });
 
 test("quiz flow reaches final results only after the last question and can restart", async ({ page }) => {
@@ -111,4 +163,25 @@ test("desktop navbar marks the current section active", async ({ page }) => {
 
   await page.goto("/quiz/ai-study-systems-check");
   await expect(nav.getByRole("link", { name: "Quizzes" })).toHaveAttribute("aria-current", "page");
+});
+
+test.describe("mobile smoke", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  const mobileRoutes = [
+    { route: "/", text: "IntellectX" },
+    { route: "/courses", text: "Choose your next intelligent learning path" },
+    { route: "/quizzes", text: "Practice where learning becomes visible" },
+    { route: "/privacy-policy", text: "Privacy Policy" },
+  ];
+
+  for (const { route, text } of mobileRoutes) {
+    test(`${route} loads on mobile`, async ({ page }) => {
+      await page.goto(route);
+
+      await expect(page.getByText(text).first()).toBeVisible();
+      await expect(page.locator("body")).not.toContainText("Application error");
+      await expect(page.locator("body")).not.toContainText("Unhandled Runtime Error");
+    });
+  }
 });
