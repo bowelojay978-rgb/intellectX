@@ -1,6 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-const coreRoutes = ["/", "/courses", "/dashboard", "/progress", "/quizzes", "/profile", "/mobile-study"];
+const coreRoutes = [
+  "/",
+  "/courses",
+  "/dashboard",
+  "/progress",
+  "/quizzes",
+  "/profile",
+  "/mobile-study",
+  "/mobile-notes",
+  "/mobile-flashcards",
+];
 const legalRoutes = [
   { route: "/privacy-policy", heading: "Privacy Policy" },
   { route: "/terms-and-conditions", heading: "Terms and Conditions" },
@@ -70,14 +80,25 @@ test("mobile study entry route exposes the limited mobile scope", async ({ page 
 
   await expect(page.getByRole("heading", { name: "Study essentials for the mobile app" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Notes from lessons" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Flashcard practice" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Flashcards" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/quizzes");
-  await expect(page.getByRole("link", { name: "Open lesson notes" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Open notes" })).toHaveAttribute("href", "/mobile-notes");
+  await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
+});
+
+test("mobile notes and flashcards entry routes load", async ({ page }) => {
+  await page.goto("/mobile-notes");
+  await expect(page.getByRole("heading", { name: "Notes from lessons" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open lesson notes" }).first()).toHaveAttribute(
     "href",
     /\/learn\/.+#lesson-notes/,
   );
-  await expect(page.getByRole("link", { name: "Open lesson cards" })).toHaveAttribute(
+
+  await page.goto("/mobile-flashcards");
+  await expect(page.getByRole("heading", { name: "Flashcards from lesson cards" })).toBeVisible();
+  await expect(page.getByText("Tutor, not answer machine")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open in lesson" }).first()).toHaveAttribute(
     "href",
     /\/learn\/.+#lesson-flashcards/,
   );

@@ -4,7 +4,14 @@ export type StudyFeature = "quizzes" | "notes" | "flashcards";
 
 const mobileStudyFeatures = ["quizzes", "notes", "flashcards"] as const satisfies readonly StudyFeature[];
 
-const mobileAllowedRoutePrefixes = ["/mobile-study", "/quizzes", "/quiz/", "/learn/"] as const;
+const mobileAllowedRoutePrefixes = [
+  "/mobile-study",
+  "/mobile-notes",
+  "/mobile-flashcards",
+  "/quizzes",
+  "/quiz/",
+  "/learn/",
+] as const;
 
 export const featureScope = {
   mobileStudyFeatures,

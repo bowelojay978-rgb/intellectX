@@ -1,8 +1,6 @@
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { lessons } from "@/data/lessons";
-import { quizzes } from "@/data/quizzes";
 import { featureScope, isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
 import { BookOpenTextIcon, FileTextIcon, Layers3Icon } from "lucide-react";
 import type { Metadata } from "next";
@@ -12,12 +10,6 @@ export const metadata: Metadata = {
   title: "Mobile Study - IntellectX",
   description: "A focused IntellectX mobile study entry point for quizzes, notes, and flashcards.",
 };
-
-const firstQuiz = quizzes[0];
-const notesLesson = lessons.find((lesson) => lesson.id === firstQuiz?.lessonId) ?? lessons[0];
-const flashcardLesson = lessons.find((lesson) =>
-  lesson.blocks?.some((block) => block.type === "visualMemoryCard" || block.type === "tapReveal"),
-);
 
 type StudyItem = {
   feature: StudyFeature;
@@ -40,18 +32,18 @@ export default function MobileStudyPage() {
     },
     {
       feature: "notes" as const,
-      title: "Notes from lessons",
-      description: "Jump to the lesson notes area and keep your study notes available locally.",
-      href: notesLesson ? `/learn/${notesLesson.id}#lesson-notes` : "/quizzes",
-      cta: "Open lesson notes",
+      title: "Notes",
+      description: "Open the mobile lesson-notes hub and jump into note-taking where it already exists.",
+      href: "/mobile-notes",
+      cta: "Open notes",
       icon: FileTextIcon,
     },
     {
       feature: "flashcards" as const,
-      title: "Flashcard practice",
-      description: "Use the existing tap-reveal and visual memory cards inside lesson study blocks.",
-      href: flashcardLesson ? `/learn/${flashcardLesson.id}#lesson-flashcards` : "/quizzes",
-      cta: "Open lesson cards",
+      title: "Flashcards",
+      description: "Review existing flashcard-style lesson cards without adding a new study model yet.",
+      href: "/mobile-flashcards",
+      cta: "Open flashcards",
       icon: Layers3Icon,
     },
   ].filter((item) => isFeatureAllowedOnMobile(item.feature));
