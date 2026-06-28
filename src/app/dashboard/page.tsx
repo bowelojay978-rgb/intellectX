@@ -51,10 +51,10 @@ export default function DashboardPage() {
         </p>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <StatCard label="Study streak" value={`${userProgress.studyStreak} days`} icon={FlameIcon} />
-        <StatCard label="Total hours" value={`${userProgress.totalHours}h`} icon={GraduationCapIcon} />
-        <StatCard label="Lessons done" value={`${userProgress.completedLessons}`} icon={BookOpenCheckIcon} />
-        <StatCard label="Avg. quiz score" value={`${userProgress.averageQuizScore}%`} icon={TrophyIcon} />
+        <StatCard label="Study streak" value="Sync pending" icon={FlameIcon} />
+        <StatCard label="Total hours" value="Sync pending" icon={GraduationCapIcon} />
+        <StatCard label="Lessons done" value="Sync pending" icon={BookOpenCheckIcon} />
+        <StatCard label="Avg. quiz score" value="Sync pending" icon={TrophyIcon} />
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                 quizzes.map((quiz) => (
                   <div key={quiz.id} className="bg-secondary/40 flex items-center justify-between rounded-lg p-4">
                     <span className="text-sm font-medium">{quiz.title}</span>
-                    <span className="font-semibold">{userProgress.quizScores[quiz.id]}%</span>
+                    <span className="text-muted-foreground text-sm">Sync pending</span>
                   </div>
                 ))
               ) : (
@@ -186,5 +186,6 @@ export default function DashboardPage() {
     </PageShell>
   );
 }
+
 
 
