@@ -60,6 +60,11 @@ Use this checklist for manual production review. Do not mark items complete unti
 ## Convex/Catalog Sanity
 
 - ☐ Courses in the UI match the expected seeded catalog.
+- ☐ Study profile can be saved from the profile page.
+- ☐ Courses page prioritizes matching subjects/modules when a study profile exists.
+- ☐ Quizzes page prioritizes matching subjects/modules when a study profile exists.
+- ☐ No-match study profiles show a fallback message and keep all available courses/quizzes reachable.
+- ☐ Study profile remains frontend-only until backend persistence and real auth integration are added.
 - ☐ Course detail pages show expected lessons.
 - ☐ Course detail pages show expected quizzes.
 - ☐ Lesson routes resolve for seeded lessons.

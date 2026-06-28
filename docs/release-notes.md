@@ -13,12 +13,14 @@ This checkpoint includes:
 - Production microtasks: custom 404, metadata baseline, robots, sitemap, security headers, release safety docs, and smoke test docs.
 - Loading, error, and empty states for core education and legal routes.
 - Completed Privacy Policy, Terms and Conditions, and Refund Policy pages for MVP review.
+- Phase 1 academic profile personalization using local browser storage to prioritize matching courses and quizzes.
 - Android debug APK milestone for device testing.
 - Vercel production deployment.
 
 ## Known Non-Production Gaps
 
 - Real auth and durable user identity are not complete.
+- Academic profile backend persistence and real auth integration are not complete.
 - Real payments, entitlement checks, and subscription lifecycle handling are not complete.
 - AI integration is not complete.
 - Notes and progress persistence need production hardening.

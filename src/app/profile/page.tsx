@@ -6,6 +6,7 @@ import { glassCardClassName, elevatedGlassCardClassName } from "@/components/edu
 import { PageShell } from "@/components/education/page-shell";
 import { StatCard } from "@/components/education/stat-card";
 import { StreakCard } from "@/components/education/streak-card";
+import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,9 @@ export default function ProfilePage() {
         <StatCard label="Study streak" value={`${userProgress.studyStreak} days`} icon={FlameIcon} />
         <StatCard label="Completed lessons" value={`${userProgress.completedLessons}`} icon={BookOpenCheckIcon} />
         <StatCard label="Average score" value={`${userProgress.averageQuizScore}%`} icon={TrophyIcon} />
+      </section>
+      <section className="mb-8">
+        <StudyProfileCard />
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div>

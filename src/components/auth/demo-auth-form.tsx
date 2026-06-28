@@ -59,7 +59,7 @@ export function DemoAuthForm({ mode }: DemoAuthFormProps) {
       role: "student",
     });
 
-    router.push("/dashboard");
+    router.push(isSignup ? "/profile#study-profile" : "/dashboard");
   }
 
   return (
@@ -167,12 +167,15 @@ function AuthFooter({ mode }: { mode: DemoAuthMode }) {
 
   if (mode === "signup") {
     return (
-      <p className="text-muted-foreground mt-6 text-center text-sm">
-        Already have demo access?{" "}
-        <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
-          Log in
-        </Link>
-      </p>
+      <div className="text-muted-foreground mt-6 grid gap-2 text-center text-sm">
+        <p>After signup, complete your study profile to prioritize relevant courses and quizzes.</p>
+        <p>
+          Already have demo access?{" "}
+          <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
+            Log in
+          </Link>
+        </p>
+      </div>
     );
   }
 

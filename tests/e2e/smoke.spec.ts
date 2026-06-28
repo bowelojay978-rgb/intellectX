@@ -127,6 +127,47 @@ test("demo auth creates, persists, and clears a local session", async ({ page })
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx-demo-session"))).toBeNull();
 });
 
+test("study profile saves and personalizes courses and quizzes", async ({ page }) => {
+  await page.goto("/profile#study-profile");
+
+  await expect(page.getByText("Study profile", { exact: true })).toBeVisible();
+  await page.getByLabel("Academic level").selectOption("Senior Secondary");
+  await page.getByLabel("Curriculum / institution").selectOption("Botswana");
+  await page.getByLabel("Grade / year").selectOption("Form 5");
+  await page.getByRole("button", { name: "Save study profile" }).click();
+  await expect(page.getByRole("button", { name: "Saved" })).toBeVisible();
+
+  await page.goto("/courses");
+  await expect(page.getByText("Personalized for your study profile")).toBeVisible();
+  await expect(page.getByText("AI Study Systems").first()).toBeVisible();
+
+  await page.goto("/quizzes");
+  await expect(page.getByText("Personalized for your study profile")).toBeVisible();
+  await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
+});
+
+test("study profile no-match fallback keeps catalog usable", async ({ page }) => {
+  await page.goto("/profile#study-profile");
+
+  await page.getByRole("button", { name: "AI Productivity" }).click();
+  await page.getByRole("button", { name: "Biology" }).click();
+  await page.getByRole("button", { name: "Save study profile" }).click();
+
+  await page.goto("/courses");
+  await expect(page.getByText("No exact course matches yet")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Edit study profile" }).first()).toHaveAttribute(
+    "href",
+    "/profile#study-profile",
+  );
+  await expect(page.getByRole("heading", { name: "All available courses" })).toBeVisible();
+  await expect(page.getByText("AI Study Systems").first()).toBeVisible();
+
+  await page.goto("/quizzes");
+  await expect(page.getByText("No exact quiz matches yet")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All available quizzes" })).toBeVisible();
+  await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
+});
+
 test("progress page renders the subject progress chart without runtime errors", async ({ page }) => {
   await page.goto("/progress");
 
