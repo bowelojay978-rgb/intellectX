@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/education/empty-state";
 import { PageShell } from "@/components/education/page-shell";
 import { ProgressCharts } from "@/components/education/progress-charts";
 import { ProgressBar } from "@/components/education/progress-bar";
+import { RecentQuizAttempts } from "@/components/education/recent-quiz-attempts";
 import { StreakCard } from "@/components/education/streak-card";
 import { SubjectMark } from "@/components/education/subject-mark";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +100,7 @@ export default function ProgressPage() {
               </div>
             </CardContent>
           </Card>
+          <RecentQuizAttempts />
           <Card className={`rounded-lg ${glassCardClassName}`}>
             <CardHeader>
               <CardTitle>Weak areas</CardTitle>

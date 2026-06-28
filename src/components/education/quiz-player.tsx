@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Quiz } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
+import { saveQuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { CheckCircle2Icon, CircleIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
@@ -77,15 +78,12 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
         (total, answer, index) => total + (answer === quiz.questions[index].answerIndex ? 1 : 0),
         0,
       );
-      window.localStorage.setItem(
-        `intellectx:quiz-attempt:${quiz.id}`,
-        JSON.stringify({
-          answers: nextAnswers,
-          score: finalScore,
-          totalQuestions: quiz.questions.length,
-          completedAt: new Date().toISOString(),
-        }),
-      );
+      saveQuizAttemptHistoryItem({
+        quizId: quiz.id,
+        quizTitle: quiz.title,
+        score: finalScore,
+        totalQuestions: quiz.questions.length,
+      });
       onComplete?.(nextAnswers, finalScore);
       setResults({ answers: nextAnswers, score: finalScore });
       return;

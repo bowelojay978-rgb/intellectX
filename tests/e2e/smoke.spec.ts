@@ -147,6 +147,7 @@ test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) =
 
 test("quiz flow reaches final results only after the last question and can restart", async ({ page }) => {
   await page.goto("/quizzes");
+  await page.evaluate(() => window.localStorage.clear());
 
   const firstQuizCard = page.locator('a[href="/quiz/ai-study-systems-check"]');
   await expect(firstQuizCard).toBeVisible();
@@ -176,10 +177,27 @@ test("quiz flow reaches final results only after the last question and can resta
 
   await expect(page.getByText("Final results")).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const history = JSON.parse(window.localStorage.getItem("intellectx:quiz-attempt-history") ?? "[]");
+        return history[0];
+      }),
+    )
+    .toMatchObject({
+      quizId: "ai-study-systems-check",
+      quizTitle: "AI Study Systems Check",
+      totalQuestions: 3,
+    });
 
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByText("Question 1 of")).toBeVisible();
   await expect(page.getByText("Final results")).toHaveCount(0);
+
+  await page.goto("/progress");
+  await expect(page.getByText("Recent quiz attempts")).toBeVisible();
+  await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
+  await expect(page.getByText(/of 3 correct/).first()).toBeVisible();
 });
 
 test("demo auth creates, persists, and clears a local session", async ({ page }) => {
@@ -255,6 +273,16 @@ test("progress page renders the subject progress chart without runtime errors", 
   await expect(page.getByText("Subject progress")).toBeVisible();
   await expect(page.getByRole("img", { name: "Grouped bar chart of subject completion and remaining work" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("Application error");
+});
+
+test("progress page shows a safe empty state before local quiz attempts exist", async ({ page }) => {
+  await page.goto("/progress");
+  await page.evaluate(() => window.localStorage.removeItem("intellectx:quiz-attempt-history"));
+  await page.reload();
+
+  await expect(page.getByText("Recent quiz attempts")).toBeVisible();
+  await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start a quiz" })).toHaveAttribute("href", "/mobile-quizzes");
 });
 
 test("navbar remains fixed and keeps links as direct navigation items", async ({ page }) => {
