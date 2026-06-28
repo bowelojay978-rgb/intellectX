@@ -69,7 +69,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <div className="hidden lg:block">
               <VideoPlayer title={lesson.title} videoUrl={lesson.videoUrl} posterUrl={lesson.posterUrl} />
             </div>
-            <Card className={`rounded-lg ${elevatedGlassCardClassName}`}>
+            <Card id="lesson-flashcards" className={`scroll-mt-28 rounded-lg ${elevatedGlassCardClassName}`}>
               <CardContent className="space-y-6 py-8 text-base leading-8 md:text-lg">
                 {lesson.content.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
@@ -78,7 +78,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </CardContent>
             </Card>
           </div>
-          <NotesEditor lessonId={lesson.id} />
+          <div id="lesson-notes" className="scroll-mt-28">
+            <NotesEditor lessonId={lesson.id} />
+          </div>
         </section>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           {lesson.nextLessonId && (

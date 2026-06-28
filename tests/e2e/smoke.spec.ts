@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const coreRoutes = ["/", "/courses", "/dashboard", "/progress", "/quizzes", "/profile"];
+const coreRoutes = ["/", "/courses", "/dashboard", "/progress", "/quizzes", "/profile", "/mobile-study"];
 const legalRoutes = [
   { route: "/privacy-policy", heading: "Privacy Policy" },
   { route: "/terms-and-conditions", heading: "Terms and Conditions" },
@@ -63,6 +63,24 @@ test.describe("production support routes", () => {
     expect(headers["permissions-policy"]).toContain("microphone=()");
     expect(headers["permissions-policy"]).toContain("geolocation=()");
   });
+});
+
+test("mobile study entry route exposes the limited mobile scope", async ({ page }) => {
+  await page.goto("/mobile-study");
+
+  await expect(page.getByRole("heading", { name: "Study essentials for the mobile app" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Notes from lessons" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Flashcard practice" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/quizzes");
+  await expect(page.getByRole("link", { name: "Open lesson notes" })).toHaveAttribute(
+    "href",
+    /\/learn\/.+#lesson-notes/,
+  );
+  await expect(page.getByRole("link", { name: "Open lesson cards" })).toHaveAttribute(
+    "href",
+    /\/learn\/.+#lesson-flashcards/,
+  );
 });
 
 test("quiz flow reaches final results only after the last question and can restart", async ({ page }) => {
