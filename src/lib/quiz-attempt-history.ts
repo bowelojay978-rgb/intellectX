@@ -42,6 +42,36 @@ export function readQuizAttemptHistory(storage: Storage = window.localStorage) {
   }
 }
 
+
+export type QuizAttemptHistorySummary = {
+  attemptCount: number;
+  averagePercentage: number;
+  latestByQuizId: Record<string, QuizAttemptHistoryItem>;
+};
+
+export function summarizeQuizAttemptHistory(attempts: QuizAttemptHistoryItem[]): QuizAttemptHistorySummary {
+  const sortedAttempts = [...attempts].sort((left, right) => {
+    return new Date(right.completedAt).getTime() - new Date(left.completedAt).getTime();
+  });
+  const latestByQuizId: Record<string, QuizAttemptHistoryItem> = {};
+
+  for (const attempt of sortedAttempts) {
+    if (!latestByQuizId[attempt.quizId]) {
+      latestByQuizId[attempt.quizId] = attempt;
+    }
+  }
+
+  const averagePercentage =
+    sortedAttempts.length > 0
+      ? Math.round(sortedAttempts.reduce((total, attempt) => total + attempt.percentage, 0) / sortedAttempts.length)
+      : 0;
+
+  return {
+    attemptCount: sortedAttempts.length,
+    averagePercentage,
+    latestByQuizId,
+  };
+}
 export function saveQuizAttemptHistoryItem(
   item: Omit<QuizAttemptHistoryItem, "percentage" | "completedAt">,
   storage: Storage = window.localStorage,
@@ -56,4 +86,5 @@ export function saveQuizAttemptHistoryItem(
   storage.setItem(quizAttemptHistoryKey, JSON.stringify(history));
   return attempt;
 }
+
 

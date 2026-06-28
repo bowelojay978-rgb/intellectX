@@ -1,4 +1,5 @@
 import { LearnerSessionName } from "@/components/auth/learner-session-name";
+import { LocalQuizPerformance } from "@/components/education/local-quiz-performance";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
@@ -11,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses } from "@/data/courses";
 import { lessons } from "@/data/lessons";
-import { quizzes } from "@/data/quizzes";
 import { userProgress } from "@/data/user-progress";
 import {
   BookOpenCheckIcon,
@@ -47,7 +47,7 @@ export default function DashboardPage() {
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
           Your learning cockpit for enrolled courses, recent lessons, quiz performance, and study consistency.
-          Learner identity is read from this browser session; progress metrics are seeded until account-level persistence is completed.
+          Learner identity is read from this browser session. Quiz performance uses local attempts until account-level persistence is completed.
         </p>
       </section>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
@@ -151,25 +151,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           <StreakCard compact />
-          <Card className={`rounded-lg ${glassCardClassName}`}>
-            <CardHeader>
-              <CardTitle>Quiz performance</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              {quizzes.length > 0 ? (
-                quizzes.map((quiz) => (
-                  <div key={quiz.id} className="bg-secondary/40 flex items-center justify-between rounded-lg p-4">
-                    <span className="text-sm font-medium">{quiz.title}</span>
-                    <span className="text-muted-foreground text-sm">Sync pending</span>
-                  </div>
-                ))
-              ) : (
-                <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
-                  Quiz scores will appear after knowledge checks are available.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <LocalQuizPerformance />
           <Card className={`rounded-lg ${glassCardClassName}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -186,6 +168,8 @@ export default function DashboardPage() {
     </PageShell>
   );
 }
+
+
 
 
 
