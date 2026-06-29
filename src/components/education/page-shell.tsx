@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
 import { getLearnerSession } from "@/lib/learner-session";
+import { isLearnerAppPath } from "@/lib/learner-routes";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -11,22 +12,9 @@ type PageShellProps = {
   children: React.ReactNode;
 };
 
-function isGuardedAppPath(pathname: string) {
-  return (
-    pathname === "/dashboard" ||
-    pathname === "/profile" ||
-    pathname === "/courses" ||
-    pathname.startsWith("/courses/") ||
-    pathname === "/quizzes" ||
-    pathname === "/progress" ||
-    pathname.startsWith("/learn/") ||
-    pathname.startsWith("/quiz/")
-  );
-}
-
 export function PageShell({ children }: PageShellProps) {
   const pathname = usePathname();
-  const guarded = isGuardedAppPath(pathname);
+  const guarded = isLearnerAppPath(pathname);
   const [canShowApp, setCanShowApp] = useState(!guarded);
 
   useEffect(() => {

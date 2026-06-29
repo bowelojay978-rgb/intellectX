@@ -1,33 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import { clearLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 type LearnerSessionStatusProps = {
   compact?: boolean;
+  navState: "app" | "public";
+  session: LearnerSession | null | undefined;
 };
 
-export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusProps) {
-  const [session, setSession] = useState<LearnerSession | null>(null);
-
-  useEffect(() => {
-    function syncSession() {
-      setSession(getLearnerSession());
-    }
-
-    syncSession();
-    window.addEventListener("storage", syncSession);
-    window.addEventListener("intellectx:learner-session-change", syncSession);
-
-    return () => {
-      window.removeEventListener("storage", syncSession);
-      window.removeEventListener("intellectx:learner-session-change", syncSession);
-    };
-  }, []);
-
+export function LearnerSessionStatus({ compact = false, navState, session }: LearnerSessionStatusProps) {
   function handleLogout() {
     clearLearnerSession();
     window.location.assign("/");
@@ -54,6 +38,28 @@ export function LearnerSessionStatus({ compact = false }: LearnerSessionStatusPr
         <Link href="/profile" className="text-muted-foreground hidden max-w-36 truncate text-sm lg:block">
           {session.name}
         </Link>
+        <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
+          <LogOutIcon className="size-4" />
+          Logout
+        </Button>
+      </div>
+    );
+  }
+
+  if (navState === "app") {
+    if (compact) {
+      return (
+        <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
+          <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
+            <LogOutIcon className="size-4" />
+            Log out
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="justify-self-end flex items-center gap-3">
         <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
           <LogOutIcon className="size-4" />
           Logout

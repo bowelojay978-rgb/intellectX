@@ -1,6 +1,7 @@
 import { LearnerSessionStatus } from "@/components/auth/learner-session-status";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerTitle } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import type { LearnerSession } from "@/lib/learner-session";
 import { Menu, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -10,10 +11,12 @@ type Props = {
     href: string;
   }[];
   logoHref?: string;
+  navState: "app" | "public";
+  session: LearnerSession | null | undefined;
   className?: string;
 };
 
-export function MobileNav({ items, logoHref = "/", className }: Props) {
+export function MobileNav({ items, logoHref = "/", navState, session, className }: Props) {
   return (
     <nav
       className={cn(
@@ -40,7 +43,7 @@ export function MobileNav({ items, logoHref = "/", className }: Props) {
                 {item.label}
               </Link>
             ))}
-            <LearnerSessionStatus compact />
+            <LearnerSessionStatus compact navState={navState} session={session} />
           </DrawerContent>
         </Drawer>
       </div>

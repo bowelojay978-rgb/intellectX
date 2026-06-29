@@ -12,8 +12,16 @@ import {
   loadAcademicProfile,
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
+import {
+  COURSE_SELECTION_CHANGE_EVENT,
+  COURSE_SELECTION_GRACE_PERIOD_DAYS,
+  COURSE_SELECTION_LIMIT,
+  type CourseSelection,
+  loadCourseSelection,
+  toggleSelectedCourse,
+} from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
-import { BookOpenIcon, GraduationCapIcon } from "lucide-react";
+import { BookOpenIcon, CheckCircle2Icon, GraduationCapIcon, InfoIcon, PlusCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -51,15 +59,83 @@ function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Cours
   };
 }
 
-function CourseGrid({ courses }: { courses: Course[] }) {
+function useCourseSelection() {
+  const [selection, setSelection] = useState<CourseSelection | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    function syncSelection() {
+      setSelection(loadCourseSelection());
+    }
+
+    syncSelection();
+    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+    window.addEventListener("storage", syncSelection);
+
+    return () => {
+      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+      window.removeEventListener("storage", syncSelection);
+    };
+  }, []);
+
+  function toggleCourse(courseId: string) {
+    const update = toggleSelectedCourse(courseId);
+    setSelection(update.selection);
+    setError(update.error ?? null);
+  }
+
+  return { selection, error, toggleCourse };
+}
+
+function CourseSelectionNote({ selectedCount, selectableCount }: { selectedCount: number; selectableCount: number }) {
+  const targetCount = Math.min(COURSE_SELECTION_LIMIT, selectableCount);
+
   return (
-    <section className="grid gap-5 md:grid-cols-3">
-      {courses.map((course) => (
-        <article key={course.id} className="grid gap-3">
-          <CourseCard course={course} />
-        </article>
-      ))}
+    <section className="border-border/70 bg-background/70 mb-5 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm text-muted-foreground backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <p className="inline-flex items-start gap-2 leading-6">
+        <InfoIcon className="mt-0.5 size-4 shrink-0" />
+        Choose up to {COURSE_SELECTION_LIMIT} courses. You have a {COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace period
+        to adjust them, then your selection locks.
+      </p>
+      <p className="font-medium text-foreground">
+        {selectedCount} / {targetCount} selected
+      </p>
     </section>
+  );
+}
+
+function CourseGrid({ courses }: { courses: Course[] }) {
+  const { selection, error, toggleCourse } = useCourseSelection();
+  const selectedCourseIds = selection?.selectedCourseIds ?? [];
+  const locked = Boolean(selection?.locked);
+
+  return (
+    <>
+      <CourseSelectionNote selectedCount={selectedCourseIds.length} selectableCount={courses.length} />
+      {error ? <p className="text-destructive mb-4 text-sm">{error}</p> : null}
+      <section className="grid gap-5 md:grid-cols-3">
+        {courses.map((course) => {
+          const selected = selectedCourseIds.includes(course.id);
+
+          return (
+            <article key={course.id} className="grid gap-3">
+              <CourseCard course={course} showProgress={false} />
+              <Button
+                type="button"
+                variant={selected ? "outline" : "secondary"}
+                size="sm"
+                disabled={locked}
+                onClick={() => toggleCourse(course.id)}
+                className="justify-self-start"
+              >
+                {selected ? <CheckCircle2Icon className="size-4" /> : <PlusCircleIcon className="size-4" />}
+                {selected ? "In your plan" : "Add to plan"}
+              </Button>
+            </article>
+          );
+        })}
+      </section>
+    </>
   );
 }
 
@@ -88,6 +164,9 @@ function useAcademicProfile() {
 
 function PersonalizedCourses({ courses }: { courses: Course[] }) {
   const { profile, loaded } = useAcademicProfile();
+  const { selection } = useCourseSelection();
+  const selectedCount = selection?.selectedCourseIds.length ?? 0;
+  const selectionComplete = selectedCount >= Math.min(COURSE_SELECTION_LIMIT, courses.length);
 
   if (!loaded) {
     return null;
@@ -113,9 +192,11 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
         <p className="text-muted-foreground text-sm">
           Filtered for {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
         </p>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/profile#study-profile">Edit profile</Link>
-        </Button>
+        {!selectionComplete ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/profile#study-profile">Edit profile</Link>
+          </Button>
+        ) : null}
       </div>
       {matchedCourses.length > 0 ? (
         <CourseGrid courses={matchedCourses} />

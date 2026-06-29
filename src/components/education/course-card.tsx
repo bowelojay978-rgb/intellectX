@@ -10,9 +10,10 @@ import Link from "next/link";
 
 type CourseCardProps = {
   course: Course;
+  showProgress?: boolean;
 };
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, showProgress = true }: CourseCardProps) {
   const subjectMark = getSubjectMark(course.subject);
 
   return (
@@ -38,16 +39,18 @@ export function CourseCard({ course }: CourseCardProps) {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-5">
         <p className="text-muted-foreground text-sm leading-6">{course.description}</p>
-        <div className="mt-auto space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground inline-flex items-center gap-1">
-              <BookOpenIcon className="size-4" />
-              Progress
-            </span>
-            <span className="font-medium">{course.progress}%</span>
+        {showProgress ? (
+          <div className="mt-auto space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                <BookOpenIcon className="size-4" />
+                Progress
+              </span>
+              <span className="font-medium">{course.progress}%</span>
+            </div>
+            <ProgressBar value={course.progress} />
           </div>
-          <ProgressBar value={course.progress} />
-        </div>
+        ) : null}
       </CardContent>
       <CardFooter>
         <Button className="w-full" asChild>

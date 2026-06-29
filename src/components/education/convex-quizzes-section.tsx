@@ -4,7 +4,7 @@ import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses } from "@/data/courses";
 import { lessons } from "@/data/lessons";
@@ -12,13 +12,12 @@ import type { Quiz } from "@/data/quizzes";
 import { readQuizAttemptHistory } from "@/lib/quiz-attempt-history";
 import {
   type AcademicProfile,
-  formatAcademicProfile,
   loadAcademicProfile,
   quizMatchesAcademicProfile,
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import { ClockIcon, FileQuestionIcon, GraduationCapIcon } from "lucide-react";
+import { ClockIcon, FileQuestionIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -189,24 +188,6 @@ function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
 
   return (
     <div className="space-y-6">
-      <section className={`rounded-lg border p-5 ${glassCardClassName}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3">
-            <span className="bg-secondary grid size-10 shrink-0 place-items-center rounded-full">
-              <GraduationCapIcon className="size-5" />
-            </span>
-            <div>
-              <h2 className="font-semibold tracking-tight">Personalized for your study profile</h2>
-              <p className="text-muted-foreground mt-1 text-sm leading-6">
-                {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
-              </p>
-            </div>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/profile#study-profile">Edit profile</Link>
-          </Button>
-        </div>
-      </section>
       {matchedQuizzes.length > 0 ? (
         <QuizGrid quizzes={matchedQuizzes} />
       ) : (

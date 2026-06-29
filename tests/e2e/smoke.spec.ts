@@ -47,6 +47,39 @@ async function fillInputWithNativeEvent(page: import("@playwright/test").Page, s
   );
 }
 
+async function visibleNav(page: import("@playwright/test").Page) {
+  const nav = page.locator("nav").filter({ has: page.locator('[data-slot="navigation-menu"]') });
+  await expect(nav).toHaveCount(1);
+  return nav;
+}
+
+async function expectPublicNav(page: import("@playwright/test").Page) {
+  const nav = await visibleNav(page);
+
+  for (const linkName of ["Features", "How it works", "Pricing", "Login", "Signup"]) {
+    await expect(nav.getByRole("link", { name: linkName, exact: true })).toBeVisible();
+  }
+
+  for (const linkName of ["Courses", "Quizzes", "Progress", "Dashboard", "Profile"]) {
+    await expect(nav.getByRole("link", { name: linkName, exact: true })).toHaveCount(0);
+  }
+
+  await expect(nav.getByRole("button", { name: "Logout" })).toHaveCount(0);
+}
+
+async function expectAppNav(page: import("@playwright/test").Page) {
+  const nav = await visibleNav(page);
+
+  for (const linkName of ["Courses", "Quizzes", "Progress", "Dashboard", "Profile"]) {
+    await expect(nav.getByRole("link", { name: linkName, exact: true })).toBeVisible();
+  }
+
+  await expect(nav.getByRole("button", { name: "Logout" })).toBeVisible();
+
+  for (const linkName of ["Features", "How it works", "Pricing", "Login", "Signup"]) {
+    await expect(nav.getByRole("link", { name: linkName, exact: true })).toHaveCount(0);
+  }
+}
 
 const coreRoutes = [
   "/",
@@ -145,6 +178,35 @@ test("mobile study entry route exposes the limited mobile scope", async ({ page 
   await expect(page.getByRole("link", { name: "Open notes" })).toHaveCount(0);
 });
 
+test("signed-out homepage shows only public nav links", async ({ page }) => {
+  await page.goto("/");
+
+  await expectPublicNav(page);
+});
+
+test("login establishes the app nav contract", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+
+  await fillInputWithNativeEvent(page, 'input[name="email"]', "nav.learner@intellectx.local");
+  await fillInputWithNativeEvent(page, 'input[name="password"]', "anything");
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page).toHaveURL(/\/courses$/);
+  await expectAppNav(page);
+});
+
+test("authenticated app navigation never falls back to signed-out nav links", async ({ page }) => {
+  await seedLearnerAccess(page);
+  await page.goto("/courses", { waitUntil: "domcontentloaded" });
+  await expectAppNav(page);
+
+  for (const linkName of ["Quizzes", "Progress", "Dashboard", "Profile"]) {
+    const nav = await visibleNav(page);
+    await nav.getByRole("link", { name: linkName, exact: true }).click();
+    await expectAppNav(page);
+  }
+});
+
 test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
   await page.goto("/mobile-quizzes");
 
@@ -239,11 +301,34 @@ test("quiz flow reaches final results only after the last question and can resta
   await expect(page.getByText(/of 3 correct/).first()).toBeVisible();
 });
 
+test("quiz timer counts down, times out unanswered questions, and resets", async ({ page }) => {
+  await page.clock.install();
+  await seedLearnerAccess(page);
+  await page.goto("/quiz/ai-study-systems-check");
+
+  await expect(page.getByText("Time left: 6:00")).toBeVisible();
+  await page.clock.runFor(2000);
+  await expect(page.getByText("Time left: 5:58")).toBeVisible();
+
+  await page.clock.runFor(358000);
+  await expect(page.getByText("Final results")).toBeVisible();
+  await expect(page.getByText("Time expired.")).toBeVisible();
+  await expect(page.getByText("You answered 0 of 3 questions correctly.")).toBeVisible();
+  await expect(page.getByText("No answer selected")).toHaveCount(3);
+
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByText("Question 1 of 3")).toBeVisible();
+  await expect(page.getByText("Time left: 6:00")).toBeVisible();
+  await expect(page.getByText("Final results")).toHaveCount(0);
+});
+
 test("learner session creates, personalizes dashboard and profile, and clears on logout", async ({ page }) => {
+  test.setTimeout(60_000);
+
   const learnerName = `Playwright Learner ${Date.now()}`;
   const learnerEmail = "playwright.learner@intellectx.local";
 
-  await page.goto("/signup", { waitUntil: "domcontentloaded" });
+  await page.goto("/signup", { waitUntil: "networkidle" });
 
   await page.getByLabel("Name").fill(learnerName);
   await page.getByLabel("Email").fill(learnerEmail);
@@ -259,10 +344,10 @@ test("learner session creates, personalizes dashboard and profile, and clears on
 
   await page.goto("/");
   await page.evaluate(() => window.localStorage.removeItem("intellectx:learner-session"));
-  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await page.goto("/login", { waitUntil: "networkidle" });
   await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
-  await fillInputWithNativeEvent(page, 'input[name="email"]', learnerEmail);
-  await fillInputWithNativeEvent(page, 'input[name="password"]', "anything");
+  await page.getByLabel("Email").fill(learnerEmail);
+  await page.getByLabel("Password").fill("anything");
   await expect(page.getByLabel("Email")).toHaveValue(learnerEmail);
   await expect(page.getByLabel("Password")).toHaveValue("anything");
   await page.getByRole("button", { name: "Continue" }).click();
@@ -279,7 +364,7 @@ test("learner session creates, personalizes dashboard and profile, and clears on
     .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
     .toContain(learnerEmail);
 
-  await page.goto("/profile", { waitUntil: "domcontentloaded" });
+  await page.goto("/profile", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "playwright.learner" })).toBeVisible();
   await expect(page.getByText(learnerEmail)).toBeVisible();
   await page.getByRole("button", { name: "Logout" }).first().click();
@@ -305,7 +390,8 @@ test("study profile saves and personalizes courses and quizzes", async ({ page }
   await expect(page.getByText("AI Study Systems").first()).toBeVisible();
 
   await page.goto("/quizzes");
-  await expect(page.getByText("Personalized for your study profile")).toBeVisible();
+  await expect(page.getByText("Your personalized profile")).toHaveCount(0);
+  await expect(page.getByText("Personalized for your study profile")).toHaveCount(0);
   await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
 });
 
@@ -326,13 +412,14 @@ test("study profile no-match fallback keeps filtered empty states safe", async (
   await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
 });
 
-test("progress page renders the subject progress chart without runtime errors", async ({ page }) => {
+test("progress page renders honest local progress state without mock charts", async ({ page }) => {
   await seedLearnerAccess(page);
   await page.goto("/progress");
 
   await expect(page.getByRole("heading", { name: "Your learning momentum" })).toBeVisible();
-  await expect(page.getByText("Subject progress")).toBeVisible();
-  await expect(page.getByRole("img", { name: "Grouped bar chart of subject completion and remaining work" })).toBeVisible();
+  await expect(page.getByText("No progress recorded yet")).toBeVisible();
+  await expect(page.getByText("Subject progress")).toHaveCount(0);
+  await expect(page.getByRole("img", { name: "Grouped bar chart of subject completion and remaining work" })).toHaveCount(0);
   await expect(page.locator("body")).not.toContainText("Application error");
 });
 
@@ -345,6 +432,23 @@ test("progress page shows a safe empty state before local quiz attempts exist", 
   await expect(page.getByText("Recent quiz attempts")).toBeVisible();
   await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
   await expect(page.getByRole("link", { name: "Start a quiz" })).toHaveAttribute("href", "/mobile-quizzes");
+});
+
+test("progress page does not show mock learner progress before local activity exists", async ({ page }) => {
+  await seedLearnerAccess(page);
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    window.localStorage.removeItem("intellectx:course-selection");
+    window.localStorage.removeItem("intellectx:quiz-attempt-history");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  await expect(page.getByText("No progress recorded yet")).toBeVisible();
+  await expect(page.getByText("No selected courses yet")).toBeVisible();
+  await expect(page.getByText("68%")).toHaveCount(0);
+  await expect(page.getByText("42%")).toHaveCount(0);
+  await expect(page.getByText("24%")).toHaveCount(0);
+  await expect(page.getByText("Weak areas")).toHaveCount(0);
 });
 
 test("navbar remains fixed and keeps links as direct navigation items", async ({ page }) => {
@@ -387,7 +491,26 @@ test("dashboard exposes study shortcuts without hiding web dashboard content", a
   await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.locator('a[href="/mobile-notes"]')).toHaveCount(0);
   await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Enrolled courses" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Selected courses", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Enrolled courses" })).toHaveCount(0);
+});
+
+test("dashboard does not show mock enrolled courses or fake progress before local activity exists", async ({ page }) => {
+  await seedLearnerAccess(page);
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    window.localStorage.removeItem("intellectx:course-selection");
+    window.localStorage.removeItem("intellectx:quiz-attempt-history");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  await expect(page.getByText("No selected courses yet")).toBeVisible();
+  await expect(page.getByText("No lessons recorded")).toBeVisible();
+  await expect(page.getByText("Not tracked yet")).toBeVisible();
+  await expect(page.getByText("Memory Systems")).toHaveCount(0);
+  await expect(page.getByText("Source Quality")).toHaveCount(0);
+  await expect(page.getByText("Diagnostic Review")).toHaveCount(0);
+  await expect(page.getByText("68%")).toHaveCount(0);
 });
 
 test.describe("mobile smoke", () => {
@@ -466,10 +589,12 @@ test("courses page hides course-selection controls", async ({ page }) => {
   await seedLearnerAccess(page);
 
   await page.goto("/courses");
+  await expect(page.getByText("Choose up to 5 courses.")).toBeVisible();
+  await expect(page.getByText("7-day grace period")).toBeVisible();
   await expect(page.getByRole("button", { name: "Select" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Remove" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Locked" })).toHaveCount(0);
-  await expect(page.getByText(/selected$/)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add to plan" }).first()).toBeVisible();
 });
 
 test("completing a quiz updates history and quizzes page reflects the attempt", async ({ page }) => {

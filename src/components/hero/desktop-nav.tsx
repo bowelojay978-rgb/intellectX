@@ -8,6 +8,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import type { LearnerSession } from "@/lib/learner-session";
 import { SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +19,8 @@ type Props = {
     href: string;
   }[];
   logoHref?: string;
+  navState: "app" | "public";
+  session: LearnerSession | null | undefined;
   className?: string;
 };
 
@@ -33,7 +36,7 @@ function isActiveNavItem(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DesktopNav({ items, logoHref = "/", className }: Props) {
+export function DesktopNav({ items, logoHref = "/", navState, session, className }: Props) {
   const pathname = usePathname();
 
   return (
@@ -72,7 +75,7 @@ export function DesktopNav({ items, logoHref = "/", className }: Props) {
             })}
           </NavigationMenuList>
         </NavigationMenu>
-        <LearnerSessionStatus />
+        <LearnerSessionStatus navState={navState} session={session} />
       </div>
     </nav>
   );
