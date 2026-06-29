@@ -3,7 +3,7 @@
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
-import { glassCardClassName } from "@/components/education/glass-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/data/courses";
 import {
@@ -12,9 +12,18 @@ import {
   formatAcademicProfile,
   loadAcademicProfile,
 } from "@/lib/academic-profile";
+import {
+  COURSE_SELECTION_GRACE_PERIOD_DAYS,
+  COURSE_SELECTION_LIMIT,
+  type CourseSelection,
+  COURSE_SELECTION_CHANGE_EVENT,
+  getEmptyCourseSelection,
+  loadCourseSelection,
+  toggleSelectedCourse,
+} from "@/lib/course-selection";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import { BookOpenIcon, GraduationCapIcon } from "lucide-react";
+import { BookOpenIcon, GraduationCapIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -52,22 +61,66 @@ function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Cours
   };
 }
 
-function CourseGrid({ courses }: { courses: Course[] }) {
+function formatSelectionDate(timestamp: number | null) {
+  if (!timestamp) return "Not started";
+
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(timestamp));
+}
+
+function CompactCourseSelectionStatus({ selection, error }: { selection: CourseSelection; error: string | null }) {
+  return (
+    <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-2">
+        <Badge variant="outline">
+          {selection.selectedCourseIds.length} / {COURSE_SELECTION_LIMIT} selected
+        </Badge>
+        <Badge variant={selection.locked ? "secondary" : "outline"} className="gap-2">
+          {selection.locked ? <LockIcon className="size-3" /> : null}
+          {selection.locked ? "Locked" : `${COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace period`}
+        </Badge>
+        <span>Ends {formatSelectionDate(selection.gracePeriodEndsAt)}. Resets require support later.</span>
+      </div>
+      {error ? <p className="text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+function CourseGrid({
+  courses,
+  selection,
+  onToggleCourse,
+}: {
+  courses: Course[];
+  selection: CourseSelection;
+  onToggleCourse: (courseId: string) => void;
+}) {
   return (
     <section className="grid gap-5 md:grid-cols-3">
-      {courses.map((course) => (
-        <CourseCard key={course.id} course={course} />
-      ))}
+      {courses.map((course) => {
+        const selected = selection.selectedCourseIds.includes(course.id);
+
+        return (
+          <article key={course.id} className="grid gap-3">
+            <CourseCard
+              course={course}
+              selectionState={selection.locked ? (selected ? "selectedLocked" : "locked") : selected ? "selected" : "available"}
+              onToggleSelection={() => onToggleCourse(course.id)}
+            />
+          </article>
+        );
+      })}
     </section>
   );
 }
 
 function useAcademicProfile() {
   const [profile, setProfile] = useState<AcademicProfile | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     function syncProfile() {
       setProfile(loadAcademicProfile());
+      setLoaded(true);
     }
 
     syncProfile();
@@ -80,54 +133,82 @@ function useAcademicProfile() {
     };
   }, []);
 
-  return profile;
+  return { profile, loaded };
+}
+
+function useCourseSelection() {
+  const [selection, setSelection] = useState<CourseSelection>(getEmptyCourseSelection);
+
+  useEffect(() => {
+    function syncSelection() {
+      setSelection(loadCourseSelection());
+    }
+
+    syncSelection();
+    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+    window.addEventListener("storage", syncSelection);
+
+    return () => {
+      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+      window.removeEventListener("storage", syncSelection);
+    };
+  }, []);
+
+  return { selection, setSelection };
 }
 
 function PersonalizedCourses({ courses }: { courses: Course[] }) {
-  const profile = useAcademicProfile();
+  const { profile, loaded } = useAcademicProfile();
+  const { selection, setSelection } = useCourseSelection();
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+
+  function handleToggleCourse(courseId: string) {
+    const update = toggleSelectedCourse(courseId, selection);
+    setSelection(update.selection);
+    setSelectionError(update.error ?? null);
+  }
+
+  if (!loaded) {
+    return null;
+  }
 
   if (!profile) {
-    return <CourseGrid courses={courses} />;
+    return (
+      <EmptyState
+        title="Complete your study profile first"
+        description="Course selection unlocks after your academic level, curriculum, and subjects are saved."
+        actionHref="/signup"
+        actionLabel="Set up profile"
+        icon={GraduationCapIcon}
+      />
+    );
   }
 
   const matchedCourses = courses.filter((course) => courseMatchesAcademicProfile(course, profile));
 
   return (
     <div className="space-y-6">
-      <section className={`rounded-lg border p-5 ${glassCardClassName}`}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3">
-            <span className="bg-secondary grid size-10 shrink-0 place-items-center rounded-full">
-              <GraduationCapIcon className="size-5" />
-            </span>
-            <div>
-              <h2 className="font-semibold tracking-tight">Personalized for your study profile</h2>
-              <p className="text-muted-foreground mt-1 text-sm leading-6">
-                {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
-              </p>
-            </div>
-          </div>
-          <Button variant="outline" asChild>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-sm">
+            Filtered for {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
+          </p>
+          <Button variant="ghost" size="sm" asChild>
             <Link href="/profile#study-profile">Edit profile</Link>
           </Button>
         </div>
-      </section>
+        <CompactCourseSelectionStatus selection={selection} error={selectionError} />
+      </div>
       {matchedCourses.length > 0 ? (
-        <CourseGrid courses={matchedCourses} />
+        <CourseGrid courses={matchedCourses} selection={selection} onToggleCourse={handleToggleCourse} />
       ) : (
-        <>
-          <EmptyState
-            title="No exact course matches yet"
-            description="The catalog is still growing. Edit your study profile or browse all available courses below."
-            actionHref="/profile#study-profile"
-            actionLabel="Edit study profile"
-            icon={BookOpenIcon}
-          />
-          <section className="space-y-4">
-            <h2 className="text-2xl font-semibold tracking-tight">All available courses</h2>
-            <CourseGrid courses={courses} />
-          </section>
-        </>
+        <EmptyState
+          title="No exact course matches yet"
+          description="The catalog is still growing. Edit your study profile to adjust the filtered course list."
+          actionHref="/profile#study-profile"
+          actionLabel="Edit study profile"
+          icon={BookOpenIcon}
+        />
       )}
     </div>
   );

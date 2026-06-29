@@ -2,13 +2,13 @@ import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { featureScope, isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
-import { BookOpenTextIcon, FileTextIcon, Layers3Icon } from "lucide-react";
+import { BookOpenTextIcon, Layers3Icon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Study - IntellectX",
-  description: "Open IntellectX mobile study tools for quizzes, lesson notes, and flashcard-style review.",
+  description: "Open IntellectX mobile study tools for quizzes and flashcard-style review.",
 };
 
 type StudyItem = {
@@ -31,14 +31,6 @@ export default function MobileStudyPage() {
       icon: BookOpenTextIcon,
     },
     {
-      feature: "notes" as const,
-      title: "Notes",
-      description: "Open the mobile lesson-notes hub and jump into note-taking where it already exists.",
-      href: "/mobile-notes",
-      cta: "Open notes",
-      icon: FileTextIcon,
-    },
-    {
       feature: "flashcards" as const,
       title: "Flashcards",
       description: "Review existing flashcard-style lesson cards without adding a new study model yet.",
@@ -58,11 +50,11 @@ export default function MobileStudyPage() {
           Study essentials for the mobile app
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-          A focused entry point for the mobile IntellectX experience: quizzes, notes, and flashcards.
+          A focused entry point for the mobile IntellectX experience: quizzes and flashcards.
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2">
         {studyItems.map((item) => {
           const Icon = item.icon;
 

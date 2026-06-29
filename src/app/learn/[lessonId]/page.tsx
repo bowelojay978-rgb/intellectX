@@ -1,7 +1,6 @@
 import { elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { LessonBlockRenderer } from "@/components/education/lesson-block-renderer";
 import { LessonProgressSync } from "@/components/education/lesson-progress-sync";
-import { NotesEditor } from "@/components/education/notes-editor";
 import { PageShell } from "@/components/education/page-shell";
 import { SubjectMark } from "@/components/education/subject-mark";
 import { VideoPlayer } from "@/components/education/video-player";
@@ -77,9 +76,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
                 {lesson.blocks && <LessonBlockRenderer blocks={lesson.blocks} />}
               </CardContent>
             </Card>
-          </div>
-          <div id="lesson-notes" className="scroll-mt-28">
-            <NotesEditor lessonId={lesson.id} />
           </div>
         </section>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">

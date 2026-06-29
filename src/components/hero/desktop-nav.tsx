@@ -17,6 +17,7 @@ type Props = {
     label: string;
     href: string;
   }[];
+  logoHref?: string;
   className?: string;
 };
 
@@ -32,7 +33,7 @@ function isActiveNavItem(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DesktopNav({ items, className }: Props) {
+export function DesktopNav({ items, logoHref = "/", className }: Props) {
   const pathname = usePathname();
 
   return (
@@ -43,7 +44,7 @@ export function DesktopNav({ items, className }: Props) {
       )}
     >
       <div className="mx-auto grid w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 justify-self-start font-semibold tracking-tight">
+        <Link href={logoHref} className="flex items-center gap-2 justify-self-start font-semibold tracking-tight">
           <span className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-full">
             <SparklesIcon className="size-4" />
           </span>

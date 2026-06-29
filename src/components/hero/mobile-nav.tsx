@@ -9,10 +9,11 @@ type Props = {
     label: string;
     href: string;
   }[];
+  logoHref?: string;
   className?: string;
 };
 
-export function MobileNav({ items, className }: Props) {
+export function MobileNav({ items, logoHref = "/", className }: Props) {
   return (
     <nav
       className={cn(
@@ -21,7 +22,7 @@ export function MobileNav({ items, className }: Props) {
       )}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+        <Link href={logoHref} className="flex items-center gap-2 font-semibold tracking-tight">
           <span className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-full">
             <SparklesIcon className="size-4" />
           </span>

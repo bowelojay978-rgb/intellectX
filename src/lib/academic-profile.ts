@@ -5,13 +5,14 @@ export const ACADEMIC_PROFILE_KEY = "intellectx:academic-profile";
 
 export const educationLevels = [
   "Primary",
-  "Junior Secondary",
-  "Senior Secondary",
-  "Varsity / University",
-  "Professional / Other",
+  "Junior",
+  "Senior",
+  "University / Varsity",
 ] as const;
 
-export const curriculumOptions = ["Botswana", "Cambridge", "Other", "University / Institution"] as const;
+export const schoolCurriculum = "Botswana curriculum" as const;
+
+export const institutionOptions = ["UB", "BAC", "BIUST"] as const;
 
 export const gradeOrYearOptions = [
   "Primary level",
@@ -27,7 +28,7 @@ export const gradeOrYearOptions = [
   "Year 4",
 ] as const;
 
-export const subjectOptions = [
+export const schoolSubjectOptions = [
   "Mathematics",
   "English",
   "Science",
@@ -42,8 +43,20 @@ export const subjectOptions = [
   "Exam Prep",
 ] as const;
 
+export const universityModuleOptions = [
+  "Mathematics",
+  "Computer Science",
+  "Accounting",
+  "Business Studies",
+  "AI Productivity",
+  "Reasoning",
+  "Exam Prep",
+] as const;
+
+export const subjectOptions = [...schoolSubjectOptions, ...universityModuleOptions] as const;
+
 export type EducationLevel = (typeof educationLevels)[number];
-export type CurriculumOrInstitution = (typeof curriculumOptions)[number] | string;
+export type CurriculumOrInstitution = typeof schoolCurriculum | (typeof institutionOptions)[number] | string;
 export type GradeOrYear = (typeof gradeOrYearOptions)[number] | string;
 
 export type AcademicProfile = {
@@ -64,6 +77,84 @@ export function isAcademicProfile(value: unknown): value is AcademicProfile {
     typeof profile.gradeOrYear === "string" &&
     Array.isArray(profile.subjectsOrModules)
   );
+}
+
+export function isUniversityLevel(educationLevel: string) {
+  return educationLevel === "University / Varsity";
+}
+
+export function getDefaultAcademicProfile(): AcademicProfile {
+  return {
+    educationLevel: "Senior",
+    curriculumOrInstitution: schoolCurriculum,
+    gradeOrYear: "Form 5",
+    subjectsOrModules: [],
+  };
+}
+
+export function getAcademicProfileOptions(profile: Pick<AcademicProfile, "educationLevel" | "gradeOrYear">) {
+  if (isUniversityLevel(profile.educationLevel)) {
+    return {
+      curriculumLabel: "Institution",
+      curriculumOptions: institutionOptions,
+      gradeLabel: "Year",
+      gradeOptions: ["Year 1", "Year 2", "Year 3", "Year 4"],
+      subjectLabel: "Modules",
+      subjectOptions: universityModuleOptions,
+    };
+  }
+
+  const gradeOptions =
+    profile.educationLevel === "Primary"
+      ? ["Primary level"]
+      : profile.educationLevel === "Junior"
+        ? ["Form 1", "Form 2", "Form 3"]
+        : ["Form 4", "Form 5"];
+
+  return {
+    curriculumLabel: "Curriculum",
+    curriculumOptions: [schoolCurriculum],
+    gradeLabel: "Grade",
+    gradeOptions,
+    subjectLabel: "Subjects",
+    subjectOptions: schoolSubjectOptions,
+  };
+}
+
+export function normalizeAcademicProfileForLevel(profile: AcademicProfile): AcademicProfile {
+  const options = getAcademicProfileOptions(profile);
+  const nextCurriculumOrInstitution = isUniversityLevel(profile.educationLevel)
+    ? institutionOptions.includes(profile.curriculumOrInstitution as (typeof institutionOptions)[number])
+      ? profile.curriculumOrInstitution
+      : institutionOptions[0]
+    : schoolCurriculum;
+  const nextGradeOrYear = options.gradeOptions.includes(profile.gradeOrYear)
+    ? profile.gradeOrYear
+    : options.gradeOptions[0];
+
+  return {
+    ...profile,
+    curriculumOrInstitution: nextCurriculumOrInstitution,
+    gradeOrYear: nextGradeOrYear,
+    subjectsOrModules: profile.subjectsOrModules.filter((subject) =>
+      (options.subjectOptions as readonly string[]).includes(subject),
+    ),
+  };
+}
+
+export function isAcademicProfileComplete(profile: AcademicProfile | null) {
+  if (!profile) return false;
+
+  const normalizedProfile = normalizeAcademicProfileForLevel(profile);
+  const hasSubjects = normalizedProfile.subjectsOrModules.length > 0;
+
+  if (!hasSubjects) return false;
+
+  if (isUniversityLevel(normalizedProfile.educationLevel)) {
+    return institutionOptions.includes(normalizedProfile.curriculumOrInstitution as (typeof institutionOptions)[number]);
+  }
+
+  return normalizedProfile.curriculumOrInstitution === schoolCurriculum && normalizedProfile.gradeOrYear.length > 0;
 }
 
 export function loadAcademicProfile(): AcademicProfile | null {
@@ -93,7 +184,9 @@ export function clearAcademicProfile() {
 }
 
 export function formatAcademicProfile(profile: AcademicProfile) {
-  return `${profile.educationLevel} / ${profile.curriculumOrInstitution} / ${profile.gradeOrYear}`;
+  const label = isUniversityLevel(profile.educationLevel) ? "Year" : "Grade";
+
+  return `${profile.educationLevel} / ${profile.curriculumOrInstitution} / ${label}: ${profile.gradeOrYear}`;
 }
 
 export function courseMatchesAcademicProfile(course: Course, profile: AcademicProfile) {

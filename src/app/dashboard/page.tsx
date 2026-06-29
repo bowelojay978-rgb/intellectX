@@ -16,7 +16,6 @@ import { userProgress } from "@/data/user-progress";
 import {
   BookOpenCheckIcon,
   BookOpenIcon,
-  FileTextIcon,
   FlameIcon,
   GraduationCapIcon,
   Layers3Icon,
@@ -95,17 +94,6 @@ export default function DashboardPage() {
                 <div>
                   <p className="font-medium">Quizzes</p>
                   <p className="text-muted-foreground mt-1 text-sm">Start your next knowledge check.</p>
-                </div>
-              </Link>
-              <Link
-                href="/mobile-notes"
-                aria-label="Open mobile notes"
-                className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
-              >
-                <FileTextIcon className="size-5" />
-                <div>
-                  <p className="font-medium">Notes</p>
-                  <p className="text-muted-foreground mt-1 text-sm">Open lesson notes for focused review.</p>
                 </div>
               </Link>
               <Link

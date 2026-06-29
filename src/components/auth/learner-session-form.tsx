@@ -2,12 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createLearnerSession } from "@/lib/learner-session";
+import { StudyProfileCard } from "@/components/education/study-profile-card";
+import { isAcademicProfileComplete, loadAcademicProfile } from "@/lib/academic-profile";
+import { createLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon, MailIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type InputHTMLAttributes, useState } from "react";
+import { type FormEvent, type InputHTMLAttributes, useEffect, useState } from "react";
 
 type LearnerSessionMode = "login" | "signup" | "forgot-password";
 
@@ -20,13 +22,13 @@ const contentByMode = {
     eyebrow: "Learner access",
     title: "Welcome back",
     description: "Use your learner email and password to continue with a browser-backed session on this device.",
-    submitLabel: "Continue to dashboard",
+    submitLabel: "Continue",
   },
   signup: {
     eyebrow: "Learner profile",
     title: "Create your learner session",
-    description: "Create a browser-backed learner session for this device. You can clear it from your profile.",
-    submitLabel: "Create learner session",
+    description: "Add your learner details, then complete your study profile before entering IntellectX.",
+    submitLabel: "Continue to study profile",
   },
   "forgot-password": {
     eyebrow: "Account recovery",
@@ -41,9 +43,20 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [pendingSession, setPendingSession] = useState<LearnerSession | null>(null);
   const content = contentByMode[mode];
   const isSignup = mode === "signup";
   const isForgotPassword = mode === "forgot-password";
+  const isProfileSetup = isSignup && pendingSession;
+
+  useEffect(() => {
+    if (!isSignup) return;
+
+    const existingSession = getLearnerSession();
+    if (existingSession && !isAcademicProfileComplete(loadAcademicProfile())) {
+      setPendingSession(existingSession);
+    }
+  }, [isSignup]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,13 +66,26 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
       return;
     }
 
-    createLearnerSession({
+    const nextSession: LearnerSession = {
       name: isSignup ? name.trim() || "Learner" : email.split("@")[0] || "Learner",
       email: email.trim() || "learner@intellectx.local",
       role: "student",
-    });
+    };
 
-    window.location.assign(isSignup ? "/profile#study-profile" : "/dashboard");
+    if (isSignup) {
+      setPendingSession(nextSession);
+      return;
+    }
+
+    createLearnerSession(nextSession);
+    window.location.assign(isAcademicProfileComplete(loadAcademicProfile()) ? "/courses" : "/signup");
+  }
+
+  function completeSignup() {
+    if (!pendingSession) return;
+
+    createLearnerSession(pendingSession);
+    window.location.assign("/courses");
   }
 
   return (
@@ -77,46 +103,60 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          {isSignup ? (
-            <AuthField
-              label="Name"
-              name="name"
-              placeholder="Your name"
-              autoComplete="name"
-              value={name}
-              onChange={setName}
+        {isProfileSetup ? (
+          <div className="grid gap-5">
+            <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
+              Complete your study profile to unlock courses, quizzes, lessons, dashboard, and progress pages.
+            </div>
+            <StudyProfileCard
+              loadSavedProfile={false}
+              showReset={false}
+              submitLabel="Complete signup"
+              onSaved={completeSignup}
             />
-          ) : null}
-          <AuthField
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="learner@intellectx.local"
-            autoComplete="email"
-            value={email}
-            onChange={setEmail}
-          />
-          {!isForgotPassword ? (
-            <AuthField
-              label="Password"
-              name="password"
-              type="password"
-              placeholder="Anything works here"
-              autoComplete={isSignup ? "new-password" : "current-password"}
-              value={password}
-              onChange={setPassword}
-            />
-          ) : null}
-          <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-            Browser-backed session: learner details stay on this device until logout or browser storage is cleared.
           </div>
-          <Button type="submit" size="lg" className="mt-2 w-full">
-            {content.submitLabel}
-            <ArrowRightIcon className="size-4" />
-          </Button>
-        </form>
-        <AuthFooter mode={mode} />
+        ) : (
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            {isSignup ? (
+              <AuthField
+                label="Name"
+                name="name"
+                placeholder="Your name"
+                autoComplete="name"
+                value={name}
+                onChange={setName}
+              />
+            ) : null}
+            <AuthField
+              label="Email"
+              name="email"
+              type="email"
+              placeholder="learner@intellectx.local"
+              autoComplete="email"
+              value={email}
+              onChange={setEmail}
+            />
+            {!isForgotPassword ? (
+              <AuthField
+                label="Password"
+                name="password"
+                type="password"
+                placeholder="Anything works here"
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                value={password}
+                onChange={setPassword}
+              />
+            ) : null}
+            <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
+              Browser-backed session: learner details stay on this device until logout or browser storage is cleared.
+            </div>
+            <Button type="submit" size="lg" className="mt-2 w-full">
+              {content.submitLabel}
+              <ArrowRightIcon className="size-4" />
+            </Button>
+          </form>
+        )}
+        {!isProfileSetup ? <AuthFooter mode={mode} /> : null}
       </CardContent>
     </Card>
   );

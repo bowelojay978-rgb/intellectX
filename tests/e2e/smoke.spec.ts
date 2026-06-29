@@ -1,5 +1,60 @@
 import { expect, test } from "@playwright/test";
 
+async function seedLearnerAccess(
+  page: import("@playwright/test").Page,
+  options: { selectedCourses?: boolean; subjectsOrModules?: string[] } = {},
+) {
+  await page.addInitScript(({ selectedCourses, subjectsOrModules }) => {
+    window.localStorage.setItem(
+      "intellectx:learner-session",
+      JSON.stringify({
+        name: "Playwright Learner",
+        email: "playwright.learner@intellectx.local",
+        role: "student",
+      }),
+    );
+    window.localStorage.setItem(
+      "intellectx:academic-profile",
+      JSON.stringify({
+        educationLevel: "Senior",
+        curriculumOrInstitution: "Botswana curriculum",
+        gradeOrYear: "Form 5",
+        subjectsOrModules,
+      }),
+    );
+
+    if (selectedCourses) {
+      const selectedAt = Date.now();
+      window.localStorage.setItem(
+        "intellectx:course-selection",
+        JSON.stringify({
+          selectedCourseIds: ["ai-study-systems"],
+          selectedAt,
+          gracePeriodEndsAt: selectedAt + 7 * 24 * 60 * 60 * 1000,
+          lockedAt: null,
+          locked: false,
+        }),
+      );
+    } else {
+      window.localStorage.removeItem("intellectx:course-selection");
+    }
+  }, { subjectsOrModules: ["AI Productivity"], ...options });
+}
+
+async function fillInputWithNativeEvent(page: import("@playwright/test").Page, selector: string, value: string) {
+  await page.locator(selector).evaluate(
+    (element, nextValue) => {
+      const input = element as HTMLInputElement;
+      const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+
+      valueSetter?.call(input, nextValue);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    },
+    value,
+  );
+}
+
+
 const coreRoutes = [
   "/",
   "/courses",
@@ -21,6 +76,16 @@ const legalRoutes = [
 test.describe("core routes", () => {
   for (const route of coreRoutes) {
     test(`${route} loads`, async ({ page }) => {
+      if (
+        route === "/courses" ||
+        route === "/dashboard" ||
+        route === "/progress" ||
+        route === "/quizzes" ||
+        route === "/profile"
+      ) {
+        await seedLearnerAccess(page, { selectedCourses: route !== "/courses" });
+      }
+
       await page.goto(route);
 
       await expect(page.locator("body")).not.toContainText("Application error");
@@ -81,11 +146,10 @@ test("mobile study entry route exposes the limited mobile scope", async ({ page 
 
   await expect(page.getByRole("heading", { name: "Study essentials for the mobile app" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Flashcards" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
-  await expect(page.getByRole("link", { name: "Open notes" })).toHaveAttribute("href", "/mobile-notes");
   await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
+  await expect(page.getByRole("link", { name: "Open notes" })).toHaveCount(0);
 });
 
 test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
@@ -101,11 +165,10 @@ test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
 
 test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await page.goto("/mobile-notes");
-  await expect(page.getByRole("heading", { name: "Notes from lessons" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open lesson notes" }).first()).toHaveAttribute(
-    "href",
-    /\/learn\/.+#lesson-notes/,
-  );
+  await expect(page.getByRole("heading", { name: "Notes are part of each lesson" })).toBeVisible();
+  await expect(page.getByText("Instructor notes, explanations, examples, and video-attached learning material")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Browse lessons" })).toHaveAttribute("href", "/courses");
+  await expect(page.getByRole("link", { name: "Open lesson notes" })).toHaveCount(0);
 
   await page.goto("/mobile-flashcards");
   await expect(page.getByRole("heading", { name: "Flashcards from lesson cards" })).toBeVisible();
@@ -116,38 +179,21 @@ test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Hide answer" })).toBeVisible();
 });
 
-test("lesson notes save, reload, and stay scoped per lesson", async ({ page }) => {
-  const noteBody = `Playwright note ${Date.now()}`;
-  const otherLessonNote = `Other lesson note ${Date.now()}`;
+test("lesson page keeps instructor course content and removes editable student notes", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
+  await page.goto("/learn/prompting-for-learning", { waitUntil: "domcontentloaded" });
 
-  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
-  await page.evaluate(() => window.localStorage.clear());
-  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
-
-  const noteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
-  await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
-  await expect(noteInput).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save" })).toBeEnabled();
-
-  await noteInput.fill(noteBody);
-  await page.getByRole("button", { name: "Save" }).click();
-
-  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
-  await expect(noteInput).toHaveValue(noteBody);
-
-  await page.goto("/learn/memory-systems#lesson-notes", { waitUntil: "domcontentloaded" });
-  const otherNoteInput = page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...");
-  await expect(otherNoteInput).not.toHaveValue(noteBody);
-  await otherNoteInput.fill(otherLessonNote);
-  await page.getByRole("button", { name: "Save" }).click();
-
-  await page.goto("/learn/prompting-for-learning#lesson-notes", { waitUntil: "domcontentloaded" });
-  await expect(noteInput).toHaveValue(noteBody);
+  await expect(page.getByRole("heading", { name: "Prompting for Learning", level: 1 })).toBeVisible();
+  await expect(page.getByText("A strong learning prompt gives the AI a role")).toBeVisible();
+  await expect(page.getByText("Learning loop")).toBeVisible();
+  await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Lesson notes" })).toHaveCount(0);
 });
 
 test("quiz flow reaches final results only after the last question and can restart", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/quizzes");
-  await page.evaluate(() => window.localStorage.clear());
 
   const firstQuizCard = page.locator('a[href="/quiz/ai-study-systems-check"]');
   await expect(firstQuizCard).toBeVisible();
@@ -209,19 +255,27 @@ test("learner session creates, personalizes dashboard and profile, and clears on
   await page.getByLabel("Name").fill(learnerName);
   await page.getByLabel("Email").fill(learnerEmail);
   await page.getByLabel("Password").fill("anything");
-  await page.getByRole("button", { name: /Create learner session/i }).click();
+  await page.getByRole("button", { name: /Continue to study profile/i }).click();
 
-  await expect(page).toHaveURL(/\/profile#study-profile$/);
-  await expect(page.getByRole("heading", { name: learnerName })).toBeVisible();
+  await page.getByRole("button", { name: "AI Productivity" }).click();
+  await page.getByRole("button", { name: "Complete signup" }).click();
+  await expect(page).toHaveURL(/\/courses$/);
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
+    .toContain(learnerEmail);
+
+  await page.getByRole("button", { name: "Select" }).first().click();
+  await page.evaluate(() => window.localStorage.removeItem("intellectx:learner-session"));
 
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
-  await page.getByLabel("Email").fill(learnerEmail);
-  await page.getByLabel("Password").fill("anything");
-  await page.getByRole("button", { name: /Continue to dashboard/i }).click();
+  await fillInputWithNativeEvent(page, 'input[name="email"]', learnerEmail);
+  await fillInputWithNativeEvent(page, 'input[name="password"]', "anything");
+  await expect(page.getByLabel("Email")).toHaveValue(learnerEmail);
+  await expect(page.getByLabel("Password")).toHaveValue("anything");
+  await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { name: /Welcome back, playwright\.learner/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/courses$/);
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session")))
     .toContain(learnerEmail);
@@ -243,17 +297,19 @@ test("learner session creates, personalizes dashboard and profile, and clears on
 });
 
 test("study profile saves and personalizes courses and quizzes", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/profile#study-profile");
 
   await expect(page.getByText("Study profile", { exact: true })).toBeVisible();
-  await page.getByLabel("Academic level").selectOption("Senior Secondary");
-  await page.getByLabel("Curriculum / institution").selectOption("Botswana");
-  await page.getByLabel("Grade / year").selectOption("Form 5");
+  await page.getByLabel("Academic level").selectOption("Senior");
+  await page.getByLabel("Curriculum").selectOption("Botswana curriculum");
+  await page.getByLabel("Grade").selectOption("Form 5");
+  await page.getByRole("button", { name: "AI Productivity" }).click();
   await page.getByRole("button", { name: "Save study profile" }).click();
   await expect(page.getByRole("button", { name: "Saved" })).toBeVisible();
 
   await page.goto("/courses");
-  await expect(page.getByText("Personalized for your study profile")).toBeVisible();
+  await expect(page.getByText("Filtered for Senior / Botswana curriculum / Grade: Form 5 / AI Productivity")).toBeVisible();
   await expect(page.getByText("AI Study Systems").first()).toBeVisible();
 
   await page.goto("/quizzes");
@@ -261,12 +317,8 @@ test("study profile saves and personalizes courses and quizzes", async ({ page }
   await expect(page.getByText("AI Study Systems Check").first()).toBeVisible();
 });
 
-test("study profile no-match fallback keeps catalog usable", async ({ page }) => {
-  await page.goto("/profile#study-profile");
-
-  await page.getByRole("button", { name: "AI Productivity" }).click();
-  await page.getByRole("button", { name: "Biology" }).click();
-  await page.getByRole("button", { name: "Save study profile" }).click();
+test("study profile no-match fallback keeps filtered empty states safe", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true, subjectsOrModules: ["Biology"] });
 
   await page.goto("/courses");
   await expect(page.getByText("No exact course matches yet")).toBeVisible();
@@ -274,8 +326,7 @@ test("study profile no-match fallback keeps catalog usable", async ({ page }) =>
     "href",
     "/profile#study-profile",
   );
-  await expect(page.getByRole("heading", { name: "All available courses" })).toBeVisible();
-  await expect(page.getByText("AI Study Systems").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All available courses" })).toHaveCount(0);
 
   await page.goto("/quizzes");
   await expect(page.getByText("No exact quiz matches yet")).toBeVisible();
@@ -284,6 +335,7 @@ test("study profile no-match fallback keeps catalog usable", async ({ page }) =>
 });
 
 test("progress page renders the subject progress chart without runtime errors", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/progress");
 
   await expect(page.getByRole("heading", { name: "Your learning momentum" })).toBeVisible();
@@ -293,9 +345,10 @@ test("progress page renders the subject progress chart without runtime errors", 
 });
 
 test("progress page shows a safe empty state before local quiz attempts exist", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/progress", { waitUntil: "domcontentloaded" });
-  await page.evaluate(() => window.localStorage.clear());
-  await page.goto("/progress", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.localStorage.removeItem("intellectx:quiz-attempt-history"));
+  await page.reload({ waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Recent quiz attempts")).toBeVisible();
   await expect(page.getByText("No local quiz attempts yet")).toBeVisible();
@@ -311,13 +364,15 @@ test("navbar remains fixed and keeps links as direct navigation items", async ({
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(nav).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Courses" })).toBeVisible();
-  await expect(nav.locator(".rounded-full").filter({ hasText: /Home|Courses|Quizzes|Progress|Dashboard|Pricing|Profile/ })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Features" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
+  await expect(nav.locator(".rounded-full").filter({ hasText: /Features|How it works|Pricing/ })).toHaveCount(0);
 });
 
 test("desktop navbar marks the current section active", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/courses");
-  const nav = page.locator("nav:visible").filter({ has: page.getByRole("link", { name: "Signup" }) });
+  const nav = page.locator("nav:visible").filter({ has: page.getByRole("button", { name: "Logout" }) });
   await expect(nav).toHaveCSS("position", "fixed");
   await expect(nav.getByRole("link", { name: "Courses" })).toHaveAttribute("aria-current", "page");
 
@@ -332,12 +387,13 @@ test("desktop navbar marks the current section active", async ({ page }) => {
 });
 
 test("dashboard exposes study shortcuts without hiding web dashboard content", async ({ page }) => {
+  await seedLearnerAccess(page, { selectedCourses: true });
   await page.goto("/dashboard");
 
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
   await expect(page.getByText("Study shortcuts")).toBeVisible();
   await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
-  await expect(page.locator('a[href="/mobile-notes"]')).toBeVisible();
+  await expect(page.locator('a[href="/mobile-notes"]')).toHaveCount(0);
   await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: "Enrolled courses" })).toBeVisible();
 });
@@ -354,6 +410,10 @@ test.describe("mobile smoke", () => {
 
   for (const { route, text } of mobileRoutes) {
     test(`${route} loads on mobile`, async ({ page }) => {
+      if (route === "/courses" || route === "/quizzes") {
+        await seedLearnerAccess(page, { selectedCourses: route !== "/courses" });
+      }
+
       await page.goto(route);
 
       await expect(page.getByText(text).first()).toBeVisible();
@@ -362,12 +422,14 @@ test.describe("mobile smoke", () => {
     });
   }
 
-  test("lesson page keeps notes and quiz access visible while hiding video on mobile", async ({ page }) => {
+  test("lesson page keeps lesson content and quiz access visible while hiding video on mobile", async ({ page }) => {
+    await seedLearnerAccess(page, { selectedCourses: true });
     await page.goto("/learn/prompting-for-learning");
 
     await expect(page.getByRole("heading", { name: "Prompting for Learning" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Lesson notes" })).toBeVisible();
-    await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toBeVisible();
+    await expect(page.getByText("A strong learning prompt gives the AI a role")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Lesson notes" })).toHaveCount(0);
+    await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toHaveCount(0);
     await expect(page.getByText("Video lesson preview")).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Play lesson" })).not.toBeVisible();
     await expect(page.getByRole("link", { name: /Related quiz/i })).toHaveAttribute(

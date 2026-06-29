@@ -1,51 +1,35 @@
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { lessons } from "@/data/lessons";
-import { ArrowRightIcon, FileTextIcon } from "lucide-react";
+import { BookOpenIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Mobile Notes - IntellectX",
-  description: "Open lesson-attached IntellectX notes from a focused mobile notes hub.",
+  title: "Lesson Notes - IntellectX",
+  description: "Instructor-provided lesson material is available inside each IntellectX lesson.",
 };
 
 export default function MobileNotesPage() {
   return (
     <PageShell>
-      <section className="mb-10 flex flex-col items-center gap-5 text-center">
+      <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
         <Badge variant="secondary" className="uppercase">
-          Lesson notes
+          Lesson material
         </Badge>
-        <h1 className="max-w-3xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
-          Notes from lessons
+        <span className="bg-primary text-primary-foreground grid size-12 place-items-center rounded-full">
+          <BookOpenIcon className="size-5" />
+        </span>
+        <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+          Notes are part of each lesson
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-          A focused mobile hub for opening the note-taking area inside each lesson. Notes stay attached to lessons while
-          the standalone mobile notes experience grows.
+          Instructor notes, explanations, examples, and video-attached learning material now live directly inside the
+          lesson experience.
         </p>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        {lessons.map((lesson) => (
-          <article
-            key={lesson.id}
-            className="animate-widget flex min-h-56 flex-col rounded-lg border border-white/70 bg-white/60 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60"
-          >
-            <span className="bg-primary text-primary-foreground grid size-11 place-items-center rounded-full">
-              <FileTextIcon className="size-5" />
-            </span>
-            <h2 className="mt-5 text-2xl font-semibold tracking-tight">{lesson.title}</h2>
-            <p className="text-muted-foreground mt-3 flex-1 text-sm leading-6">{lesson.summary}</p>
-            <Button className="mt-6 self-start" asChild>
-              <Link href={`/learn/${lesson.id}#lesson-notes`}>
-                Open lesson notes
-                <ArrowRightIcon />
-              </Link>
-            </Button>
-          </article>
-        ))}
+        <Button asChild>
+          <Link href="/courses">Browse lessons</Link>
+        </Button>
       </section>
     </PageShell>
   );

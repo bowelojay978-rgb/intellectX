@@ -1,39 +1,35 @@
 import { FeaturesCarousel } from "@/components/features/features-carousel";
 import { FeaturesTabs } from "@/components/features/features-tabs";
 import { Badge } from "@/components/ui/badge";
-import { BrainCircuitIcon, ChartNoAxesColumnIcon, LibraryIcon, ZapIcon } from "lucide-react";
+import { FileQuestionIcon, FileTextIcon, PlaySquareIcon } from "lucide-react";
+
+export type FeatureVisualType = "notes" | "quizzes" | "videos";
 
 export type Feature = {
   icon: React.ReactNode;
   title: string;
   description: string;
-  image: string;
+  visual: FeatureVisualType;
 };
 
 const features = [
   {
-    icon: <BrainCircuitIcon size={20} />,
-    title: "AI Study Coach",
-    description: "Get guided explanations, sharper prompts, and practice loops tailored to your goals.",
-    image: "/app-image-1.png",
+    icon: <FileTextIcon size={20} />,
+    title: "Instructor Notes",
+    description: "Review structured explanations and worked examples attached to each lesson.",
+    visual: "notes",
   },
   {
-    icon: <ZapIcon size={20} />,
-    title: "Focused Learning Flow",
-    description: "Move from lessons to quizzes to review without losing context or momentum.",
-    image: "/app-image-1.png",
+    icon: <FileQuestionIcon size={20} />,
+    title: "Quiz Practice",
+    description: "Answer focused questions and see feedback while the concept is still fresh.",
+    visual: "quizzes",
   },
   {
-    icon: <LibraryIcon size={20} />,
-    title: "Premium Course Paths",
-    description: "Follow curated tracks across AI productivity, critical thinking, and exam prep.",
-    image: "/app-image-1.png",
-  },
-  {
-    icon: <ChartNoAxesColumnIcon size={20} />,
-    title: "Progress Intelligence",
-    description: "See streaks, quiz scores, recent lessons, and the next best study action.",
-    image: "/app-image-1.png",
+    icon: <PlaySquareIcon size={20} />,
+    title: "Video Lessons",
+    description: "Move through guided video playlists with lesson material kept in context.",
+    visual: "videos",
   },
 ] satisfies Feature[];
 

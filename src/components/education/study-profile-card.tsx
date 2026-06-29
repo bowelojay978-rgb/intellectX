@@ -6,32 +6,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   type AcademicProfile,
   clearAcademicProfile,
-  curriculumOptions,
   educationLevels,
-  gradeOrYearOptions,
+  getAcademicProfileOptions,
+  getDefaultAcademicProfile,
+  isAcademicProfileComplete,
+  normalizeAcademicProfileForLevel,
   loadAcademicProfile,
   saveAcademicProfile,
-  subjectOptions,
 } from "@/lib/academic-profile";
 import { cn } from "@/lib/utils";
 import { GraduationCapIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const defaultProfile: AcademicProfile = {
-  educationLevel: "Senior Secondary",
-  curriculumOrInstitution: "Botswana",
-  gradeOrYear: "Form 5",
-  subjectsOrModules: ["AI Productivity"],
+type StudyProfileCardProps = {
+  onSaved?: (profile: AcademicProfile) => void;
+  submitLabel?: string;
+  showReset?: boolean;
+  loadSavedProfile?: boolean;
 };
 
-export function StudyProfileCard() {
-  const [profile, setProfile] = useState<AcademicProfile>(defaultProfile);
+export function StudyProfileCard({
+  onSaved,
+  submitLabel = "Save study profile",
+  showReset = true,
+  loadSavedProfile = true,
+}: StudyProfileCardProps) {
+  const [profile, setProfile] = useState<AcademicProfile>(getDefaultAcademicProfile);
   const [saved, setSaved] = useState(false);
+  const [attemptedSave, setAttemptedSave] = useState(false);
+  const normalizedProfile = normalizeAcademicProfileForLevel(profile);
+  const profileOptions = getAcademicProfileOptions(normalizedProfile);
+  const canSave = isAcademicProfileComplete(normalizedProfile);
 
   useEffect(() => {
+    if (!loadSavedProfile) return;
+
     const storedProfile = loadAcademicProfile();
-    if (storedProfile) setProfile(storedProfile);
-  }, []);
+    if (storedProfile) setProfile(normalizeAcademicProfileForLevel(storedProfile));
+  }, [loadSavedProfile]);
 
   function toggleSubject(subject: string) {
     setProfile((currentProfile) => {
@@ -47,18 +59,21 @@ export function StudyProfileCard() {
   }
 
   function saveProfile() {
-    saveAcademicProfile({
-      ...profile,
-      subjectsOrModules: profile.subjectsOrModules.length > 0 ? profile.subjectsOrModules : defaultProfile.subjectsOrModules,
-    });
+    setAttemptedSave(true);
+
+    if (!canSave) return;
+
+    saveAcademicProfile(normalizedProfile);
     setSaved(true);
+    onSaved?.(normalizedProfile);
     window.setTimeout(() => setSaved(false), 1800);
   }
 
   function resetProfile() {
     clearAcademicProfile();
-    setProfile(defaultProfile);
+    setProfile(getDefaultAcademicProfile());
     setSaved(false);
+    setAttemptedSave(false);
   }
 
   return (
@@ -76,35 +91,42 @@ export function StudyProfileCard() {
         <div className="grid gap-4 md:grid-cols-3">
           <ProfileSelect
             label="Academic level"
-            value={profile.educationLevel}
+            value={normalizedProfile.educationLevel}
             options={educationLevels}
             onChange={(educationLevel) =>
-              setProfile((currentProfile) => ({
-                ...currentProfile,
-                educationLevel: educationLevel as AcademicProfile["educationLevel"],
-              }))
+              setProfile((currentProfile) =>
+                normalizeAcademicProfileForLevel({
+                  ...currentProfile,
+                  educationLevel: educationLevel as AcademicProfile["educationLevel"],
+                  subjectsOrModules: [],
+                }),
+              )
             }
           />
           <ProfileSelect
-            label="Curriculum / institution"
-            value={profile.curriculumOrInstitution}
-            options={curriculumOptions}
+            label={profileOptions.curriculumLabel}
+            value={normalizedProfile.curriculumOrInstitution}
+            options={profileOptions.curriculumOptions}
             onChange={(curriculumOrInstitution) =>
-              setProfile((currentProfile) => ({ ...currentProfile, curriculumOrInstitution }))
+              setProfile((currentProfile) =>
+                normalizeAcademicProfileForLevel({ ...currentProfile, curriculumOrInstitution }),
+              )
             }
           />
           <ProfileSelect
-            label="Grade / year"
-            value={profile.gradeOrYear}
-            options={gradeOrYearOptions}
-            onChange={(gradeOrYear) => setProfile((currentProfile) => ({ ...currentProfile, gradeOrYear }))}
+            label={profileOptions.gradeLabel}
+            value={normalizedProfile.gradeOrYear}
+            options={profileOptions.gradeOptions}
+            onChange={(gradeOrYear) =>
+              setProfile((currentProfile) => normalizeAcademicProfileForLevel({ ...currentProfile, gradeOrYear }))
+            }
           />
         </div>
         <div>
-          <p className="mb-3 text-sm font-medium">Subjects / modules</p>
+          <p className="mb-3 text-sm font-medium">{profileOptions.subjectLabel}</p>
           <div className="flex flex-wrap gap-2">
-            {subjectOptions.map((subject) => {
-              const selected = profile.subjectsOrModules.includes(subject);
+            {profileOptions.subjectOptions.map((subject) => {
+              const selected = normalizedProfile.subjectsOrModules.includes(subject);
 
               return (
                 <button
@@ -124,14 +146,21 @@ export function StudyProfileCard() {
               );
             })}
           </div>
+          {attemptedSave && !canSave ? (
+            <p className="text-destructive mt-3 text-sm">
+              Complete the required profile fields and choose at least one {profileOptions.subjectLabel.toLowerCase()}.
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button type="button" onClick={saveProfile}>
-            {saved ? "Saved" : "Save study profile"}
+            {saved ? "Saved" : submitLabel}
           </Button>
-          <Button type="button" variant="outline" onClick={resetProfile}>
-            Clear profile
-          </Button>
+          {showReset ? (
+            <Button type="button" variant="outline" onClick={resetProfile}>
+              Clear profile
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>
