@@ -19,6 +19,9 @@ export const convexApi = {
     getLessonNote: makeFunctionReference<"query">("notes:getLessonNote"),
     upsertLessonNote: makeFunctionReference<"mutation">("notes:upsertLessonNote"),
   },
+  aiTutor: {
+    getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
+  },
   seed: {
     seedEducationCatalog: makeFunctionReference<"mutation">("seed:seedEducationCatalog"),
   },

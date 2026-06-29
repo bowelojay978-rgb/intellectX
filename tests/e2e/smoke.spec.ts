@@ -91,6 +91,12 @@ async function expectAppNav(page: import("@playwright/test").Page) {
   }
 }
 
+async function expectNoGenericChat(page: import("@playwright/test").Page) {
+  await expect(page.getByRole("heading", { name: "Chat" })).toHaveCount(0);
+  await expect(page.getByPlaceholder(/ask.*ai|ask.*anything|message/i)).toHaveCount(0);
+  await expect(page.locator("textarea")).toHaveCount(0);
+}
+
 const coreRoutes = [
   "/",
   "/courses",
@@ -264,6 +270,7 @@ test("mobile notes and flashcards entry routes load", async ({ page }) => {
 
   await page.goto("/mobile-flashcards");
   await expect(page.getByRole("heading", { name: "Flashcards from lesson cards" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "AI lesson tutor" })).toHaveCount(0);
   await expect(page.getByText("Tutor, not answer machine")).toBeVisible();
   await expect(page.getByText("Card 1 of")).toBeVisible();
   await expect(page.getByRole("link", { name: "Source lesson" })).toHaveAttribute("href", /\/learn\/.+#lesson-flashcards/);
@@ -278,6 +285,11 @@ test("lesson page keeps instructor course content and removes editable student n
   await expect(page.getByRole("heading", { name: "Prompting for Learning", level: 1 })).toBeVisible();
   await expect(page.getByText("A strong learning prompt gives the AI a role")).toBeVisible();
   await expect(page.getByText("Learning loop")).toBeVisible();
+  await expect(page.getByRole("region", { name: "AI lesson tutor" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Get lesson help" })).toBeVisible();
+  await expectNoGenericChat(page);
+  await page.getByRole("button", { name: "Get lesson help" }).click();
+  await expect(page.getByText("Lesson tutor support for Prompting for Learning is not configured yet.")).toBeVisible();
   await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Lesson notes" })).toHaveCount(0);
@@ -524,6 +536,7 @@ test("dashboard exposes study shortcuts without hiding web dashboard content", a
   await page.goto("/dashboard");
 
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: "AI lesson tutor" })).toHaveCount(0);
   await expect(page.getByText("Study shortcuts")).toBeVisible();
   await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.locator('a[href="/mobile-notes"]')).toHaveCount(0);
@@ -580,6 +593,8 @@ test.describe("mobile smoke", () => {
 
     await expect(page.getByRole("heading", { name: "Prompting for Learning" })).toBeVisible();
     await expect(page.getByText("A strong learning prompt gives the AI a role")).toBeVisible();
+    await expect(page.getByRole("region", { name: "AI lesson tutor" })).toBeVisible();
+    await expectNoGenericChat(page);
     await expect(page.getByRole("heading", { name: "Lesson notes" })).toHaveCount(0);
     await expect(page.getByPlaceholder("Capture key ideas, questions, and next actions while you learn...")).toHaveCount(0);
     await expect(page.getByText("Video lesson preview")).not.toBeVisible();
@@ -616,6 +631,7 @@ test("authenticated nav reaches quizzes and progress without course selection", 
   await page.getByRole("link", { name: "Quizzes" }).click();
   await expect(page).toHaveURL(/\/quizzes$/);
   await expect(page.getByRole("heading", { name: /Practice where learning becomes visible/i })).toBeVisible();
+  await expect(page.getByRole("region", { name: "AI lesson tutor" })).toHaveCount(0);
 
   await page.getByRole("link", { name: "Progress" }).click();
   await expect(page).toHaveURL(/\/progress$/);

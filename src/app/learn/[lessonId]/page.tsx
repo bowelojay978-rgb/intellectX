@@ -1,4 +1,5 @@
 import { elevatedGlassCardClassName } from "@/components/education/glass-card";
+import { AiLessonTutorPanel } from "@/components/education/ai-lesson-tutor-panel";
 import { LessonBlockRenderer } from "@/components/education/lesson-block-renderer";
 import { LessonProgressSync } from "@/components/education/lesson-progress-sync";
 import { PageShell } from "@/components/education/page-shell";
@@ -76,6 +77,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                 {lesson.blocks && <LessonBlockRenderer blocks={lesson.blocks} />}
               </CardContent>
             </Card>
+            <AiLessonTutorPanel lesson={lesson} />
           </div>
         </section>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
