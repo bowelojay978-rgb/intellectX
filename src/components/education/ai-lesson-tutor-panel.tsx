@@ -33,6 +33,33 @@ function getLocalUnavailableResponse(lesson: Lesson): LessonTutorResponse {
   };
 }
 
+function isTutorCheck(value: unknown): value is LessonTutorResponse["checkForUnderstanding"][number] {
+  if (!value || typeof value !== "object") return false;
+
+  const check = value as Partial<LessonTutorResponse["checkForUnderstanding"][number]>;
+  return typeof check.question === "string" && typeof check.expectedAnswer === "string";
+}
+
+function isLessonTutorResponse(value: unknown): value is LessonTutorResponse {
+  if (!value || typeof value !== "object") return false;
+
+  const response = value as Partial<LessonTutorResponse>;
+
+  return (
+    (response.status === "ready" || response.status === "unavailable" || response.status === "error") &&
+    typeof response.lessonId === "string" &&
+    typeof response.summary === "string" &&
+    Array.isArray(response.keyIdeas) &&
+    response.keyIdeas.every((idea) => typeof idea === "string") &&
+    Array.isArray(response.checkForUnderstanding) &&
+    response.checkForUnderstanding.every(isTutorCheck) &&
+    Array.isArray(response.commonMisconceptions) &&
+    response.commonMisconceptions.every((item) => typeof item === "string") &&
+    typeof response.nextStudyStep === "string" &&
+    response.groundedInLesson === true
+  );
+}
+
 function LessonTutorResult({ result }: { result: LessonTutorResponse }) {
   return (
     <div className="space-y-5 text-sm leading-6">
@@ -107,7 +134,7 @@ function ConvexAiLessonTutorPanel({ lesson }: AiLessonTutorPanelProps) {
         lessonSummary: lesson.summary,
         lessonContent: lesson.content,
       });
-      setResult(response as LessonTutorResponse);
+      setResult(isLessonTutorResponse(response) ? response : getLocalUnavailableResponse(lesson));
     } catch {
       setResult(getLocalUnavailableResponse(lesson));
     } finally {

@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as aiTutor from "../aiTutor.js";
+import type * as courseSelections from "../courseSelections.js";
 import type * as courses from "../courses.js";
 import type * as lessons from "../lessons.js";
 import type * as notes from "../notes.js";
@@ -23,6 +25,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  aiTutor: typeof aiTutor;
+  courseSelections: typeof courseSelections;
   courses: typeof courses;
   lessons: typeof lessons;
   notes: typeof notes;

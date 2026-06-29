@@ -1,0 +1,145 @@
+"use client";
+
+import { convexApi } from "@/lib/convex-api";
+import {
+  COURSE_SELECTION_CHANGE_EVENT,
+  type CourseSelection,
+  loadCourseSelection,
+  normalizeCourseSelection,
+  saveCourseSelection,
+} from "@/lib/course-selection";
+import { convexEnv } from "@/lib/education-data";
+import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { useConvex, useMutation } from "convex/react";
+import { useEffect, useRef, useState } from "react";
+
+type StoredCourseSelection = CourseSelection & {
+  userKey?: string;
+};
+
+function courseSelectionsMatch(left: CourseSelection, right: CourseSelection) {
+  return (
+    left.locked === right.locked &&
+    left.selectedAt === right.selectedAt &&
+    left.gracePeriodEndsAt === right.gracePeriodEndsAt &&
+    left.lockedAt === right.lockedAt &&
+    left.selectedCourseIds.length === right.selectedCourseIds.length &&
+    left.selectedCourseIds.every((courseId, index) => courseId === right.selectedCourseIds[index])
+  );
+}
+
+function persistCourseSelectionArgs(userKey: string, selection: CourseSelection) {
+  const normalizedSelection = normalizeCourseSelection(selection);
+
+  return {
+    userKey,
+    selectedCourseIds: normalizedSelection.selectedCourseIds,
+    selectedAt: normalizedSelection.selectedAt,
+    gracePeriodEndsAt: normalizedSelection.gracePeriodEndsAt,
+    lockedAt: normalizedSelection.lockedAt,
+    locked: normalizedSelection.locked,
+  };
+}
+
+export function CourseSelectionSync() {
+  if (!convexEnv.isConfigured) {
+    return null;
+  }
+
+  return <ConvexCourseSelectionSync />;
+}
+
+function ConvexCourseSelectionSync() {
+  const convex = useConvex();
+  const [userKey, setUserKey] = useState<string | null>(null);
+  const upsertCourseSelection = useMutation(convexApi.courseSelections.upsertCourseSelection);
+  const remoteHydrated = useRef(false);
+  const syncingRemoteToLocal = useRef(false);
+
+  useEffect(() => {
+    setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+
+    function syncIdentity() {
+      setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+      remoteHydrated.current = false;
+    }
+
+    window.addEventListener("intellectx:learner-session-change", syncIdentity);
+    window.addEventListener("storage", syncIdentity);
+
+    return () => {
+      window.removeEventListener("intellectx:learner-session-change", syncIdentity);
+      window.removeEventListener("storage", syncIdentity);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userKey) {
+      return;
+    }
+
+    let cancelled = false;
+
+    convex
+      .query(convexApi.courseSelections.getCourseSelection, { userKey })
+      .then((remoteSelection) => {
+        if (cancelled) return;
+
+        if (remoteSelection) {
+          const normalizedRemoteSelection = normalizeCourseSelection(remoteSelection as StoredCourseSelection);
+          const localSelection = loadCourseSelection();
+
+          remoteHydrated.current = true;
+
+          if (!courseSelectionsMatch(normalizedRemoteSelection, localSelection)) {
+            syncingRemoteToLocal.current = true;
+            saveCourseSelection(normalizedRemoteSelection);
+            window.setTimeout(() => {
+              syncingRemoteToLocal.current = false;
+            }, 0);
+          }
+
+          return;
+        }
+
+        remoteHydrated.current = true;
+
+        const localSelection = loadCourseSelection();
+        if (localSelection.selectedCourseIds.length > 0) {
+          upsertCourseSelection(persistCourseSelectionArgs(userKey, localSelection)).catch((error) => {
+            console.warn("Unable to sync local course selection to Convex", error);
+          });
+        }
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        remoteHydrated.current = false;
+        console.warn("Unable to load course selection from Convex", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [convex, upsertCourseSelection, userKey]);
+
+  useEffect(() => {
+    function syncLocalSelectionToConvex() {
+      if (!userKey || !remoteHydrated.current || syncingRemoteToLocal.current) {
+        return;
+      }
+
+      upsertCourseSelection(persistCourseSelectionArgs(userKey, loadCourseSelection())).catch((error) => {
+        console.warn("Unable to sync course selection to Convex", error);
+      });
+    }
+
+    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
+
+    return () => {
+      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
+    };
+  }, [upsertCourseSelection, userKey]);
+
+  return null;
+}

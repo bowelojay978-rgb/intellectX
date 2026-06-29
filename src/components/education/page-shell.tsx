@@ -1,5 +1,6 @@
 "use client";
 
+import { CourseSelectionSync } from "@/components/education/course-selection-sync";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
@@ -54,6 +55,7 @@ export function PageShell({ children }: PageShellProps) {
 
   return (
     <>
+      <CourseSelectionSync />
       <div className="relative isolate z-10 min-h-screen overflow-hidden px-6 pt-32 pb-8 md:px-10 md:pt-36">
         <BackgroundBlur className="-top-40 md:-top-0" />
         <Nav />
@@ -63,4 +65,3 @@ export function PageShell({ children }: PageShellProps) {
     </>
   );
 }
-

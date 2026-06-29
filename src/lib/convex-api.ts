@@ -5,6 +5,10 @@ export const convexApi = {
     listCourses: makeFunctionReference<"query">("courses:listCourses"),
     getCourseBySlug: makeFunctionReference<"query">("courses:getCourseBySlug"),
   },
+  courseSelections: {
+    getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
+    upsertCourseSelection: makeFunctionReference<"mutation">("courseSelections:upsertCourseSelection"),
+  },
   lessons: {
     getLessonsByCourse: makeFunctionReference<"query">("lessons:getLessonsByCourse"),
     getLessonById: makeFunctionReference<"query">("lessons:getLessonById"),

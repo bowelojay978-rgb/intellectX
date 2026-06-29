@@ -91,6 +91,16 @@ export default defineSchema({
     lastStudiedDate: v.string(),
     updatedAt: v.number(),
   }).index("by_user", ["userKey"]),
+  courseSelections: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    selectedCourseIds: v.array(v.string()),
+    selectedAt: v.union(v.number(), v.null()),
+    gracePeriodEndsAt: v.union(v.number(), v.null()),
+    lockedAt: v.union(v.number(), v.null()),
+    locked: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userKey"]),
   notes: defineTable({
     userId: v.optional(v.id("users")),
     userKey: v.string(),
