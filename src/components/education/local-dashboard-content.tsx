@@ -43,18 +43,30 @@ export function LocalDashboardContent() {
       setAverageQuizScore(summary.attemptCount > 0 ? summary.averagePercentage : null);
     }
 
-    syncSelection();
-    syncAttempts();
-    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-    window.addEventListener("storage", syncSelection);
-    window.addEventListener("focus", syncAttempts);
-    window.addEventListener("pageshow", syncAttempts);
+    function syncAll() {
+      syncSelection();
+      syncAttempts();
+    }
+
+    function syncAllWhenVisible() {
+      if (!document.hidden) {
+        syncAll();
+      }
+    }
+
+    syncAll();
+    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+    window.addEventListener("storage", syncAll);
+    window.addEventListener("focus", syncAll);
+    window.addEventListener("pageshow", syncAll);
+    document.addEventListener("visibilitychange", syncAllWhenVisible);
 
     return () => {
-      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-      window.removeEventListener("storage", syncSelection);
-      window.removeEventListener("focus", syncAttempts);
-      window.removeEventListener("pageshow", syncAttempts);
+      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+      window.removeEventListener("storage", syncAll);
+      window.removeEventListener("focus", syncAll);
+      window.removeEventListener("pageshow", syncAll);
+      document.removeEventListener("visibilitychange", syncAllWhenVisible);
     };
   }, []);
 

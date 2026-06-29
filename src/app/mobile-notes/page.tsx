@@ -1,6 +1,4 @@
 import { PageShell } from "@/components/education/page-shell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { BookOpenIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -13,24 +11,30 @@ export const metadata: Metadata = {
 export default function MobileNotesPage() {
   return (
     <PageShell>
-      <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-        <Badge variant="secondary" className="uppercase">
+      <section className="mx-auto max-w-3xl space-y-6">
+        <p className="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">
           Lesson material
-        </Badge>
-        <span className="bg-primary text-primary-foreground grid size-12 place-items-center rounded-full">
-          <BookOpenIcon className="size-5" />
-        </span>
-        <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
-          Notes are part of each lesson
-        </h1>
-        <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-          Instructor notes, explanations, examples, and video-attached learning material now live directly inside the
-          lesson experience.
         </p>
-        <Button asChild>
-          <Link href="/courses">Browse lessons</Link>
-        </Button>
+        <div className="inline-flex size-12 items-center justify-center rounded-full border border-foreground/10 bg-muted text-muted-foreground">
+          <BookOpenIcon className="size-5" />
+        </div>
+        <div className="space-y-4">
+          <h1 className="max-w-2xl text-4xl leading-[1.1] font-medium tracking-tight text-foreground md:text-6xl">
+            Notes are part of each lesson
+          </h1>
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+            Instructor notes, explanations, examples, and video-attached learning material now live directly inside the
+            lesson experience.
+          </p>
+        </div>
+        <Link
+          href="/courses"
+          className="inline-flex rounded-full border border-foreground/15 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          Browse lessons
+        </Link>
       </section>
     </PageShell>
   );
 }
+

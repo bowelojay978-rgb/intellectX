@@ -18,19 +18,38 @@ export function PageShell({ children }: PageShellProps) {
   const [canShowApp, setCanShowApp] = useState(!guarded);
 
   useEffect(() => {
-    if (!guarded) {
+    function enforceAccess() {
+      if (!guarded) {
+        setCanShowApp(true);
+        return;
+      }
+
+      const session = getLearnerSession();
+
+      if (!session) {
+        window.location.replace("/login");
+        return;
+      }
+
       setCanShowApp(true);
-      return;
     }
 
-    const session = getLearnerSession();
-
-    if (!session) {
-      window.location.replace("/login");
-      return;
+    function enforceAccessWhenVisible() {
+      if (!document.hidden) {
+        enforceAccess();
+      }
     }
 
-    setCanShowApp(true);
+    enforceAccess();
+    window.addEventListener("focus", enforceAccess);
+    window.addEventListener("pageshow", enforceAccess);
+    document.addEventListener("visibilitychange", enforceAccessWhenVisible);
+
+    return () => {
+      window.removeEventListener("focus", enforceAccess);
+      window.removeEventListener("pageshow", enforceAccess);
+      document.removeEventListener("visibilitychange", enforceAccessWhenVisible);
+    };
   }, [guarded, pathname]);
 
   return (
@@ -44,3 +63,4 @@ export function PageShell({ children }: PageShellProps) {
     </>
   );
 }
+

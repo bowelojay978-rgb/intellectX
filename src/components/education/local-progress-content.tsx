@@ -24,13 +24,25 @@ export function LocalProgressContent() {
       setSelection(loadCourseSelection());
     }
 
+    function syncSelectionWhenVisible() {
+      if (!document.hidden) {
+        syncSelection();
+      }
+    }
+
     syncSelection();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
     window.addEventListener("storage", syncSelection);
+    window.addEventListener("focus", syncSelection);
+    window.addEventListener("pageshow", syncSelection);
+    document.addEventListener("visibilitychange", syncSelectionWhenVisible);
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
       window.removeEventListener("storage", syncSelection);
+      window.removeEventListener("focus", syncSelection);
+      window.removeEventListener("pageshow", syncSelection);
+      document.removeEventListener("visibilitychange", syncSelectionWhenVisible);
     };
   }, []);
 

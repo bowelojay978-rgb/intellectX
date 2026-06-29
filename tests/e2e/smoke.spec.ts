@@ -1,37 +1,47 @@
 import { expect, test } from "@playwright/test";
 
+
 async function seedLearnerAccess(
   page: import("@playwright/test").Page,
-  options: { subjectsOrModules?: string[]; includeProfile?: boolean } = {},
+  options: { subjectsOrModules?: string[]; includeProfile?: boolean; resetCourseSelection?: boolean } = {},
 ) {
-  const { subjectsOrModules = ["AI Productivity"], includeProfile = true } = options;
+  const {
+    subjectsOrModules = ["AI Productivity"],
+    includeProfile = true,
+    resetCourseSelection = true,
+  } = options;
 
-  await page.addInitScript(({ subjectsOrModules, includeProfile }) => {
-    window.localStorage.setItem(
-      "intellectx:learner-session",
-      JSON.stringify({
-        name: "Playwright Learner",
-        email: "playwright.learner@intellectx.local",
-        role: "student",
-      }),
-    );
-
-    if (includeProfile) {
+  await page.addInitScript(
+    ({ subjectsOrModules, includeProfile, resetCourseSelection }) => {
       window.localStorage.setItem(
-        "intellectx:academic-profile",
+        "intellectx:learner-session",
         JSON.stringify({
-          educationLevel: "Senior",
-          curriculumOrInstitution: "Botswana curriculum",
-          gradeOrYear: "Form 5",
-          subjectsOrModules,
+          name: "Playwright Learner",
+          email: "playwright.learner@intellectx.local",
+          role: "student",
         }),
       );
-    } else {
-      window.localStorage.removeItem("intellectx:academic-profile");
-    }
 
-    window.localStorage.removeItem("intellectx:course-selection");
-  }, { subjectsOrModules, includeProfile });
+      if (includeProfile) {
+        window.localStorage.setItem(
+          "intellectx:academic-profile",
+          JSON.stringify({
+            educationLevel: "Senior",
+            curriculumOrInstitution: "Botswana curriculum",
+            gradeOrYear: "Form 5",
+            subjectsOrModules,
+          }),
+        );
+      } else {
+        window.localStorage.removeItem("intellectx:academic-profile");
+      }
+
+      if (resetCourseSelection) {
+        window.localStorage.removeItem("intellectx:course-selection");
+      }
+    },
+    { subjectsOrModules, includeProfile, resetCourseSelection },
+  );
 }
 
 async function fillInputWithNativeEvent(page: import("@playwright/test").Page, selector: string, value: string) {
@@ -205,6 +215,33 @@ test("authenticated app navigation never falls back to signed-out nav links", as
     await nav.getByRole("link", { name: linkName, exact: true }).click();
     await expectAppNav(page);
   }
+});
+
+test("native app restores logged-in learners from home to courses", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "intellectx:learner-session",
+      JSON.stringify({
+        name: "Native Learner",
+        email: "native.learner@intellectx.local",
+        role: "student",
+      }),
+    );
+
+    (window as Window & {
+      Capacitor?: {
+        isNativePlatform: () => boolean;
+        getPlatform: () => string;
+      };
+    }).Capacitor = {
+      isNativePlatform: () => true,
+      getPlatform: () => "android",
+    };
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/courses$/);
+  await expectAppNav(page);
 });
 
 test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
@@ -585,16 +622,54 @@ test("authenticated nav reaches quizzes and progress without course selection", 
   await expect(page.getByRole("heading", { name: "Your learning momentum" })).toBeVisible();
 });
 
-test("courses page hides course-selection controls", async ({ page }) => {
-  await seedLearnerAccess(page);
+
+test("courses page keeps course selection in filters, not under course cards", async ({ page }) => {
+  await seedLearnerAccess(page, { resetCourseSelection: false });
 
   await page.goto("/courses");
+  const filters = page.getByRole("region", { name: "Course filters" });
+
   await expect(page.getByText("Choose up to 5 courses.")).toBeVisible();
   await expect(page.getByText("7-day grace period")).toBeVisible();
+  await expect(filters).toBeVisible();
+  await expect(filters.getByText(/0 \/ \d selected/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Select" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Remove" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Locked" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Add to plan" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add to plan" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "In your plan" })).toHaveCount(0);
+
+  await filters.getByRole("button").first().click();
+  await expect(filters.getByText(/1 \/ \d selected/)).toBeVisible();
+});
+
+test("selected courses appear on progress after choosing from course filters", async ({ page }) => {
+  await seedLearnerAccess(page, { resetCourseSelection: false });
+
+  await page.goto("/courses");
+  const filters = page.getByRole("region", { name: "Course filters" });
+  const firstCourseFilter = filters.getByRole("button").first();
+  const selectedCourseName = (await firstCourseFilter.textContent())?.trim();
+
+  if (!selectedCourseName) {
+    throw new Error("Expected a selectable course filter.");
+  }
+
+  await firstCourseFilter.click();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const storedSelection = window.localStorage.getItem("intellectx:course-selection");
+        return storedSelection ? JSON.parse(storedSelection).selectedCourseIds.length : 0;
+      }),
+    )
+    .toBe(1);
+
+  await page.goto("/progress", { waitUntil: "domcontentloaded" });
+
+  await expect(page.getByText("Selected courses").first()).toBeVisible();
+  await expect(page.getByText(selectedCourseName).first()).toBeVisible();
+  await expect(page.getByText("No selected courses yet")).toHaveCount(0);
 });
 
 test("completing a quiz updates history and quizzes page reflects the attempt", async ({ page }) => {

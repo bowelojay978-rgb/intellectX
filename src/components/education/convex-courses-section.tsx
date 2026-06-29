@@ -21,7 +21,7 @@ import {
   toggleSelectedCourse,
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
-import { BookOpenIcon, CheckCircle2Icon, GraduationCapIcon, InfoIcon, PlusCircleIcon } from "lucide-react";
+import { BookOpenIcon, GraduationCapIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -68,13 +68,25 @@ function useCourseSelection() {
       setSelection(loadCourseSelection());
     }
 
+    function syncSelectionWhenVisible() {
+      if (!document.hidden) {
+        syncSelection();
+      }
+    }
+
     syncSelection();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
     window.addEventListener("storage", syncSelection);
+    window.addEventListener("focus", syncSelection);
+    window.addEventListener("pageshow", syncSelection);
+    document.addEventListener("visibilitychange", syncSelectionWhenVisible);
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
       window.removeEventListener("storage", syncSelection);
+      window.removeEventListener("focus", syncSelection);
+      window.removeEventListener("pageshow", syncSelection);
+      document.removeEventListener("visibilitychange", syncSelectionWhenVisible);
     };
   }, []);
 
@@ -87,19 +99,56 @@ function useCourseSelection() {
   return { selection, error, toggleCourse };
 }
 
-function CourseSelectionNote({ selectedCount, selectableCount }: { selectedCount: number; selectableCount: number }) {
-  const targetCount = Math.min(COURSE_SELECTION_LIMIT, selectableCount);
+function CourseSelectionFilters({
+  courses,
+  selectedCourseIds,
+  locked,
+  error,
+  onToggle,
+}: {
+  courses: Course[];
+  selectedCourseIds: string[];
+  locked: boolean;
+  error: string | null;
+  onToggle: (courseId: string) => void;
+}) {
+  const targetCount = Math.min(COURSE_SELECTION_LIMIT, courses.length);
 
   return (
-    <section className="border-border/70 bg-background/70 mb-5 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm text-muted-foreground backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-      <p className="inline-flex items-start gap-2 leading-6">
-        <InfoIcon className="mt-0.5 size-4 shrink-0" />
-        Choose up to {COURSE_SELECTION_LIMIT} courses. You have a {COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace period
-        to adjust them, then your selection locks.
-      </p>
-      <p className="font-medium text-foreground">
-        {selectedCount} / {targetCount} selected
-      </p>
+    <section
+      aria-label="Course filters"
+      className="border-border/70 bg-background/70 mb-5 rounded-lg border px-4 py-3 text-sm text-muted-foreground backdrop-blur"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <p className="inline-flex items-start gap-2 leading-6">
+          <InfoIcon className="mt-0.5 size-4 shrink-0" />
+          Choose up to {COURSE_SELECTION_LIMIT} courses. You have a {COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace
+          period to adjust them, then your selection locks.
+        </p>
+        <p className="shrink-0 font-medium text-foreground">
+          {selectedCourseIds.length} / {targetCount} selected
+        </p>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {courses.map((course) => {
+          const selected = selectedCourseIds.includes(course.id);
+
+          return (
+            <Button
+              key={course.id}
+              type="button"
+              variant={selected ? "secondary" : "outline"}
+              size="sm"
+              disabled={locked}
+              aria-pressed={selected}
+              onClick={() => onToggle(course.id)}
+            >
+              {course.title}
+            </Button>
+          );
+        })}
+      </div>
+      {error ? <p className="text-destructive mt-3 text-sm">{error}</p> : null}
     </section>
   );
 }
@@ -111,29 +160,17 @@ function CourseGrid({ courses }: { courses: Course[] }) {
 
   return (
     <>
-      <CourseSelectionNote selectedCount={selectedCourseIds.length} selectableCount={courses.length} />
-      {error ? <p className="text-destructive mb-4 text-sm">{error}</p> : null}
+      <CourseSelectionFilters
+        courses={courses}
+        selectedCourseIds={selectedCourseIds}
+        locked={locked}
+        error={error}
+        onToggle={toggleCourse}
+      />
       <section className="grid gap-5 md:grid-cols-3">
-        {courses.map((course) => {
-          const selected = selectedCourseIds.includes(course.id);
-
-          return (
-            <article key={course.id} className="grid gap-3">
-              <CourseCard course={course} showProgress={false} />
-              <Button
-                type="button"
-                variant={selected ? "outline" : "secondary"}
-                size="sm"
-                disabled={locked}
-                onClick={() => toggleCourse(course.id)}
-                className="justify-self-start"
-              >
-                {selected ? <CheckCircle2Icon className="size-4" /> : <PlusCircleIcon className="size-4" />}
-                {selected ? "In your plan" : "Add to plan"}
-              </Button>
-            </article>
-          );
-        })}
+        {courses.map((course) => (
+          <CourseCard key={course.id} course={course} showProgress={false} />
+        ))}
       </section>
     </>
   );
