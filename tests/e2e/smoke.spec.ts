@@ -109,6 +109,7 @@ const coreRoutes = [
   "/mobile-notes",
   "/mobile-flashcards",
 ];
+const globalLoadingCompletionRoutes = ["/", "/courses", "/dashboard", "/learn/prompting-for-learning"];
 const legalRoutes = [
   { route: "/privacy-policy", heading: "Privacy Policy" },
   { route: "/terms-and-conditions", heading: "Terms and Conditions" },
@@ -223,6 +224,52 @@ test("authenticated app navigation never falls back to signed-out nav links", as
   }
 });
 
+test.describe("global loading indicator", () => {
+  for (const route of globalLoadingCompletionRoutes) {
+    test(`${route} does not leave the app loading spinner stuck`, async ({ page }) => {
+      if (route !== "/") {
+        await seedLearnerAccess(page);
+      }
+
+      await page.goto(route);
+
+      await expect(page.locator("body")).not.toContainText("Application error");
+      await expect(page.getByTestId("app-loading-spinner")).toHaveCount(0);
+    });
+  }
+
+  test("appears immediately for internal navigation clicks", async ({ page }) => {
+    await seedLearnerAccess(page);
+    await page.goto("/courses", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("app-loading-spinner")).toHaveCount(0);
+
+    await page.evaluate(() => {
+      const link = document.createElement("a");
+      link.href = "/dashboard";
+      link.textContent = "Test dashboard navigation";
+      link.dataset.testid = "test-dashboard-navigation";
+      link.addEventListener("click", (event) => event.preventDefault());
+      document.body.append(link);
+    });
+
+    await page.getByTestId("test-dashboard-navigation").click();
+    await expect(page.getByTestId("app-loading-spinner")).toBeVisible();
+
+    await page.goto("/courses", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("app-loading-spinner")).toHaveCount(0);
+  });
+
+  test("does not appear for hash-only homepage anchor clicks", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("app-loading-spinner")).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Features", exact: true }).first().click();
+
+    await expect(page).toHaveURL(/\/#features$/);
+    await expect(page.getByTestId("app-loading-spinner")).toHaveCount(0);
+  });
+});
+
 test("native app restores logged-in learners from home to courses", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
@@ -287,6 +334,10 @@ test("lesson page keeps instructor course content and removes editable student n
   await expect(page.getByText("Learning loop")).toBeVisible();
   await expect(page.getByRole("region", { name: "AI lesson tutor" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Get lesson help" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Related quiz/i })).toHaveAttribute(
+    "href",
+    "/quiz/ai-study-systems-check",
+  );
   await expectNoGenericChat(page);
   await page.getByRole("button", { name: "Get lesson help" }).click();
   await expect(page.getByText("Lesson tutor support for Prompting for Learning is not configured yet.")).toBeVisible();

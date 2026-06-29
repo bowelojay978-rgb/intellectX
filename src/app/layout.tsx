@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
+import { GlobalNavigationLoader } from "@/components/ui/global-navigation-loader";
+import { Suspense } from "react";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,6 +44,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
+        <Suspense fallback={null}>
+          <GlobalNavigationLoader />
+        </Suspense>
         <Toaster />
       </body>
     </html>

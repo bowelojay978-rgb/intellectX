@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/education/page-shell";
 import { glassCardClassName } from "@/components/education/glass-card";
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type PageLoadingStateProps = {
@@ -10,6 +11,7 @@ export function PageLoadingState({ cards = 3 }: PageLoadingStateProps) {
   return (
     <PageShell>
       <section className="mb-10 flex flex-col items-center gap-5 text-center">
+        <AppLoadingSpinner />
         <Skeleton className="h-6 w-24 rounded-full" />
         <Skeleton className="h-12 w-full max-w-2xl md:h-16" />
         <Skeleton className="h-5 w-full max-w-xl" />
