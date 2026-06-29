@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Quiz } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
+import { getCurrentLearnerIdentity } from "@/lib/learner-session";
 import { convexEnv } from "@/lib/education-data";
 import { saveQuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { cn } from "@/lib/utils";
@@ -61,17 +62,23 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
   return (
     <QuizPlayerCore
       quiz={quiz}
-      onComplete={(answers, score) =>
+      onComplete={(answers, score) => {
+        const identity = getCurrentLearnerIdentity();
+
+        if (!identity) {
+          return;
+        }
+
         saveAttempt({
-          userKey: "local-learner",
+          userKey: identity.userKey,
           quizId: quiz.id,
           score,
           totalQuestions: quiz.questions.length,
           answers,
         }).catch((error) => {
           console.warn("Unable to sync quiz attempt to Convex", error);
-        })
-      }
+        });
+      }}
     />
   );
 }
@@ -300,3 +307,4 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
     </Card>
   );
 }
+

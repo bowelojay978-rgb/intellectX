@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 export const LEARNER_SESSION_KEY = "intellectx:learner-session";
 const LEGACY_LEARNER_SESSION_KEY = "intellectx-demo-session";
-const LEARNER_SESSION_CHANGE_EVENT = "intellectx:learner-session-change";
+export const LEARNER_SESSION_CHANGE_EVENT = "intellectx:learner-session-change";
 
 export type LearnerSession = {
   name: string;
@@ -10,16 +10,55 @@ export type LearnerSession = {
   role: "student";
 };
 
+export type LearnerIdentity = LearnerSession & {
+  userKey: string;
+  source: "local-session";
+};
+
+function normalizeLearnerEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function getLearnerUserKey(session: LearnerSession) {
+  return `learner:${normalizeLearnerEmail(session.email)}`;
+}
+
 function normalizeLearnerSession(session: Partial<LearnerSession>): LearnerSession | null {
   if (!session.email) {
     return null;
   }
 
+  const email = normalizeLearnerEmail(session.email);
+
   return {
-    name: session.name || session.email.split("@")[0] || "Learner",
-    email: session.email,
+    name: session.name || email.split("@")[0] || "Learner",
+    email,
     role: "student",
   };
+}
+
+export function getCurrentLearnerIdentity(): LearnerIdentity | null {
+  const session = getLearnerSession();
+
+  if (!session) {
+    return null;
+  }
+
+  return {
+    ...session,
+    userKey: getLearnerUserKey(session),
+    source: "local-session",
+  };
+}
+
+export function requireCurrentLearnerIdentity(): LearnerIdentity {
+  const identity = getCurrentLearnerIdentity();
+
+  if (!identity) {
+    throw new Error("Learner session is required.");
+  }
+
+  return identity;
 }
 
 function migrateLegacyLearnerSession(storedSession: string | null) {
@@ -33,7 +72,13 @@ function migrateLegacyLearnerSession(storedSession: string | null) {
 }
 
 export function createLearnerSession(session: LearnerSession) {
-  window.localStorage.setItem(LEARNER_SESSION_KEY, JSON.stringify(session));
+  const normalizedSession = normalizeLearnerSession(session);
+
+  if (!normalizedSession) {
+    return;
+  }
+
+  window.localStorage.setItem(LEARNER_SESSION_KEY, JSON.stringify(normalizedSession));
   window.localStorage.removeItem(LEGACY_LEARNER_SESSION_KEY);
   window.dispatchEvent(new Event(LEARNER_SESSION_CHANGE_EVENT));
 }
