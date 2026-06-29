@@ -4,6 +4,7 @@ import { clickableGlassCardClassName, glassCardClassName } from "@/components/ed
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { quizzes } from "@/data/quizzes";
 import {
+  QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
   readQuizAttemptHistory,
   summarizeQuizAttemptHistory,
   type QuizAttemptHistorySummary,
@@ -20,7 +21,18 @@ export function LocalQuizPerformance() {
   const [summary, setSummary] = useState<QuizAttemptHistorySummary>(emptySummary);
 
   useEffect(() => {
-    setSummary(summarizeQuizAttemptHistory(readQuizAttemptHistory()));
+    function syncSummary() {
+      setSummary(summarizeQuizAttemptHistory(readQuizAttemptHistory()));
+    }
+
+    syncSummary();
+    window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncSummary);
+    window.addEventListener("storage", syncSummary);
+
+    return () => {
+      window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncSummary);
+      window.removeEventListener("storage", syncSummary);
+    };
   }, []);
 
   return (
@@ -61,4 +73,5 @@ export function LocalQuizPerformance() {
     </Card>
   );
 }
+
 

@@ -78,6 +78,8 @@ export default defineSchema({
     score: v.number(),
     totalQuestions: v.number(),
     answers: v.array(v.number()),
+    quizTitle: v.optional(v.string()),
+    percentage: v.optional(v.number()),
     completedAt: v.number(),
   })
     .index("by_user", ["userKey"])
@@ -120,4 +122,5 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["userKey"]),
 });
+
 

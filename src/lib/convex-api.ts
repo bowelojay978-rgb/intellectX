@@ -22,6 +22,7 @@ export const convexApi = {
   quizzes: {
     listQuizzes: makeFunctionReference<"query">("quizzes:listQuizzes"),
     getQuizById: makeFunctionReference<"query">("quizzes:getQuizById"),
+    getQuizAttempts: makeFunctionReference<"query">("quizzes:getQuizAttempts"),
     submitQuizAttempt: makeFunctionReference<"mutation">("quizzes:submitQuizAttempt"),
   },
   notes: {
@@ -35,4 +36,5 @@ export const convexApi = {
     seedEducationCatalog: makeFunctionReference<"mutation">("seed:seedEducationCatalog"),
   },
 };
+
 

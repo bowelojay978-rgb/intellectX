@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
   readQuizAttemptHistory,
   summarizeQuizAttemptHistory,
   type QuizAttemptHistorySummary,
@@ -17,7 +18,18 @@ export function LocalQuizAverageStat() {
   const [summary, setSummary] = useState<QuizAttemptHistorySummary>(emptySummary);
 
   useEffect(() => {
-    setSummary(summarizeQuizAttemptHistory(readQuizAttemptHistory()));
+    function syncSummary() {
+      setSummary(summarizeQuizAttemptHistory(readQuizAttemptHistory()));
+    }
+
+    syncSummary();
+    window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncSummary);
+    window.addEventListener("storage", syncSummary);
+
+    return () => {
+      window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncSummary);
+      window.removeEventListener("storage", syncSummary);
+    };
   }, []);
 
   if (summary.attemptCount === 0) {
@@ -38,4 +50,5 @@ export function LocalQuizAverageStat() {
     </>
   );
 }
+
 

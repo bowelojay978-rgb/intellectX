@@ -11,13 +11,15 @@ async function seedLearnerAccess(
     resetCourseSelection = true,
   } = options;
 
+  const learnerEmail = `playwright.learner.${Date.now()}.${Math.random().toString(36).slice(2)}@intellectx.local`;
+
   await page.addInitScript(
-    ({ subjectsOrModules, includeProfile, resetCourseSelection }) => {
+    ({ subjectsOrModules, includeProfile, resetCourseSelection, learnerEmail }) => {
       window.localStorage.setItem(
         "intellectx:learner-session",
         JSON.stringify({
           name: "Playwright Learner",
-          email: "playwright.learner@intellectx.local",
+          email: learnerEmail,
           role: "student",
         }),
       );
@@ -40,7 +42,7 @@ async function seedLearnerAccess(
         window.localStorage.removeItem("intellectx:course-selection");
       }
     },
-    { subjectsOrModules, includeProfile, resetCourseSelection },
+    { subjectsOrModules, includeProfile, resetCourseSelection, learnerEmail },
   );
 }
 
@@ -777,6 +779,8 @@ test("profile is guarded when no learner session exists", async ({ page }) => {
   await page.goto("/profile");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+
 
 
 

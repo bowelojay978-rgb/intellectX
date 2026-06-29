@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { ProgressBar } from "@/components/education/progress-bar";
@@ -8,7 +8,7 @@ import type { Quiz } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentLearnerIdentity } from "@/lib/learner-session";
 import { convexEnv } from "@/lib/education-data";
-import { saveQuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
+import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { CheckCircle2Icon, CircleIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
@@ -62,7 +62,7 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
   return (
     <QuizPlayerCore
       quiz={quiz}
-      onComplete={(answers, score) => {
+      onComplete={(answers, score, attempt) => {
         const identity = getCurrentLearnerIdentity();
 
         if (!identity) {
@@ -75,6 +75,9 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
           score,
           totalQuestions: quiz.questions.length,
           answers,
+          quizTitle: attempt.quizTitle,
+          percentage: attempt.percentage,
+          completedAt: new Date(attempt.completedAt).getTime(),
         }).catch((error) => {
           console.warn("Unable to sync quiz attempt to Convex", error);
         });
@@ -84,7 +87,7 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
 }
 
 type QuizPlayerCoreProps = QuizPlayerProps & {
-  onComplete?: (answers: number[], score: number) => void;
+  onComplete?: (answers: number[], score: number, attempt: QuizAttemptHistoryItem) => void;
 };
 
 function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
@@ -110,13 +113,13 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
         0,
       );
 
-      saveQuizAttemptHistoryItem({
+      const attempt = saveQuizAttemptHistoryItem({
         quizId: quiz.id,
         quizTitle: quiz.title,
         score: finalScore,
         totalQuestions: quiz.questions.length,
       });
-      onComplete?.(finalAnswers, finalScore);
+      onComplete?.(finalAnswers, finalScore, attempt);
       setResults({ answers: finalAnswers, score: finalScore, timedOut });
     },
     [onComplete, quiz.id, quiz.questions, quiz.title, results],
@@ -307,4 +310,5 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
     </Card>
   );
 }
+
 

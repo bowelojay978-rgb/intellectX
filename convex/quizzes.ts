@@ -42,11 +42,26 @@ export const submitQuizAttempt = mutationGeneric({
     score: v.number(),
     totalQuestions: v.number(),
     answers: v.array(v.number()),
+    quizTitle: v.optional(v.string()),
+    percentage: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("quizAttempts", {
       ...args,
-      completedAt: Date.now(),
+      completedAt: args.completedAt ?? Date.now(),
     });
+  },
+});
+
+export const getQuizAttempts = queryGeneric({
+  args: { userKey: v.string() },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("quizAttempts")
+      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .collect();
+
+    return attempts.sort((left, right) => right.completedAt - left.completedAt).slice(0, 20);
   },
 });

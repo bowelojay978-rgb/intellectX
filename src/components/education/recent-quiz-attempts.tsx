@@ -3,7 +3,11 @@
 import { glassCardClassName } from "@/components/education/glass-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { readQuizAttemptHistory, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
+import {
+  QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
+  readQuizAttemptHistory,
+  type QuizAttemptHistoryItem,
+} from "@/lib/quiz-attempt-history";
 import { TrophyIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -19,7 +23,18 @@ export function RecentQuizAttempts() {
   const [attempts, setAttempts] = useState<QuizAttemptHistoryItem[]>([]);
 
   useEffect(() => {
-    setAttempts(readQuizAttemptHistory().slice(0, 3));
+    function syncAttempts() {
+      setAttempts(readQuizAttemptHistory().slice(0, 3));
+    }
+
+    syncAttempts();
+    window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAttempts);
+    window.addEventListener("storage", syncAttempts);
+
+    return () => {
+      window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAttempts);
+      window.removeEventListener("storage", syncAttempts);
+    };
   }, []);
 
   return (
@@ -58,4 +73,5 @@ export function RecentQuizAttempts() {
     </Card>
   );
 }
+
 

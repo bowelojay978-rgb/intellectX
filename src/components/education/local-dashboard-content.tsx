@@ -14,7 +14,11 @@ import {
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
-import { readQuizAttemptHistory, summarizeQuizAttemptHistory } from "@/lib/quiz-attempt-history";
+import {
+  QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
+  readQuizAttemptHistory,
+  summarizeQuizAttemptHistory,
+} from "@/lib/quiz-attempt-history";
 import {
   BookOpenCheckIcon,
   BookOpenIcon,
@@ -56,6 +60,7 @@ export function LocalDashboardContent() {
 
     syncAll();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+    window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
     window.addEventListener("storage", syncAll);
     window.addEventListener("focus", syncAll);
     window.addEventListener("pageshow", syncAll);
@@ -63,6 +68,7 @@ export function LocalDashboardContent() {
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+      window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
       window.removeEventListener("storage", syncAll);
       window.removeEventListener("focus", syncAll);
       window.removeEventListener("pageshow", syncAll);
@@ -183,3 +189,4 @@ export function LocalDashboardContent() {
     </>
   );
 }
+
