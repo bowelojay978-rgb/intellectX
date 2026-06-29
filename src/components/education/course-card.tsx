@@ -5,19 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
-import { BookOpenIcon, ClockIcon, FileQuestionIcon, LockIcon } from "lucide-react";
+import { BookOpenIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import Link from "next/link";
 
 type CourseCardProps = {
   course: Course;
-  selectionState?: "selected" | "available" | "locked" | "selectedLocked";
-  onToggleSelection?: () => void;
 };
 
-export function CourseCard({ course, selectionState, onToggleSelection }: CourseCardProps) {
+export function CourseCard({ course }: CourseCardProps) {
   const subjectMark = getSubjectMark(course.subject);
-  const selected = selectionState === "selected" || selectionState === "selectedLocked";
-  const locked = selectionState === "locked" || selectionState === "selectedLocked";
 
   return (
     <Card className={`animate-widget overflow-hidden rounded-lg ${elevatedGlassCardClassName} ${clickableGlassCardClassName}`}>
@@ -29,13 +25,6 @@ export function CourseCard({ course, selectionState, onToggleSelection }: Course
       <CardHeader>
         <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">
           <Badge variant="secondary">{course.level}</Badge>
-          {selected ? <Badge variant="outline">Selected</Badge> : null}
-          {locked ? (
-            <Badge variant="outline" className="gap-1">
-              <LockIcon className="size-3" />
-              Locked
-            </Badge>
-          ) : null}
           <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
             <ClockIcon className="size-4" />
             {course.duration}
@@ -60,15 +49,10 @@ export function CourseCard({ course, selectionState, onToggleSelection }: Course
           <ProgressBar value={course.progress} />
         </div>
       </CardContent>
-      <CardFooter className="gap-2">
-        <Button className="flex-1" asChild>
+      <CardFooter>
+        <Button className="w-full" asChild>
           <Link href={`/courses/${course.id}`}>View course</Link>
         </Button>
-        {onToggleSelection ? (
-          <Button type="button" variant="outline" onClick={onToggleSelection} disabled={locked}>
-            {locked ? "Locked" : selected ? "Remove" : "Select"}
-          </Button>
-        ) : null}
       </CardFooter>
     </Card>
   );

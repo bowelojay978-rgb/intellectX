@@ -3,8 +3,6 @@
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
-import { isAcademicProfileComplete, loadAcademicProfile } from "@/lib/academic-profile";
-import { hasSelectedCourses, loadCourseSelection } from "@/lib/course-selection";
 import { getLearnerSession } from "@/lib/learner-session";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,6 +14,7 @@ type PageShellProps = {
 function isGuardedAppPath(pathname: string) {
   return (
     pathname === "/dashboard" ||
+    pathname === "/profile" ||
     pathname === "/courses" ||
     pathname.startsWith("/courses/") ||
     pathname === "/quizzes" ||
@@ -23,10 +22,6 @@ function isGuardedAppPath(pathname: string) {
     pathname.startsWith("/learn/") ||
     pathname.startsWith("/quiz/")
   );
-}
-
-function isCourseSelectionPath(pathname: string) {
-  return pathname === "/courses";
 }
 
 export function PageShell({ children }: PageShellProps) {
@@ -44,16 +39,6 @@ export function PageShell({ children }: PageShellProps) {
 
     if (!session) {
       window.location.replace("/login");
-      return;
-    }
-
-    if (!isAcademicProfileComplete(loadAcademicProfile())) {
-      window.location.replace("/signup");
-      return;
-    }
-
-    if (!isCourseSelectionPath(pathname) && !hasSelectedCourses(loadCourseSelection())) {
-      window.location.replace("/courses");
       return;
     }
 

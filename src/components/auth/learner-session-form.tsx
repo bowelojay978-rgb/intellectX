@@ -78,7 +78,7 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
     }
 
     createLearnerSession(nextSession);
-    window.location.assign(isAcademicProfileComplete(loadAcademicProfile()) ? "/courses" : "/signup");
+    window.location.assign("/courses");
   }
 
   function completeSignup() {

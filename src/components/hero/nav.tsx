@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { MobileNav } from "@/components/hero/mobile-nav";
 import { DesktopNav } from "@/components/hero/desktop-nav";
 import { getLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const publicNavItems = [
@@ -43,8 +44,24 @@ const authenticatedNavItems = [
   },
 ];
 
+function isAuthenticatedAppPath(pathname: string) {
+  return (
+    pathname === "/dashboard" ||
+    pathname === "/profile" ||
+    pathname === "/courses" ||
+    pathname.startsWith("/courses/") ||
+    pathname === "/quizzes" ||
+    pathname === "/progress" ||
+    pathname.startsWith("/learn/") ||
+    pathname.startsWith("/quiz/")
+  );
+}
+
+type SessionState = LearnerSession | null | undefined;
+
 export function Nav() {
-  const [session, setSession] = useState<LearnerSession | null>(null);
+  const pathname = usePathname();
+  const [session, setSession] = useState<SessionState>(undefined);
 
   useEffect(() => {
     function syncSession() {
@@ -61,8 +78,10 @@ export function Nav() {
     };
   }, []);
 
-  const navItems = session ? authenticatedNavItems : publicNavItems;
-  const logoHref = session ? "/courses" : "/";
+  const isAppRoute = isAuthenticatedAppPath(pathname);
+  const showAuthenticatedNav = isAppRoute || Boolean(session);
+  const navItems = showAuthenticatedNav ? authenticatedNavItems : publicNavItems;
+  const logoHref = showAuthenticatedNav ? "/courses" : "/";
 
   return (
     <>

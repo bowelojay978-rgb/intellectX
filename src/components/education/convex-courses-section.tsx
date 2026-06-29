@@ -3,7 +3,6 @@
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/data/courses";
 import {
@@ -12,18 +11,9 @@ import {
   formatAcademicProfile,
   loadAcademicProfile,
 } from "@/lib/academic-profile";
-import {
-  COURSE_SELECTION_GRACE_PERIOD_DAYS,
-  COURSE_SELECTION_LIMIT,
-  type CourseSelection,
-  COURSE_SELECTION_CHANGE_EVENT,
-  getEmptyCourseSelection,
-  loadCourseSelection,
-  toggleSelectedCourse,
-} from "@/lib/course-selection";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import { BookOpenIcon, GraduationCapIcon, LockIcon } from "lucide-react";
+import { BookOpenIcon, GraduationCapIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -61,54 +51,14 @@ function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Cours
   };
 }
 
-function formatSelectionDate(timestamp: number | null) {
-  if (!timestamp) return "Not started";
-
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(timestamp));
-}
-
-function CompactCourseSelectionStatus({ selection, error }: { selection: CourseSelection; error: string | null }) {
-  return (
-    <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-      <div className="text-muted-foreground flex flex-wrap items-center gap-2">
-        <Badge variant="outline">
-          {selection.selectedCourseIds.length} / {COURSE_SELECTION_LIMIT} selected
-        </Badge>
-        <Badge variant={selection.locked ? "secondary" : "outline"} className="gap-2">
-          {selection.locked ? <LockIcon className="size-3" /> : null}
-          {selection.locked ? "Locked" : `${COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace period`}
-        </Badge>
-        <span>Ends {formatSelectionDate(selection.gracePeriodEndsAt)}. Resets require support later.</span>
-      </div>
-      {error ? <p className="text-destructive">{error}</p> : null}
-    </div>
-  );
-}
-
-function CourseGrid({
-  courses,
-  selection,
-  onToggleCourse,
-}: {
-  courses: Course[];
-  selection: CourseSelection;
-  onToggleCourse: (courseId: string) => void;
-}) {
+function CourseGrid({ courses }: { courses: Course[] }) {
   return (
     <section className="grid gap-5 md:grid-cols-3">
-      {courses.map((course) => {
-        const selected = selection.selectedCourseIds.includes(course.id);
-
-        return (
-          <article key={course.id} className="grid gap-3">
-            <CourseCard
-              course={course}
-              selectionState={selection.locked ? (selected ? "selectedLocked" : "locked") : selected ? "selected" : "available"}
-              onToggleSelection={() => onToggleCourse(course.id)}
-            />
-          </article>
-        );
-      })}
+      {courses.map((course) => (
+        <article key={course.id} className="grid gap-3">
+          <CourseCard course={course} />
+        </article>
+      ))}
     </section>
   );
 }
@@ -136,37 +86,8 @@ function useAcademicProfile() {
   return { profile, loaded };
 }
 
-function useCourseSelection() {
-  const [selection, setSelection] = useState<CourseSelection>(getEmptyCourseSelection);
-
-  useEffect(() => {
-    function syncSelection() {
-      setSelection(loadCourseSelection());
-    }
-
-    syncSelection();
-    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-    window.addEventListener("storage", syncSelection);
-
-    return () => {
-      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-      window.removeEventListener("storage", syncSelection);
-    };
-  }, []);
-
-  return { selection, setSelection };
-}
-
 function PersonalizedCourses({ courses }: { courses: Course[] }) {
   const { profile, loaded } = useAcademicProfile();
-  const { selection, setSelection } = useCourseSelection();
-  const [selectionError, setSelectionError] = useState<string | null>(null);
-
-  function handleToggleCourse(courseId: string) {
-    const update = toggleSelectedCourse(courseId, selection);
-    setSelection(update.selection);
-    setSelectionError(update.error ?? null);
-  }
 
   if (!loaded) {
     return null;
@@ -188,19 +109,16 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground text-sm">
-            Filtered for {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
-          </p>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/profile#study-profile">Edit profile</Link>
-          </Button>
-        </div>
-        <CompactCourseSelectionStatus selection={selection} error={selectionError} />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-sm">
+          Filtered for {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
+        </p>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/profile#study-profile">Edit profile</Link>
+        </Button>
       </div>
       {matchedCourses.length > 0 ? (
-        <CourseGrid courses={matchedCourses} selection={selection} onToggleCourse={handleToggleCourse} />
+        <CourseGrid courses={matchedCourses} />
       ) : (
         <EmptyState
           title="No exact course matches yet"

@@ -97,7 +97,18 @@ function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
   const [localAttempts, setLocalAttempts] = useState<Record<string, QuizAttemptSummary>>({});
 
   useEffect(() => {
-    setLocalAttempts(Object.fromEntries(quizzes.map((quiz) => [quiz.id, getStoredAttempt(quiz.id)])));
+    function syncAttempts() {
+      setLocalAttempts(Object.fromEntries(quizzes.map((quiz) => [quiz.id, getStoredAttempt(quiz.id)])));
+    }
+
+    syncAttempts();
+    window.addEventListener("pageshow", syncAttempts);
+    window.addEventListener("focus", syncAttempts);
+
+    return () => {
+      window.removeEventListener("pageshow", syncAttempts);
+      window.removeEventListener("focus", syncAttempts);
+    };
   }, [quizzes]);
 
   return (
