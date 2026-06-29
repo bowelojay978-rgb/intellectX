@@ -9,6 +9,11 @@ export const convexApi = {
     getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
     upsertCourseSelection: makeFunctionReference<"mutation">("courseSelections:upsertCourseSelection"),
   },
+  academicProfiles: {
+    getAcademicProfile: makeFunctionReference<"query">("academicProfiles:getAcademicProfile"),
+    upsertAcademicProfile: makeFunctionReference<"mutation">("academicProfiles:upsertAcademicProfile"),
+    clearAcademicProfile: makeFunctionReference<"mutation">("academicProfiles:clearAcademicProfile"),
+  },
   lessons: {
     getLessonsByCourse: makeFunctionReference<"query">("lessons:getLessonsByCourse"),
     getLessonById: makeFunctionReference<"query">("lessons:getLessonById"),
@@ -30,3 +35,4 @@ export const convexApi = {
     seedEducationCatalog: makeFunctionReference<"mutation">("seed:seedEducationCatalog"),
   },
 };
+

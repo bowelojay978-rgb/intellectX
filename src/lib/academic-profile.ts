@@ -2,6 +2,7 @@ import type { Course } from "@/data/courses";
 import type { Quiz } from "@/data/quizzes";
 
 export const ACADEMIC_PROFILE_KEY = "intellectx:academic-profile";
+export const ACADEMIC_PROFILE_CHANGE_EVENT = "intellectx-academic-profile-change";
 
 export const educationLevels = [
   "Primary",
@@ -175,12 +176,12 @@ export function loadAcademicProfile(): AcademicProfile | null {
 
 export function saveAcademicProfile(profile: AcademicProfile) {
   window.localStorage.setItem(ACADEMIC_PROFILE_KEY, JSON.stringify(profile));
-  window.dispatchEvent(new Event("intellectx-academic-profile-change"));
+  window.dispatchEvent(new Event(ACADEMIC_PROFILE_CHANGE_EVENT));
 }
 
 export function clearAcademicProfile() {
   window.localStorage.removeItem(ACADEMIC_PROFILE_KEY);
-  window.dispatchEvent(new Event("intellectx-academic-profile-change"));
+  window.dispatchEvent(new Event(ACADEMIC_PROFILE_CHANGE_EVENT));
 }
 
 export function formatAcademicProfile(profile: AcademicProfile) {
@@ -206,3 +207,5 @@ export function quizMatchesAcademicProfile(quiz: Quiz, courses: Course[], profil
 
   return course ? courseMatchesAcademicProfile(course, profile) : false;
 }
+
+

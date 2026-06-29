@@ -110,4 +110,14 @@ export default defineSchema({
   })
     .index("by_user_lesson", ["userKey", "lessonId"])
     .index("by_lesson", ["lessonId"]),
+  academicProfiles: defineTable({
+    userId: v.optional(v.id("users")),
+    userKey: v.string(),
+    educationLevel: v.string(),
+    curriculumOrInstitution: v.string(),
+    gradeOrYear: v.string(),
+    subjectsOrModules: v.array(v.string()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userKey"]),
 });
+
