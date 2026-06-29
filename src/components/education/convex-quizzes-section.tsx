@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { courses } from "@/data/courses";
 import { lessons } from "@/data/lessons";
 import type { Quiz } from "@/data/quizzes";
+import { readQuizAttemptHistory } from "@/lib/quiz-attempt-history";
 import {
   type AcademicProfile,
   formatAcademicProfile,
@@ -36,40 +37,23 @@ type ConvexQuizzesSectionProps = {
   fallbackQuizzes: Quiz[];
 };
 
-type StoredQuizAttempt = {
-  answers?: number[];
-  score?: number;
-  totalQuestions?: number;
-  completedAt?: string;
-};
-
 type QuizAttemptSummary = {
   completed: boolean;
   percent?: number;
 };
 
 function getStoredAttempt(quizId: string): QuizAttemptSummary {
-  try {
-    const storedValue = window.localStorage.getItem(`intellectx:quiz-attempt:${quizId}`);
+  const latestAttempt = readQuizAttemptHistory().find((attempt) => attempt.quizId === quizId);
 
-    if (!storedValue) {
-      return { completed: false };
-    }
-
-    const attempt = JSON.parse(storedValue) as StoredQuizAttempt;
-    const score = attempt.score;
-    const totalQuestions = attempt.totalQuestions;
-    const hasScore = typeof score === "number" && typeof totalQuestions === "number";
-
-    return {
-      completed: true,
-      percent: hasScore ? Math.round((score / totalQuestions) * 100) : undefined,
-    };
-  } catch {
+  if (!latestAttempt) {
     return { completed: false };
   }
-}
 
+  return {
+    completed: true,
+    percent: latestAttempt.percentage,
+  };
+}
 function normalizeQuiz(quiz: ConvexQuiz, fallbackQuizzes: Quiz[]): Quiz | null {
   const fallbackQuiz = fallbackQuizzes.find((item) => item.id === quiz.stableId);
 
@@ -265,4 +249,5 @@ export function ConvexQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionPr
 
   return <LiveQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
 }
+
 
