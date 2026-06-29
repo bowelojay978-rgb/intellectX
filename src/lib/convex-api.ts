@@ -19,6 +19,11 @@ export const convexApi = {
     getLessonById: makeFunctionReference<"query">("lessons:getLessonById"),
     updateLessonProgress: makeFunctionReference<"mutation">("lessons:updateLessonProgress"),
   },
+  progress: {
+    getDashboardSummary: makeFunctionReference<"query">("progress:getDashboardSummary"),
+    getProgressSummary: makeFunctionReference<"query">("progress:getProgressSummary"),
+    getProfileLearningSummary: makeFunctionReference<"query">("progress:getProfileLearningSummary"),
+  },
   quizzes: {
     listQuizzes: makeFunctionReference<"query">("quizzes:listQuizzes"),
     getQuizById: makeFunctionReference<"query">("quizzes:getQuizById"),
@@ -36,5 +41,7 @@ export const convexApi = {
     seedEducationCatalog: makeFunctionReference<"mutation">("seed:seedEducationCatalog"),
   },
 };
+
+
 
 

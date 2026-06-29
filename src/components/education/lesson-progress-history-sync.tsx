@@ -1,0 +1,116 @@
+"use client";
+
+import { lessons } from "@/data/lessons";
+import { convexApi } from "@/lib/convex-api";
+import { convexEnv } from "@/lib/education-data";
+import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { mergeLessonProgressHistory, type LessonProgressHistoryItem } from "@/lib/lesson-progress-history";
+import { useConvex } from "convex/react";
+import { useEffect, useState } from "react";
+
+type RemoteLessonProgress = {
+  lessonId?: unknown;
+  status?: unknown;
+  progress?: unknown;
+  updatedAt?: unknown;
+};
+
+function toLessonProgressHistoryItem(value: unknown): LessonProgressHistoryItem | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const progress = value as RemoteLessonProgress;
+
+  if (
+    typeof progress.lessonId !== "string" ||
+    typeof progress.status !== "string" ||
+    typeof progress.progress !== "number" ||
+    typeof progress.updatedAt !== "number"
+  ) {
+    return null;
+  }
+
+  const lessonExists = lessons.some((lesson) => lesson.id === progress.lessonId);
+
+  if (!lessonExists) {
+    return null;
+  }
+
+  return {
+    lessonId: progress.lessonId,
+    status: progress.status,
+    progress: progress.progress,
+    updatedAt: new Date(progress.updatedAt).toISOString(),
+  };
+}
+
+export function LessonProgressHistorySync() {
+  if (!convexEnv.isConfigured) {
+    return null;
+  }
+
+  return <ConvexLessonProgressHistorySync />;
+}
+
+function ConvexLessonProgressHistorySync() {
+  const convex = useConvex();
+  const [userKey, setUserKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+
+    function syncIdentity() {
+      setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+    }
+
+    window.addEventListener("intellectx:learner-session-change", syncIdentity);
+    window.addEventListener("storage", syncIdentity);
+
+    return () => {
+      window.removeEventListener("intellectx:learner-session-change", syncIdentity);
+      window.removeEventListener("storage", syncIdentity);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!userKey) {
+      return;
+    }
+
+    let cancelled = false;
+
+    convex
+      .query(convexApi.progress.getProgressSummary, { userKey })
+      .then((summary) => {
+        if (cancelled || !summary || typeof summary !== "object") {
+          return;
+        }
+
+        const lessonProgress = (summary as { lessonProgress?: unknown }).lessonProgress;
+
+        if (!Array.isArray(lessonProgress)) {
+          return;
+        }
+
+        const items = lessonProgress
+          .map((item) => toLessonProgressHistoryItem(item))
+          .filter((item): item is LessonProgressHistoryItem => Boolean(item));
+
+        if (items.length > 0) {
+          mergeLessonProgressHistory(items);
+        }
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        console.warn("Unable to hydrate lesson progress from Convex", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [convex, userKey]);
+
+  return null;
+}

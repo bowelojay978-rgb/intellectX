@@ -13,36 +13,61 @@ import {
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
+import {
+  LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
+  readLessonProgressHistory,
+  summarizeLessonProgressHistory,
+  type LessonProgressHistorySummary,
+} from "@/lib/lesson-progress-history";
 import { BookOpenCheckIcon, TrophyIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+const emptyLessonProgressSummary: LessonProgressHistorySummary = {
+  lessonCount: 0,
+  inProgressCount: 0,
+  completedCount: 0,
+  latestLessons: [],
+};
+
 export function LocalProgressContent() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
+  const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
 
   useEffect(() => {
     function syncSelection() {
       setSelection(loadCourseSelection());
     }
 
-    function syncSelectionWhenVisible() {
+    function syncLessons() {
+      setLessonSummary(summarizeLessonProgressHistory(readLessonProgressHistory()));
+    }
+
+    function syncAll() {
+      syncSelection();
+      syncLessons();
+    }
+
+    function syncAllWhenVisible() {
       if (!document.hidden) {
-        syncSelection();
+        syncAll();
       }
     }
 
-    syncSelection();
-    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-    window.addEventListener("storage", syncSelection);
-    window.addEventListener("focus", syncSelection);
-    window.addEventListener("pageshow", syncSelection);
-    document.addEventListener("visibilitychange", syncSelectionWhenVisible);
+    syncAll();
+    window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+    window.addEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
+    window.addEventListener("storage", syncAll);
+    window.addEventListener("focus", syncAll);
+    window.addEventListener("pageshow", syncAll);
+    document.addEventListener("visibilitychange", syncAllWhenVisible);
 
     return () => {
-      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
-      window.removeEventListener("storage", syncSelection);
-      window.removeEventListener("focus", syncSelection);
-      window.removeEventListener("pageshow", syncSelection);
-      document.removeEventListener("visibilitychange", syncSelectionWhenVisible);
+      window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+      window.removeEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
+      window.removeEventListener("storage", syncAll);
+      window.removeEventListener("focus", syncAll);
+      window.removeEventListener("pageshow", syncAll);
+      document.removeEventListener("visibilitychange", syncAllWhenVisible);
     };
   }, []);
 
@@ -57,9 +82,13 @@ export function LocalProgressContent() {
         <Card className={`rounded-lg ${glassCardClassName}`}>
           <CardContent className="space-y-3">
             <BookOpenCheckIcon className="size-5" />
-            <p className="text-3xl font-semibold tracking-tight">No progress recorded yet</p>
+            <p className="text-3xl font-semibold tracking-tight">
+              {lessonSummary.lessonCount > 0 ? `${lessonSummary.lessonCount} lesson activity` : "No progress recorded yet"}
+            </p>
             <p className="text-muted-foreground text-sm">
-              Complete lessons or quizzes to build progress in this browser.
+              {lessonSummary.lessonCount > 0
+                ? `${lessonSummary.inProgressCount} in progress, ${lessonSummary.completedCount} completed.`
+                : "Complete lessons or quizzes to build progress in this browser."}
             </p>
           </CardContent>
         </Card>
@@ -69,7 +98,7 @@ export function LocalProgressContent() {
             <LocalQuizAverageStat />
           </CardContent>
         </Card>
-        <StreakCard compact />
+        <StreakCard compact hasActivity={lessonSummary.lessonCount > 0} />
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <Card className={`rounded-lg ${glassCardClassName}`}>
@@ -101,8 +130,7 @@ export function LocalProgressContent() {
               <CardTitle>Progress notes</CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground text-sm leading-6">
-              Account-level progress persistence is not active yet. This page only uses activity recorded locally in this
-              browser.
+              Account-backed quiz history, study profile, course selection, and lesson activity hydrate here when available.
             </CardContent>
           </Card>
         </div>

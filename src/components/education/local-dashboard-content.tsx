@@ -9,11 +9,18 @@ import { StatCard } from "@/components/education/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses } from "@/data/courses";
+import { lessons } from "@/data/lessons";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
+import {
+  LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
+  readLessonProgressHistory,
+  summarizeLessonProgressHistory,
+  type LessonProgressHistorySummary,
+} from "@/lib/lesson-progress-history";
 import {
   QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
   readQuizAttemptHistory,
@@ -31,14 +38,26 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+const emptyLessonProgressSummary: LessonProgressHistorySummary = {
+  lessonCount: 0,
+  inProgressCount: 0,
+  completedCount: 0,
+  latestLessons: [],
+};
+
 export function LocalDashboardContent() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
+  const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [quizAttemptCount, setQuizAttemptCount] = useState(0);
   const [averageQuizScore, setAverageQuizScore] = useState<number | null>(null);
 
   useEffect(() => {
     function syncSelection() {
       setSelection(loadCourseSelection());
+    }
+
+    function syncLessons() {
+      setLessonSummary(summarizeLessonProgressHistory(readLessonProgressHistory()));
     }
 
     function syncAttempts() {
@@ -49,6 +68,7 @@ export function LocalDashboardContent() {
 
     function syncAll() {
       syncSelection();
+      syncLessons();
       syncAttempts();
     }
 
@@ -60,6 +80,7 @@ export function LocalDashboardContent() {
 
     syncAll();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+    window.addEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
     window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
     window.addEventListener("storage", syncAll);
     window.addEventListener("focus", syncAll);
@@ -68,6 +89,7 @@ export function LocalDashboardContent() {
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
+      window.removeEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
       window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
       window.removeEventListener("storage", syncAll);
       window.removeEventListener("focus", syncAll);
@@ -81,12 +103,31 @@ export function LocalDashboardContent() {
     return courses.filter((course) => selectedIds.includes(course.id));
   }, [selection]);
 
+  const recentLessons = useMemo(
+    () =>
+      lessonSummary.latestLessons
+        .map((item) => {
+          const lesson = lessons.find((candidate) => candidate.id === item.lessonId);
+          return lesson ? { lesson, progress: item } : null;
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    [lessonSummary.latestLessons],
+  );
+
   return (
     <>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <StatCard label="Study streak" value="No activity yet" icon={FlameIcon} />
+        <StatCard
+          label="Study streak"
+          value={lessonSummary.lessonCount > 0 || quizAttemptCount > 0 ? "Active today" : "No activity yet"}
+          icon={FlameIcon}
+        />
         <StatCard label="Total hours" value="Not tracked yet" icon={GraduationCapIcon} />
-        <StatCard label="Lessons done" value="No lessons recorded" icon={BookOpenCheckIcon} />
+        <StatCard
+          label="Lessons viewed"
+          value={lessonSummary.lessonCount === 0 ? "No lessons recorded" : `${lessonSummary.lessonCount}`}
+          icon={BookOpenCheckIcon}
+        />
         <StatCard
           label="Avg. quiz score"
           value={averageQuizScore === null ? "No attempts yet" : `${averageQuizScore}%`}
@@ -152,9 +193,26 @@ export function LocalDashboardContent() {
               <CardTitle>Recent lessons</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
-                Recent lessons will appear after lesson completion is recorded in this browser.
-              </div>
+              {recentLessons.length > 0 ? (
+                <div className="grid gap-3">
+                  {recentLessons.map(({ lesson, progress }) => (
+                    <Link
+                      key={lesson.id}
+                      href={`/learn/${lesson.id}`}
+                      className={`bg-secondary/40 rounded-lg p-4 text-sm ${clickableGlassCardClassName}`}
+                    >
+                      <p className="font-medium">{lesson.title}</p>
+                      <p className="text-muted-foreground mt-1">
+                        {progress.progress}% {progress.status.replace("_", " ")}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
+                  Recent lessons will appear after lesson activity is recorded.
+                </div>
+              )}
             </CardContent>
           </Card>
           <LocalQuizPerformance />
@@ -169,8 +227,8 @@ export function LocalDashboardContent() {
             <CardContent className="text-muted-foreground space-y-4 text-sm leading-6">
               <p>
                 {selectedCourses.length > 0
-                  ? quizAttemptCount > 0
-                    ? "Review your recent quiz attempts or continue with a selected course."
+                  ? lessonSummary.lessonCount > 0 || quizAttemptCount > 0
+                    ? "Review your recent activity or continue with a selected course."
                     : "Start with one quiz or lesson from your selected courses to build real activity here."
                   : "Choose courses first, then complete lessons or quizzes to build your dashboard."}
               </p>
@@ -189,4 +247,3 @@ export function LocalDashboardContent() {
     </>
   );
 }
-
