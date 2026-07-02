@@ -1,4 +1,4 @@
-import { mutationGeneric } from "convex/server";
+﻿import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 
 export const updateStudyStats = mutationGeneric({
@@ -10,7 +10,27 @@ export const updateStudyStats = mutationGeneric({
     lastStudiedDate: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("studyStats", { ...args, updatedAt: Date.now() });
+    const existing = await ctx.db
+      .query("studyStats")
+      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .first();
+
+    const nextStats = {
+      userKey: args.userKey,
+      currentStreak: Math.max(0, args.currentStreak),
+      longestStreak: Math.max(existing?.longestStreak ?? 0, args.longestStreak, args.currentStreak),
+      weeklyActiveDays: args.weeklyActiveDays,
+      lastStudiedDate: args.lastStudiedDate,
+      updatedAt: Date.now(),
+    };
+
+    if (!existing) {
+      return await ctx.db.insert("studyStats", nextStats);
+    }
+
+    await ctx.db.patch(existing._id, nextStats);
+
+    return existing._id;
   },
 });
 

@@ -1,4 +1,4 @@
-import { queryGeneric, mutationGeneric } from "convex/server";
+﻿import { queryGeneric, mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 
 export const getLessonsByCourse = queryGeneric({
@@ -29,9 +29,33 @@ export const updateLessonProgress = mutationGeneric({
     progress: v.number(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("lessonProgress", {
-      ...args,
+    const existing = await ctx.db
+      .query("lessonProgress")
+      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .filter((q) => q.eq(q.field("lessonId"), args.lessonId))
+      .first();
+
+    const nextProgress = Math.min(Math.max(args.progress, 0), 100);
+    const nextStatus = nextProgress >= 100 ? "completed" : args.status;
+
+    if (!existing) {
+      return await ctx.db.insert("lessonProgress", {
+        userKey: args.userKey,
+        lessonId: args.lessonId,
+        status: nextStatus,
+        progress: nextProgress,
+        updatedAt: Date.now(),
+      });
+    }
+
+    const mergedProgress = Math.max(existing.progress, nextProgress);
+
+    await ctx.db.patch(existing._id, {
+      status: mergedProgress >= 100 ? "completed" : nextStatus,
+      progress: mergedProgress,
       updatedAt: Date.now(),
     });
+
+    return existing._id;
   },
 });
