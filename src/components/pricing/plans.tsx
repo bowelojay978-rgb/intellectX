@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -7,18 +7,20 @@ const plans = [
   {
     name: "Explorer",
     price: "Free",
-    description: "Preview AI-guided learning with starter courses and progress tracking.",
+    description: "Start with focused learning paths, quizzes, progress tracking, and local study momentum.",
     features: ["Browse available courses", "Try lesson and quiz flows", "View learning dashboard stats"],
     cta: "Browse Courses",
     href: "/courses",
+    available: true,
   },
   {
     name: "Scholar",
     price: "$12",
-    description: "A future premium plan for adaptive study plans, richer tutoring, and saved progress.",
+    description: "Premium tutoring, deeper adaptive planning, and account-backed paid access are being prepared.",
     features: ["Adaptive study planning", "Expanded AI quiz practice", "Saved progress and profile insights"],
-    cta: "Start Learning",
-    href: "/dashboard",
+    cta: "Coming Soon",
+    href: null,
+    available: false,
   },
 ];
 
@@ -29,14 +31,20 @@ export function Plans() {
         Learning plans for focused growth
       </h1>
       <p className="text-muted-foreground mb-10 max-w-xl text-center leading-6">
-        Pricing below presents available plan positioning for the education product
-        experience.
+        Start free while premium account access and payment activation are finalized.
       </p>
       <div className="grid w-full gap-5 md:grid-cols-2">
         {plans.map((plan) => (
           <Card key={plan.name} className="rounded-lg border-white/70 bg-white/75 shadow-3xl backdrop-blur">
             <CardHeader>
-              <p className="text-muted-foreground text-sm">{plan.name}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-muted-foreground text-sm">{plan.name}</p>
+                {!plan.available && (
+                  <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                    Not live yet
+                  </span>
+                )}
+              </div>
               <CardTitle className="text-4xl tracking-tight">
                 {plan.price}
                 {plan.price !== "Free" && <span className="text-muted-foreground text-base font-normal">/mo</span>}
@@ -56,9 +64,15 @@ export function Plans() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" size="lg" asChild>
-                <Link href={plan.href}>{plan.cta}</Link>
-              </Button>
+              {plan.href ? (
+                <Button className="w-full" size="lg" asChild>
+                  <Link href={plan.href}>{plan.cta}</Link>
+                </Button>
+              ) : (
+                <Button className="w-full" size="lg" disabled>
+                  {plan.cta}
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
@@ -71,7 +85,3 @@ export function Plans() {
     </div>
   );
 }
-
-
-
-
