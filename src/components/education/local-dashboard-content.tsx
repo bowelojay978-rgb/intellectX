@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { CourseCard } from "@/components/education/course-card";
 import { EmptyState } from "@/components/education/empty-state";
@@ -27,10 +27,16 @@ import {
   summarizeQuizAttemptHistory,
 } from "@/lib/quiz-attempt-history";
 import {
+  emptyStudyActivitySummary,
+  formatStudyStreakValue,
+  readStudyActivitySummary,
+  type StudyActivitySummary,
+} from "@/lib/study-activity-summary";
+import {
   BookOpenCheckIcon,
   BookOpenIcon,
+  CalendarCheckIcon,
   FlameIcon,
-  GraduationCapIcon,
   Layers3Icon,
   TargetIcon,
   TrophyIcon,
@@ -48,6 +54,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 export function LocalDashboardContent() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
+  const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
   const [quizAttemptCount, setQuizAttemptCount] = useState(0);
   const [averageQuizScore, setAverageQuizScore] = useState<number | null>(null);
 
@@ -66,10 +73,15 @@ export function LocalDashboardContent() {
       setAverageQuizScore(summary.attemptCount > 0 ? summary.averagePercentage : null);
     }
 
+    function syncActivity() {
+      setStudyActivity(readStudyActivitySummary());
+    }
+
     function syncAll() {
       syncSelection();
       syncLessons();
       syncAttempts();
+      syncActivity();
     }
 
     function syncAllWhenVisible() {
@@ -117,12 +129,8 @@ export function LocalDashboardContent() {
   return (
     <>
       <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <StatCard
-          label="Study streak"
-          value={lessonSummary.lessonCount > 0 || quizAttemptCount > 0 ? "Active today" : "No activity yet"}
-          icon={FlameIcon}
-        />
-        <StatCard label="Total hours" value="Not tracked yet" icon={GraduationCapIcon} />
+        <StatCard label="Study streak" value={formatStudyStreakValue(studyActivity)} icon={FlameIcon} />
+        <StatCard label="Last studied" value={studyActivity.lastStudiedLabel} icon={CalendarCheckIcon} />
         <StatCard
           label="Lessons viewed"
           value={lessonSummary.lessonCount === 0 ? "No lessons recorded" : `${lessonSummary.lessonCount}`}

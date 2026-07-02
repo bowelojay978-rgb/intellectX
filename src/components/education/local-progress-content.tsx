@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { CourseCard } from "@/components/education/course-card";
 import { EmptyState } from "@/components/education/empty-state";
@@ -19,6 +19,12 @@ import {
   summarizeLessonProgressHistory,
   type LessonProgressHistorySummary,
 } from "@/lib/lesson-progress-history";
+import { QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT } from "@/lib/quiz-attempt-history";
+import {
+  emptyStudyActivitySummary,
+  readStudyActivitySummary,
+  type StudyActivitySummary,
+} from "@/lib/study-activity-summary";
 import { BookOpenCheckIcon, TrophyIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -32,6 +38,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 export function LocalProgressContent() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
+  const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
 
   useEffect(() => {
     function syncSelection() {
@@ -42,9 +49,14 @@ export function LocalProgressContent() {
       setLessonSummary(summarizeLessonProgressHistory(readLessonProgressHistory()));
     }
 
+    function syncActivity() {
+      setStudyActivity(readStudyActivitySummary());
+    }
+
     function syncAll() {
       syncSelection();
       syncLessons();
+      syncActivity();
     }
 
     function syncAllWhenVisible() {
@@ -56,6 +68,7 @@ export function LocalProgressContent() {
     syncAll();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
     window.addEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
+    window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
     window.addEventListener("storage", syncAll);
     window.addEventListener("focus", syncAll);
     window.addEventListener("pageshow", syncAll);
@@ -64,6 +77,7 @@ export function LocalProgressContent() {
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncAll);
       window.removeEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncAll);
+      window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncAll);
       window.removeEventListener("storage", syncAll);
       window.removeEventListener("focus", syncAll);
       window.removeEventListener("pageshow", syncAll);
@@ -98,7 +112,7 @@ export function LocalProgressContent() {
             <LocalQuizAverageStat />
           </CardContent>
         </Card>
-        <StreakCard compact hasActivity={lessonSummary.lessonCount > 0} />
+        <StreakCard compact summary={studyActivity} />
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <Card className={`rounded-lg ${glassCardClassName}`}>
