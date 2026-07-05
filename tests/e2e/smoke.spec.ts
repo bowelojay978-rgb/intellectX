@@ -609,7 +609,7 @@ test("dashboard does not show mock enrolled courses or fake progress before loca
 
   await expect(page.getByText("No selected courses yet")).toBeVisible();
   await expect(page.getByText("No lessons recorded")).toBeVisible();
-  await expect(page.getByText("Not tracked yet")).toBeVisible();
+  await expect(page.getByText("No attempts yet")).toBeVisible();
   await expect(page.getByText("Memory Systems")).toHaveCount(0);
   await expect(page.getByText("Source Quality")).toHaveCount(0);
   await expect(page.getByText("Diagnostic Review")).toHaveCount(0);
@@ -780,8 +780,19 @@ test("profile is guarded when no learner session exists", async ({ page }) => {
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("pricing keeps premium plan unavailable for free MVP", async ({ page }) => {
+  await page.goto("/pricing");
 
+  await expect(page.getByText("Scholar")).toBeVisible();
+  await expect(page.getByText("Not live yet")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Coming Soon" })).toBeDisabled();
+});
 
+test("checkout is disabled unless payments are explicitly enabled", async ({ page }) => {
+  await page.goto("/checkout?price_id=pri_fake_test");
 
-
+  await expect(page.getByRole("heading", { name: "Premium checkout is not live yet" })).toBeVisible();
+  await expect(page.getByText("Start learning for free while premium account access is being finalized.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start free" })).toBeVisible();
+});
 

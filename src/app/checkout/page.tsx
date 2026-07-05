@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Checkout - IntellectX",
-  description: "IntellectX premium checkout.",
+  description: "IntellectX premium checkout availability.",
 };
 
 type Props = {
