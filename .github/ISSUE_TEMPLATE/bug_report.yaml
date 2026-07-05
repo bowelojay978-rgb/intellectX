@@ -6,13 +6,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form to report a bug or problem with the Paddle mobile web payments starter kit.
+        Use this form to report a bug or problem with IntellectX.
 
         Remember to remove sensitive information from screenshots, videos, or code samples before submitting.
 
-        **Do not create issues for potential security vulnerabilities.** Please see the [Paddle Vulnerability Disclosure Policy](https://www.paddle.com/vulnerability-disclosure-policy) and report any vulnerabilities [using our form](https://vdp.paddle.com/p/Report-a-Vulnerability).
+        **Do not create issues for potential security vulnerabilities.** Issues are public; use the repository's security reporting guidance instead.
 
-        Thanks for helping to make the Paddle platform better for everyone!
+        Thanks for helping to make IntellectX better.
   - type: textarea
     id: description
     attributes:

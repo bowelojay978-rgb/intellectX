@@ -6,12 +6,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form to send us suggestions for improvements to the Paddle mobile web payments starter kit.
+        Use this form to send suggestions for improvements to IntellectX.
 
-        For general feedback about the Paddle API or developer platform, contact our DX team directly
-        at [team-dx@paddle.com](mailto:team-dx@paddle.com).
+        Do not include secrets, private learner data, or payment credentials in feature requests.
 
-        Thanks for helping to make the Paddle platform better for everyone!
+        Thanks for helping to make IntellectX better.
   - type: textarea
     id: request
     attributes:
