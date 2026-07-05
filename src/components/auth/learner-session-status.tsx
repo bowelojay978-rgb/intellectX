@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { clearLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +12,54 @@ type LearnerSessionStatusProps = {
 };
 
 export function LearnerSessionStatus({ compact = false, session }: LearnerSessionStatusProps) {
+  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return <ClerkLearnerSessionStatus compact={compact} />;
+  }
+
+  return <LocalLearnerSessionStatus compact={compact} session={session} />;
+}
+
+function getClerkDisplayName(user: ReturnType<typeof useUser>["user"]) {
+  return user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress || "Learner";
+}
+
+function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatusProps, "compact">) {
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (isSignedIn && user) {
+    const displayName = getClerkDisplayName(user);
+    const email = user.primaryEmailAddress?.emailAddress;
+
+    if (compact) {
+      return (
+        <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
+          <div className="flex items-center gap-2 text-sm">
+            <UserButton />
+            <span className="truncate font-medium">{displayName}</span>
+          </div>
+          {email ? <p className="text-muted-foreground truncate text-xs">{email}</p> : null}
+        </div>
+      );
+    }
+
+    return (
+      <div className="justify-self-end flex items-center gap-3">
+        <Link href="/profile" className="text-muted-foreground hidden max-w-36 truncate text-sm lg:block">
+          {displayName}
+        </Link>
+        <UserButton />
+      </div>
+    );
+  }
+
+  return <SignedOutLinks compact={compact} />;
+}
+
+function LocalLearnerSessionStatus({ compact = false, session }: LearnerSessionStatusProps) {
   function handleLogout() {
     clearLearnerSession();
     window.location.assign("/");
@@ -45,6 +94,10 @@ export function LearnerSessionStatus({ compact = false, session }: LearnerSessio
     );
   }
 
+  return <SignedOutLinks compact={compact} />;
+}
+
+function SignedOutLinks({ compact = false }: Pick<LearnerSessionStatusProps, "compact">) {
   if (compact) {
     return (
       <div className="mt-3 grid grid-cols-2 gap-3">

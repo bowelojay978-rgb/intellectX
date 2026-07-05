@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserButton, useUser } from "@clerk/nextjs";
 import {
   clearLearnerSession,
   getLearnerSession,
@@ -17,6 +18,54 @@ type ProfileLearnerSessionProps = {
 };
 
 export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
+  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return <ClerkProfileLearnerSession className={className} />;
+  }
+
+  return <LocalProfileLearnerSession className={className} />;
+}
+
+function getClerkDisplayName(user: ReturnType<typeof useUser>["user"]) {
+  return user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress || "Learner";
+}
+
+function ClerkProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MonitorCheckIcon className="size-5" />
+          Learner session
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-muted-foreground grid gap-4 text-sm leading-6">
+        {isLoaded && isSignedIn && user ? (
+          <>
+            <div>
+              <p className="text-foreground font-medium">{getClerkDisplayName(user)}</p>
+              {user.primaryEmailAddress?.emailAddress ? <p>{user.primaryEmailAddress.emailAddress}</p> : null}
+              <p>Account-backed session</p>
+            </div>
+            <div className="w-fit">
+              <UserButton />
+            </div>
+          </>
+        ) : (
+          <>
+            <p>No account-backed learner session is active. Login or signup will create one for this browser.</p>
+            <Button asChild className="w-fit">
+              <Link href="/login">Login</Link>
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LocalProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
   const [session, setSession] = useState<LearnerSession | null>(null);
 
   useEffect(() => {
@@ -72,4 +121,3 @@ export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps)
     </Card>
   );
 }
-
