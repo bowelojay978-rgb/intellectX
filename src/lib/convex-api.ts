@@ -40,9 +40,6 @@ export const convexApi = {
   aiTutor: {
     getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
   },
-  seed: {
-    seedEducationCatalog: makeFunctionReference<"mutation">("seed:seedEducationCatalog"),
-  },
 };
 
 

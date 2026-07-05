@@ -1,7 +1,7 @@
 import { courses } from "../src/data/courses";
 import { lessons } from "../src/data/lessons";
 import { quizzes } from "../src/data/quizzes";
-import { mutationGeneric } from "convex/server";
+import { internalMutationGeneric } from "convex/server";
 import { v } from "convex/values";
 
 type CatalogTable = "courses" | "lessons" | "quizzes" | "questions";
@@ -83,7 +83,7 @@ async function removeObsoleteCatalogDocs(ctx: any, table: CatalogTable, stableId
   return removed;
 }
 
-export const seedEducationCatalog = mutationGeneric({
+export const seedEducationCatalog = internalMutationGeneric({
   args: { reset: v.optional(v.boolean()) },
   handler: async (ctx) => {
     const counts = {
