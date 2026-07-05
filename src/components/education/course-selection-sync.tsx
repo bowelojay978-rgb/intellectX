@@ -9,7 +9,7 @@ import {
   saveCourseSelection,
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -64,11 +64,11 @@ function ConvexCourseSelectionSync() {
       remoteHydrated.current = false;
     }
 
-    window.addEventListener("intellectx:learner-session-change", syncIdentity);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
     window.addEventListener("storage", syncIdentity);
 
     return () => {
-      window.removeEventListener("intellectx:learner-session-change", syncIdentity);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
       window.removeEventListener("storage", syncIdentity);
     };
   }, []);

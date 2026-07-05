@@ -2,7 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { clearLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import {
+  clearLearnerSession,
+  getLearnerSession,
+  LEARNER_SESSION_CHANGE_EVENT,
+  type LearnerSession,
+} from "@/lib/learner-session";
 import { LogOutIcon, MonitorCheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -21,11 +26,11 @@ export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps)
 
     syncSession();
     window.addEventListener("storage", syncSession);
-    window.addEventListener("intellectx:learner-session-change", syncSession);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
 
     return () => {
       window.removeEventListener("storage", syncSession);
-      window.removeEventListener("intellectx:learner-session-change", syncSession);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
     };
   }, []);
 

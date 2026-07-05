@@ -1,6 +1,10 @@
 "use client";
 
-import { getLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import {
+  getLearnerSession,
+  LEARNER_SESSION_CHANGE_EVENT,
+  type LearnerSession,
+} from "@/lib/learner-session";
 import { useEffect, useState } from "react";
 
 type LearnerSessionNameProps = {
@@ -28,11 +32,11 @@ export function LearnerSessionName({ fallback = "Learner", firstNameOnly = false
 
     syncSession();
     window.addEventListener("storage", syncSession);
-    window.addEventListener("intellectx:learner-session-change", syncSession);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
 
     return () => {
       window.removeEventListener("storage", syncSession);
-      window.removeEventListener("intellectx:learner-session-change", syncSession);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
     };
   }, []);
 

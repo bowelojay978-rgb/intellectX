@@ -2,7 +2,7 @@
 
 import { MobileNav } from "@/components/hero/mobile-nav";
 import { DesktopNav } from "@/components/hero/desktop-nav";
-import { getLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
 import { isLearnerAppPath } from "@/lib/learner-routes";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -90,14 +90,14 @@ export function Nav() {
     window.addEventListener("storage", syncSession);
     window.addEventListener("focus", syncSession);
     window.addEventListener("pageshow", syncSession);
-    window.addEventListener("intellectx:learner-session-change", syncSession);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
     document.addEventListener("visibilitychange", syncSessionWhenVisible);
 
     return () => {
       window.removeEventListener("storage", syncSession);
       window.removeEventListener("focus", syncSession);
       window.removeEventListener("pageshow", syncSession);
-      window.removeEventListener("intellectx:learner-session-change", syncSession);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
       document.removeEventListener("visibilitychange", syncSessionWhenVisible);
     };
   }, [pathname, router]);

@@ -1,4 +1,4 @@
-import { LearnerSessionForm } from "@/components/auth/learner-session-form";
+﻿import { LearnerSessionForm } from "@/components/auth/learner-session-form";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
@@ -19,7 +19,7 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
               IntellectX learner access
             </p>
             <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">
-              Premium learning access for this browser.
+              Learner access for this browser.
             </h1>
             <p className="text-muted-foreground mt-5 max-w-xl leading-7">
               These pages create a learner session stored on this device while account-level persistence is being completed.

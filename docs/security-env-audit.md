@@ -1,4 +1,4 @@
-# Security and Environment Audit
+﻿# Security and Environment Audit
 
 Use this checklist before sharing builds, deploying releases, or handing artifacts to another environment. Do not print or copy secret values into docs, tickets, screenshots, or chat.
 
@@ -18,6 +18,12 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Confirm catalog seeding remains internal/developer-only and is not exposed to client runtime.
 - [ ] Confirm generated Convex files are not manually edited.
 - [ ] Confirm production data access is reviewed before launch.
+
+## Auth Readiness
+
+- [ ] Clerk package/provider preparation exists, but real auth is not active unless Clerk environment keys are configured.
+- [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
+- [ ] Current free MVP access still uses browser-backed local learner sessions.
 
 ## Secrets Hygiene
 

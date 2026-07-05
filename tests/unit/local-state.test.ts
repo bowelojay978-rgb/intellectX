@@ -5,8 +5,16 @@ import {
   createLearnerSession,
   getCurrentLearnerIdentity,
   getLearnerSession,
+  LEARNER_SESSION_CHANGE_EVENT,
   LEARNER_SESSION_KEY,
 } from "@/lib/learner-session";
+import {
+  ACADEMIC_PROFILE_KEY,
+  isAcademicProfileComplete,
+  loadAcademicProfile,
+  saveAcademicProfile,
+  type AcademicProfile,
+} from "@/lib/academic-profile";
 import {
   COURSE_SELECTION_LIMIT,
   getEmptyCourseSelection,
@@ -61,6 +69,38 @@ describe("learner session local identity", () => {
     expect(localStorage.getItem(LEARNER_SESSION_KEY)).toBeNull();
   });
 
+  it("clears stored learner sessions missing an email", () => {
+    localStorage.setItem(
+      LEARNER_SESSION_KEY,
+      JSON.stringify({
+        name: "No Email",
+        role: "student",
+      }),
+    );
+
+    expect(getLearnerSession()).toBeNull();
+    expect(localStorage.getItem(LEARNER_SESSION_KEY)).toBeNull();
+  });
+
+  it("migrates legacy learner sessions into the current storage key", () => {
+    localStorage.setItem(
+      "intellectx-demo-session",
+      JSON.stringify({
+        name: "Legacy Learner",
+        email: "  LEGACY@Example.COM ",
+        role: "student",
+      }),
+    );
+
+    expect(getLearnerSession()).toEqual({
+      name: "Legacy Learner",
+      email: "legacy@example.com",
+      role: "student",
+    });
+    expect(localStorage.getItem("intellectx-demo-session")).toBeNull();
+    expect(localStorage.getItem(LEARNER_SESSION_KEY)).not.toBeNull();
+  });
+
   it("clears the current learner session", () => {
     createLearnerSession({
       name: "Learner",
@@ -71,6 +111,71 @@ describe("learner session local identity", () => {
     clearLearnerSession();
 
     expect(getLearnerSession()).toBeNull();
+  });
+
+  it("dispatches the learner session change event when creating a session", () => {
+    const listener = vi.fn();
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, listener);
+
+    createLearnerSession({
+      name: "Learner",
+      email: "learner@example.com",
+      role: "student",
+    });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, listener);
+  });
+
+  it("dispatches the learner session change event when clearing a session", () => {
+    const listener = vi.fn();
+    createLearnerSession({
+      name: "Learner",
+      email: "learner@example.com",
+      role: "student",
+    });
+
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, listener);
+    clearLearnerSession();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, listener);
+  });
+});
+
+describe("academic profile local state", () => {
+  it("clears invalid stored academic profile JSON instead of crashing", () => {
+    localStorage.setItem(ACADEMIC_PROFILE_KEY, "{bad json");
+
+    expect(loadAcademicProfile()).toBeNull();
+    expect(localStorage.getItem(ACADEMIC_PROFILE_KEY)).toBeNull();
+  });
+
+  it("detects incomplete academic profiles", () => {
+    expect(
+      isAcademicProfileComplete({
+        educationLevel: "Senior",
+        curriculumOrInstitution: "Botswana curriculum",
+        gradeOrYear: "Form 5",
+        subjectsOrModules: [],
+      }),
+    ).toBe(false);
+
+    expect(loadAcademicProfile()).toBeNull();
+  });
+
+  it("saves and loads a complete academic profile", () => {
+    const profile: AcademicProfile = {
+      educationLevel: "Senior",
+      curriculumOrInstitution: "Botswana curriculum",
+      gradeOrYear: "Form 5",
+      subjectsOrModules: ["AI Productivity"],
+    };
+
+    saveAcademicProfile(profile);
+
+    expect(loadAcademicProfile()).toEqual(profile);
+    expect(isAcademicProfileComplete(loadAcademicProfile())).toBe(true);
   });
 });
 
@@ -247,4 +352,3 @@ describe("study activity summary", () => {
     expect(summary.weeklyActiveDayLabels).toEqual(["Sun", "Sat", "Fri"]);
   });
 });
-

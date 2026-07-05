@@ -3,7 +3,7 @@
 import { quizzes } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { mergeQuizAttemptHistory, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { useConvex } from "convex/react";
 import { useEffect, useState } from "react";
@@ -69,11 +69,11 @@ function ConvexQuizAttemptHistorySync() {
       setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
     }
 
-    window.addEventListener("intellectx:learner-session-change", syncIdentity);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
     window.addEventListener("storage", syncIdentity);
 
     return () => {
-      window.removeEventListener("intellectx:learner-session-change", syncIdentity);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
       window.removeEventListener("storage", syncIdentity);
     };
   }, []);

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 
 
 async function seedLearnerAccess(
@@ -675,6 +675,18 @@ test("login does not force study profile setup", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Complete signup" })).toHaveCount(0);
 });
 
+test("forgot password returns to login without creating a learner session", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.removeItem("intellectx:learner-session");
+  });
+
+  await page.goto("/forgot-password", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Return to login" }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("intellectx:learner-session"))).toBeNull();
+});
+
 test("authenticated nav reaches quizzes and progress without course selection", async ({ page }) => {
   await seedLearnerAccess(page, { includeProfile: false });
 
@@ -781,6 +793,16 @@ test("profile is guarded when no learner session exists", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
 });
 
+test("dashboard is guarded when no learner session exists", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.removeItem("intellectx:learner-session");
+  });
+
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
+});
+
 test("pricing keeps premium plan unavailable for free MVP", async ({ page }) => {
   await page.goto("/pricing");
 
@@ -796,4 +818,3 @@ test("checkout is disabled unless payments are explicitly enabled", async ({ pag
   await expect(page.getByText("Start learning for free while premium account access is being finalized.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Start free" })).toBeVisible();
 });
-

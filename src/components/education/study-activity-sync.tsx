@@ -8,7 +8,7 @@ import {
 } from "@/lib/quiz-attempt-history";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { readStudyActivitySummary } from "@/lib/study-activity-summary";
 import { useMutation } from "convex/react";
 import { useCallback, useEffect, useRef } from "react";
@@ -65,7 +65,7 @@ function ConvexStudyActivitySync() {
 
     window.addEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncStudyStats);
     window.addEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncStudyStats);
-    window.addEventListener("intellectx:learner-session-change", syncStudyStats);
+    window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncStudyStats);
     window.addEventListener("storage", syncStudyStats);
     window.addEventListener("focus", syncStudyStats);
     window.addEventListener("pageshow", syncStudyStats);
@@ -73,7 +73,7 @@ function ConvexStudyActivitySync() {
     return () => {
       window.removeEventListener(LESSON_PROGRESS_HISTORY_CHANGE_EVENT, syncStudyStats);
       window.removeEventListener(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT, syncStudyStats);
-      window.removeEventListener("intellectx:learner-session-change", syncStudyStats);
+      window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncStudyStats);
       window.removeEventListener("storage", syncStudyStats);
       window.removeEventListener("focus", syncStudyStats);
       window.removeEventListener("pageshow", syncStudyStats);
