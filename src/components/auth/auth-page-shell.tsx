@@ -1,4 +1,5 @@
-﻿import { LearnerSessionForm } from "@/components/auth/learner-session-form";
+import { ClerkAuthPanel } from "@/components/auth/clerk-auth-panel";
+import { LearnerSessionForm } from "@/components/auth/learner-session-form";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
@@ -8,6 +9,14 @@ type AuthPageShellProps = {
 };
 
 export function AuthPageShell({ mode }: AuthPageShellProps) {
+  const shouldUseClerkAuth = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  const authPanel =
+    shouldUseClerkAuth && mode !== "forgot-password" ? (
+      <ClerkAuthPanel mode={mode} />
+    ) : (
+      <LearnerSessionForm mode={mode} />
+    );
+
   return (
     <>
       <div className="relative isolate min-h-screen overflow-hidden px-6 pt-28 pb-10 md:px-10">
@@ -26,7 +35,7 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
               Session details can be cleared from the profile page.
             </p>
           </section>
-          <LearnerSessionForm mode={mode} />
+          {authPanel}
         </main>
       </div>
       <Footer />

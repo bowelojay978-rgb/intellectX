@@ -15,7 +15,11 @@ export function ConvexClientProvider({ children }: ConvexClientProviderProps) {
   const client = useMemo(() => (convexUrl ? new ConvexReactClient(convexUrl) : null), [convexUrl]);
 
   if (!client) {
-    return <>{children}</>;
+    if (!clerkPublishableKey) {
+      return <>{children}</>;
+    }
+
+    return <ClerkProvider publishableKey={clerkPublishableKey}>{children}</ClerkProvider>;
   }
 
   if (!clerkPublishableKey) {
