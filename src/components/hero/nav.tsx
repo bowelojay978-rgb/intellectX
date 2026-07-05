@@ -106,13 +106,11 @@ export function Nav() {
   const showAuthenticatedNav = isAppRoute || Boolean(session);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
-  const navState = showAuthenticatedNav ? "app" : "public";
 
   return (
     <>
-      <MobileNav className="flex md:hidden" items={navItems} logoHref={logoHref} session={session} navState={navState} />
-      <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={session} navState={navState} />
+      <MobileNav className="flex md:hidden" items={navItems} logoHref={logoHref} session={session} />
+      <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={session} />
     </>
   );
 }
-

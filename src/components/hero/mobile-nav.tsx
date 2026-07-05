@@ -11,12 +11,11 @@ type Props = {
     href: string;
   }[];
   logoHref?: string;
-  navState: "app" | "public";
   session: LearnerSession | null | undefined;
   className?: string;
 };
 
-export function MobileNav({ items, logoHref = "/", navState, session, className }: Props) {
+export function MobileNav({ items, logoHref = "/", session, className }: Props) {
   return (
     <nav
       className={cn(
@@ -43,7 +42,7 @@ export function MobileNav({ items, logoHref = "/", navState, session, className 
                 {item.label}
               </Link>
             ))}
-            <LearnerSessionStatus compact navState={navState} session={session} />
+            <LearnerSessionStatus compact session={session} />
           </DrawerContent>
         </Drawer>
       </div>

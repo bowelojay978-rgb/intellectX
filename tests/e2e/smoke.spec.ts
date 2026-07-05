@@ -778,6 +778,7 @@ test("profile is guarded when no learner session exists", async ({ page }) => {
 
   await page.goto("/profile");
   await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
 });
 
 test("pricing keeps premium plan unavailable for free MVP", async ({ page }) => {

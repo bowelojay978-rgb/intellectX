@@ -19,7 +19,6 @@ type Props = {
     href: string;
   }[];
   logoHref?: string;
-  navState: "app" | "public";
   session: LearnerSession | null | undefined;
   className?: string;
 };
@@ -36,7 +35,7 @@ function isActiveNavItem(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DesktopNav({ items, logoHref = "/", navState, session, className }: Props) {
+export function DesktopNav({ items, logoHref = "/", session, className }: Props) {
   const pathname = usePathname();
 
   return (
@@ -75,7 +74,7 @@ export function DesktopNav({ items, logoHref = "/", navState, session, className
             })}
           </NavigationMenuList>
         </NavigationMenu>
-        <LearnerSessionStatus navState={navState} session={session} />
+        <LearnerSessionStatus session={session} />
       </div>
     </nav>
   );

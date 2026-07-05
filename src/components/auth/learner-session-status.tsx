@@ -7,11 +7,10 @@ import Link from "next/link";
 
 type LearnerSessionStatusProps = {
   compact?: boolean;
-  navState: "app" | "public";
   session: LearnerSession | null | undefined;
 };
 
-export function LearnerSessionStatus({ compact = false, navState, session }: LearnerSessionStatusProps) {
+export function LearnerSessionStatus({ compact = false, session }: LearnerSessionStatusProps) {
   function handleLogout() {
     clearLearnerSession();
     window.location.assign("/");
@@ -46,27 +45,6 @@ export function LearnerSessionStatus({ compact = false, navState, session }: Lea
     );
   }
 
-  if (navState === "app") {
-    if (compact) {
-      return (
-        <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
-          <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
-            <LogOutIcon className="size-4" />
-            Log out
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="justify-self-end flex items-center gap-3">
-        <Button type="button" variant="outline" size="sm" onClick={handleLogout}>
-          <LogOutIcon className="size-4" />
-          Logout
-        </Button>
-      </div>
-    );
-  }
 
   if (compact) {
     return (
@@ -92,4 +70,3 @@ export function LearnerSessionStatus({ compact = false, navState, session }: Lea
     </div>
   );
 }
-
