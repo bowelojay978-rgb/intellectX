@@ -1,7 +1,7 @@
 import type { UserIdentity } from "convex/server";
 import { describe, expect, it } from "vitest";
 
-import { resolveLearnerUserKeyFromIdentity } from "../../convex/lib/identity";
+import { isLocalUserKeyFallbackAllowed, resolveLearnerUserKeyFromIdentity } from "../../convex/lib/identity";
 import {
   AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
   isLocalLearnerMigrationSourceUserKey,
@@ -19,16 +19,65 @@ function identity(overrides: Partial<UserIdentity> = {}): UserIdentity {
 
 describe("Convex learner identity resolution", () => {
   it("prefers authenticated identity over client-supplied userKey", () => {
-    expect(resolveLearnerUserKeyFromIdentity(identity(), "learner:spoofed@example.com")).toEqual({
+    expect(
+      resolveLearnerUserKeyFromIdentity(identity(), "learner:spoofed@example.com", {
+        NODE_ENV: "production",
+        ALLOW_LOCAL_USERKEY_FALLBACK: "false",
+      }),
+    ).toEqual({
       userKey: "auth:https://clerk.example|user_123",
       source: "authenticated",
     });
   });
 
-  it("allows the temporary local fallback userKey when no authenticated identity exists", () => {
-    expect(resolveLearnerUserKeyFromIdentity(null, " learner:local@example.com ")).toEqual({
+  it("allows the temporary local fallback userKey only when explicitly allowed", () => {
+    expect(
+      resolveLearnerUserKeyFromIdentity(null, " learner:local@example.com ", {
+        ALLOW_LOCAL_USERKEY_FALLBACK: "true",
+        NODE_ENV: "production",
+      }),
+    ).toEqual({
       userKey: "learner:local@example.com",
       source: "local-fallback",
+    });
+  });
+
+  it("allows the temporary local fallback for clearly local development contexts", () => {
+    expect(resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", { NODE_ENV: "development" })).toEqual({
+      userKey: "learner:local@example.com",
+      source: "local-fallback",
+    });
+
+    expect(
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", { CONVEX_DEPLOYMENT: "dev:example" }),
+    ).toEqual({
+      userKey: "learner:local@example.com",
+      source: "local-fallback",
+    });
+  });
+
+  it("rejects local fallback in production-like contexts without an opt-in flag", () => {
+    expect(() =>
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", {
+        NODE_ENV: "production",
+      }),
+    ).toThrow("Authenticated learner identity is required.");
+
+    expect(() =>
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", {
+        CONVEX_DEPLOYMENT: "prod:example",
+      }),
+    ).toThrow("Authenticated learner identity is required.");
+  });
+
+  it("does not let a forged client userKey override authenticated identity", () => {
+    expect(
+      resolveLearnerUserKeyFromIdentity(identity({ tokenIdentifier: "https://clerk.example|user_real" }), "learner:victim@example.com", {
+        ALLOW_LOCAL_USERKEY_FALLBACK: "true",
+      }),
+    ).toEqual({
+      userKey: "auth:https://clerk.example|user_real",
+      source: "authenticated",
     });
   });
 
@@ -36,6 +85,17 @@ describe("Convex learner identity resolution", () => {
     expect(() => resolveLearnerUserKeyFromIdentity(null, null)).toThrow(
       "A learner identity is required for this operation.",
     );
+  });
+
+  it("detects when local userKey fallback is allowed", () => {
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "production" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", NODE_ENV: "development" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "production" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "development" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "test" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ CONVEX_DEPLOYMENT: "dev:example" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ CONVEX_DEPLOYMENT: "prod:example" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({})).toBe(false);
   });
 });
 

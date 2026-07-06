@@ -40,5 +40,7 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 - Convex URL without Clerk is not real auth; it is local fallback with Convex sync.
 - Clerk+Convex frontend sync still passes a `userKey` argument because the existing Convex function signatures require it. If no local learner key exists, the client uses an authenticated-user placeholder; production security depends on Convex authenticated identity overriding that placeholder server-side.
 - Local-to-auth auto-migration only uses the current browser's local learner session key, records a local attempted/succeeded marker, and rejects authenticated, placeholder, or malformed source keys during migration planning.
-- Do not treat the placeholder path as paid-production safe. Remove or restrict fallback `userKey` trust before enabling paid access.
+- Authenticated Convex identity is the production source of truth for user-owned data. In production-like environments, user-owned Convex functions fail closed when `ctx.auth.getUserIdentity()` is missing.
+- `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
+- Do not treat the placeholder path as paid-production safe. Remove or further restrict fallback `userKey` trust before enabling paid access.
 - Payments remain blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle handling are complete.

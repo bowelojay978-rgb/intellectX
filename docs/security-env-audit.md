@@ -28,6 +28,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
 - [ ] Convex learner identity resolution is centralized for user-owned data.
 - [ ] Authenticated Clerk/Convex identity is preferred when available.
+- [ ] Production Convex user-owned reads and writes fail closed without authenticated identity.
+- [ ] `ALLOW_LOCAL_USERKEY_FALLBACK` is unset or `false` in production; use it only for local/development fallback testing.
 - [ ] Frontend Convex sync is auth-aware: Clerk+Convex mode can hydrate and write account-backed profile, course selection, quiz, lesson progress, and study activity data without requiring a local browser learner session.
 - [ ] Local-to-auth learner data migration bridge exists for account activation.
 - [ ] Migration only runs when authenticated Convex identity exists; automatic frontend migration uses only the current browser's local learner identity as the source key.
@@ -35,7 +37,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Convex migration planning rejects empty, authenticated, placeholder, and malformed local source keys.
 - [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
 - [ ] Existing Convex calls still pass a `userKey` argument for compatibility. In Clerk+Convex mode without a local key, the frontend passes a placeholder that must be ignored by authenticated Convex identity once `convex/auth.config.ts` is active.
-- [ ] Client-supplied `userKey` remains only as a temporary local/free fallback and is not paid-production safe.
+- [ ] Client-supplied `userKey` remains only as a temporary local/development fallback and is not production-trusted.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - [ ] Keep payments blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
