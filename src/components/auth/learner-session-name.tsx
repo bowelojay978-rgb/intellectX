@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import { useUser } from "@clerk/nextjs";
+import { getClerkDisplayName, getFirstDisplayNamePart, getLocalLearnerDisplayName } from "@/lib/auth-identity";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import {
   getLearnerSession,
   LEARNER_SESSION_CHANGE_EVENT,
@@ -14,36 +16,32 @@ type LearnerSessionNameProps = {
 };
 
 function formatLearnerName(session: LearnerSession | null, fallback: string, firstNameOnly: boolean) {
-  const displayName = session?.name?.trim() || fallback;
+  const displayName = getLocalLearnerDisplayName(session, fallback);
 
   if (!firstNameOnly) {
     return displayName;
   }
 
-  return displayName.split(/\s+/)[0] || fallback;
+  return getFirstDisplayNamePart(displayName, fallback);
 }
 
 export function LearnerSessionName({ fallback = "Learner", firstNameOnly = false }: LearnerSessionNameProps) {
-  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  if (isClerkAuthEnabled()) {
     return <ClerkLearnerSessionName fallback={fallback} firstNameOnly={firstNameOnly} />;
   }
 
   return <LocalLearnerSessionName fallback={fallback} firstNameOnly={firstNameOnly} />;
 }
 
-function getClerkName(user: ReturnType<typeof useUser>["user"], fallback: string) {
-  return user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress || fallback;
-}
-
 function ClerkLearnerSessionName({ fallback = "Learner", firstNameOnly = false }: LearnerSessionNameProps) {
   const { isLoaded, isSignedIn, user } = useUser();
-  const displayName = isLoaded && isSignedIn ? getClerkName(user, fallback) : fallback;
+  const displayName = isLoaded && isSignedIn ? getClerkDisplayName(user, fallback) : fallback;
 
   if (!firstNameOnly) {
     return <>{displayName}</>;
   }
 
-  return <>{displayName.split(/\s+/)[0] || fallback}</>;
+  return <>{getFirstDisplayNamePart(displayName, fallback)}</>;
 }
 
 function LocalLearnerSessionName({ fallback = "Learner", firstNameOnly = false }: LearnerSessionNameProps) {

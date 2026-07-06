@@ -21,9 +21,14 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 
 ## Auth Readiness
 
-- [ ] Clerk package/provider preparation exists, but real auth is not active unless Clerk environment keys are configured.
+- [ ] Clerk package/provider preparation exists.
+- [ ] Clerk auth UI bridge exists.
+- [ ] Clerk-aware nav, session, and profile UI exists.
+- [ ] Dual-mode route guard exists for protected app routes.
+- [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
+- [ ] Real secure Convex identity is still not complete.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
-- [ ] Current free MVP access still uses browser-backed local learner sessions.
+- [ ] Keep payments blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 
 ## Secrets Hygiene
 

@@ -782,18 +782,22 @@ test("completing a quiz updates history and quizzes page reflects the attempt", 
   await expect(quizCard.getByText(/No attempt yet/)).toHaveCount(0);
 });
 
-test("profile is guarded when no learner session exists", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.removeItem("intellectx:learner-session");
-    window.localStorage.removeItem("intellectx:academic-profile");
+const signedOutLearnerRoutes = ["/courses", "/quizzes", "/progress", "/dashboard", "/profile"];
+
+for (const route of signedOutLearnerRoutes) {
+  test(`signed out ${route} redirects to login`, async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.removeItem("intellectx:learner-session");
+      window.localStorage.removeItem("intellectx:academic-profile");
+    });
+
+    await page.goto(route);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
   });
+}
 
-  await page.goto("/profile");
-  await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
-});
-
-test("dashboard is guarded when no learner session exists", async ({ page }) => {
+test("signed out dashboard is guarded when no learner session exists and redirects to login", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.removeItem("intellectx:learner-session");
   });

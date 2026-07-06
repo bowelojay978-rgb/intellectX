@@ -3,6 +3,7 @@
 import { MobileNav } from "@/components/hero/mobile-nav";
 import { DesktopNav } from "@/components/hero/desktop-nav";
 import { useUser } from "@clerk/nextjs";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
 import { isLearnerAppPath } from "@/lib/learner-routes";
 import { usePathname, useRouter } from "next/navigation";
@@ -67,7 +68,7 @@ function isNativeAppSurface() {
 }
 
 export function Nav() {
-  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  if (isClerkAuthEnabled()) {
     return <ClerkNav />;
   }
 

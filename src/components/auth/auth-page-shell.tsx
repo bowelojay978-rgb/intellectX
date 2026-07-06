@@ -3,15 +3,15 @@ import { LearnerSessionForm } from "@/components/auth/learner-session-form";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 
 type AuthPageShellProps = {
   mode: "login" | "signup" | "forgot-password";
 };
 
 export function AuthPageShell({ mode }: AuthPageShellProps) {
-  const shouldUseClerkAuth = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
   const authPanel =
-    shouldUseClerkAuth && mode !== "forgot-password" ? (
+    isClerkAuthEnabled() && mode !== "forgot-password" ? (
       <ClerkAuthPanel mode={mode} />
     ) : (
       <LearnerSessionForm mode={mode} />

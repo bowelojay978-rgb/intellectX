@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { AcademicProfileSync } from "@/components/education/academic-profile-sync";
 import { CourseSelectionSync } from "@/components/education/course-selection-sync";
@@ -8,6 +8,8 @@ import { StudyActivitySync } from "@/components/education/study-activity-sync";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
+import { useAuth } from "@clerk/nextjs";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession } from "@/lib/learner-session";
 import { isLearnerAppPath } from "@/lib/learner-routes";
 import { usePathname } from "next/navigation";
@@ -17,7 +19,34 @@ type PageShellProps = {
   children: React.ReactNode;
 };
 
+type PageShellFrameProps = PageShellProps & {
+  canShowApp: boolean;
+};
+
 export function PageShell({ children }: PageShellProps) {
+  if (isClerkAuthEnabled()) {
+    return <ClerkPageShell>{children}</ClerkPageShell>;
+  }
+
+  return <LocalPageShell>{children}</LocalPageShell>;
+}
+
+function ClerkPageShell({ children }: PageShellProps) {
+  const pathname = usePathname();
+  const guarded = isLearnerAppPath(pathname);
+  const { isLoaded, isSignedIn } = useAuth();
+  const canShowApp = !guarded || (isLoaded && isSignedIn);
+
+  useEffect(() => {
+    if (guarded && isLoaded && !isSignedIn) {
+      window.location.replace("/login");
+    }
+  }, [guarded, isLoaded, isSignedIn, pathname]);
+
+  return <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>;
+}
+
+function LocalPageShell({ children }: PageShellProps) {
   const pathname = usePathname();
   const guarded = isLearnerAppPath(pathname);
   const [canShowApp, setCanShowApp] = useState(!guarded);
@@ -57,6 +86,10 @@ export function PageShell({ children }: PageShellProps) {
     };
   }, [guarded, pathname]);
 
+  return <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>;
+}
+
+function PageShellFrame({ canShowApp, children }: PageShellFrameProps) {
   return (
     <>
       <CourseSelectionSync />
@@ -73,9 +106,3 @@ export function PageShell({ children }: PageShellProps) {
     </>
   );
 }
-
-
-
-
-
-

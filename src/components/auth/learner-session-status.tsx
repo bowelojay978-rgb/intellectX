@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { getClerkDisplayName } from "@/lib/auth-identity";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { clearLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
@@ -12,15 +14,11 @@ type LearnerSessionStatusProps = {
 };
 
 export function LearnerSessionStatus({ compact = false, session }: LearnerSessionStatusProps) {
-  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  if (isClerkAuthEnabled()) {
     return <ClerkLearnerSessionStatus compact={compact} />;
   }
 
   return <LocalLearnerSessionStatus compact={compact} session={session} />;
-}
-
-function getClerkDisplayName(user: ReturnType<typeof useUser>["user"]) {
-  return user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress || "Learner";
 }
 
 function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatusProps, "compact">) {

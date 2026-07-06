@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { getClerkDisplayName } from "@/lib/auth-identity";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import {
   clearLearnerSession,
   getLearnerSession,
@@ -18,15 +20,11 @@ type ProfileLearnerSessionProps = {
 };
 
 export function ProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
-  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  if (isClerkAuthEnabled()) {
     return <ClerkProfileLearnerSession className={className} />;
   }
 
   return <LocalProfileLearnerSession className={className} />;
-}
-
-function getClerkDisplayName(user: ReturnType<typeof useUser>["user"]) {
-  return user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress || "Learner";
 }
 
 function ClerkProfileLearnerSession({ className }: ProfileLearnerSessionProps) {
