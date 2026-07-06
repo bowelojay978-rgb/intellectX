@@ -14,11 +14,24 @@ This checklist is developer-facing and must be completed before IntellectX treat
 1. Configure the Clerk app.
 2. Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 3. Add `CLERK_SECRET_KEY` only where needed server-side.
-4. Configure the Convex auth issuer.
-5. Set `CLERK_JWT_ISSUER_DOMAIN`.
+4. Activate Clerk's Convex integration and copy the Clerk Frontend API URL.
+5. Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex environment to that Clerk Frontend API URL.
 6. Only then add `convex/auth.config.ts`.
 7. Run `npx convex codegen`, `npm run typecheck`, `npm run test:unit`, the focused auth E2E smoke tests, and `npm run build`.
 8. QA login, signup, route guards, Convex identity, and local-to-auth data migration.
+
+## Missing Env Gate
+
+Do not add `convex/auth.config.ts` until these values are present in the correct environments:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY` where server-side Clerk access is required
+- `NEXT_PUBLIC_CONVEX_URL`
+- `CLERK_JWT_ISSUER_DOMAIN`
+
+Get `CLERK_JWT_ISSUER_DOMAIN` from the Clerk Dashboard after activating the Convex integration. Use the Clerk app's Frontend API URL: development values usually look like `https://verb-noun-00.clerk.accounts.dev`, while production values usually use the custom Clerk domain. Set it in the Convex dashboard or with Convex env tooling; do not hardcode it into source.
+
+After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx convex codegen`, then run the full validation set. Real auth is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads/writes.
 
 ## Safety Notes
 
