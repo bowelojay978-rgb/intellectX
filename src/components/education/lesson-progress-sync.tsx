@@ -1,8 +1,8 @@
 "use client";
 
 import { convexApi } from "@/lib/convex-api";
+import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
 import { recordLessonProgress } from "@/lib/lesson-progress-history";
 import { useMutation } from "convex/react";
 import { useEffect } from "react";
@@ -40,7 +40,7 @@ function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
       status: "in_progress",
       progress: 25,
     });
-    const identity = getCurrentLearnerIdentity();
+    const identity = getCurrentConvexLearnerIdentity();
 
     if (!identity) {
       return;

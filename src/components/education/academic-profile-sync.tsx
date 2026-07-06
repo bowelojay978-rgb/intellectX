@@ -10,8 +10,9 @@ import {
   saveAcademicProfile,
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
+import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
+import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -57,10 +58,10 @@ function ConvexAcademicProfileSync() {
   const syncingRemoteToLocal = useRef(false);
 
   useEffect(() => {
-    setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
 
     function syncIdentity() {
-      setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
       remoteHydrated.current = false;
     }
 

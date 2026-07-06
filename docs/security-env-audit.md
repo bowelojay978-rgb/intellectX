@@ -28,9 +28,13 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
 - [ ] Convex learner identity resolution is centralized for user-owned data.
 - [ ] Authenticated Clerk/Convex identity is preferred when available.
+- [ ] Frontend Convex sync is auth-aware: Clerk+Convex mode can hydrate and write account-backed profile, course selection, quiz, lesson progress, and study activity data without requiring a local browser learner session.
 - [ ] Local-to-auth learner data migration bridge exists for account activation.
-- [ ] Migration only runs when authenticated Convex identity exists; the client may provide only the local source key.
+- [ ] Migration only runs when authenticated Convex identity exists; automatic frontend migration uses only the current browser's local learner identity as the source key.
+- [ ] Local-to-auth migration records a local attempted/succeeded marker per auth mode and source key so failed auto-migration does not retry or log forever.
+- [ ] Convex migration planning rejects empty, authenticated, placeholder, and malformed local source keys.
 - [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
+- [ ] Existing Convex calls still pass a `userKey` argument for compatibility. In Clerk+Convex mode without a local key, the frontend passes a placeholder that must be ignored by authenticated Convex identity once `convex/auth.config.ts` is active.
 - [ ] Client-supplied `userKey` remains only as a temporary local/free fallback and is not paid-production safe.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.

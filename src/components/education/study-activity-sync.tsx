@@ -7,8 +7,9 @@ import {
   QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
 } from "@/lib/quiz-attempt-history";
 import { convexApi } from "@/lib/convex-api";
+import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
+import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { readStudyActivitySummary } from "@/lib/study-activity-summary";
 import { useMutation } from "convex/react";
 import { useCallback, useEffect, useRef } from "react";
@@ -26,7 +27,7 @@ function ConvexStudyActivitySync() {
   const lastSyncedPayload = useRef<string | null>(null);
 
   const syncStudyStats = useCallback(() => {
-    const identity = getCurrentLearnerIdentity();
+    const identity = getCurrentConvexLearnerIdentity();
 
     if (!identity) {
       return;

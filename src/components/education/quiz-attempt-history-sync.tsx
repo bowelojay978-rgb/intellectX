@@ -2,8 +2,9 @@
 
 import { quizzes } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
+import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
-import { getCurrentLearnerIdentity, LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
+import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { mergeQuizAttemptHistory, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { useConvex } from "convex/react";
 import { useEffect, useState } from "react";
@@ -63,10 +64,10 @@ function ConvexQuizAttemptHistorySync() {
   const [userKey, setUserKey] = useState<string | null>(null);
 
   useEffect(() => {
-    setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
 
     function syncIdentity() {
-      setUserKey(getCurrentLearnerIdentity()?.userKey ?? null);
+      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
     }
 
     window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);

@@ -2,7 +2,11 @@ import type { UserIdentity } from "convex/server";
 import { describe, expect, it } from "vitest";
 
 import { resolveLearnerUserKeyFromIdentity } from "../../convex/lib/identity";
-import { prepareLearnerDataMigration } from "../../convex/lib/migrateLearnerData";
+import {
+  AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
+  isLocalLearnerMigrationSourceUserKey,
+  prepareLearnerDataMigration,
+} from "../../convex/lib/migrateLearnerData";
 
 function identity(overrides: Partial<UserIdentity> = {}): UserIdentity {
   return {
@@ -54,10 +58,35 @@ describe("Convex learner data migration planning", () => {
     );
   });
 
+  it("rejects authenticated source user keys", () => {
+    expect(() => prepareLearnerDataMigration(identity(), "auth:https://clerk.example|user_other")).toThrow(
+      "Authenticated learner user keys cannot be used as local migration sources.",
+    );
+  });
+
+  it("rejects the authenticated Convex compatibility placeholder as a source", () => {
+    expect(() => prepareLearnerDataMigration(identity(), AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER)).toThrow(
+      "The authenticated Convex compatibility placeholder cannot be used as a migration source.",
+    );
+  });
+
+  it("rejects malformed local source user keys", () => {
+    expect(() => prepareLearnerDataMigration(identity(), "learner:not-an-email")).toThrow(
+      "Migration source userKey must be a local learner key.",
+    );
+  });
+
   it("always derives the destination userKey from authenticated identity", () => {
     expect(prepareLearnerDataMigration(identity(), "learner:local@example.com")).toEqual({
       sourceUserKey: "learner:local@example.com",
       destinationUserKey: "auth:https://clerk.example|user_123",
     });
+  });
+
+  it("recognizes only local learner user keys as migration sources", () => {
+    expect(isLocalLearnerMigrationSourceUserKey("learner:local@example.com")).toBe(true);
+    expect(isLocalLearnerMigrationSourceUserKey(" learner:local@example.com ")).toBe(true);
+    expect(isLocalLearnerMigrationSourceUserKey("learner:not-an-email")).toBe(false);
+    expect(isLocalLearnerMigrationSourceUserKey("auth:https://clerk.example|user_123")).toBe(false);
   });
 });

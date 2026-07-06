@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Quiz } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
     <QuizPlayerCore
       quiz={quiz}
       onComplete={(answers, score, attempt) => {
-        const identity = getCurrentLearnerIdentity();
+        const identity = getCurrentConvexLearnerIdentity();
 
         if (!identity) {
           return;

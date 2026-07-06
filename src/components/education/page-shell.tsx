@@ -102,11 +102,15 @@ function LocalPageShell({ children }: PageShellProps) {
 function PageShellFrame({ canShowApp, children }: PageShellFrameProps) {
   return (
     <>
-      <CourseSelectionSync />
-      <AcademicProfileSync />
-      <QuizAttemptHistorySync />
-      <StudyActivitySync />
-      <LessonProgressHistorySync />
+      {canShowApp ? (
+        <>
+          <CourseSelectionSync />
+          <AcademicProfileSync />
+          <QuizAttemptHistorySync />
+          <StudyActivitySync />
+          <LessonProgressHistorySync />
+        </>
+      ) : null}
       <div className="relative isolate z-10 min-h-screen overflow-hidden px-6 pt-32 pb-8 md:px-10 md:pt-36">
         <BackgroundBlur className="-top-40 md:-top-0" />
         <Nav />
