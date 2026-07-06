@@ -45,6 +45,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 - [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.
 - [ ] Entitlement statuses are `none`, `active`, `expired`, `cancelled`, `refunded`, and `payment_failed`; only `active` unlocks paid access.
+- [ ] Billing lifecycle events are documented in `docs/billing-entitlement-lifecycle.md`.
+- [ ] Only internal/server-verified billing events may write entitlement records.
 - [ ] Protected app routes, user-owned Convex data, and payment-sensitive routes match `docs/route-access-matrix.md` before production release.
 
 ## Secrets Hygiene
@@ -81,6 +83,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Do not enable Paddle from a client-only checkout path.
 - [ ] Do not claim paid production readiness until server-side authorization protects learner and entitlement data.
 - [ ] Do not grant paid access from frontend flags, localStorage, pricing cards, or checkout query params.
+- [ ] Do not treat `/checkout_redirect/success` as entitlement proof.
 - [ ] Subscription lifecycle and refund/payment-failure updates must write server-authorized entitlement status before any paid content is exposed.
 
 ## TGC Alignment

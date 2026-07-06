@@ -15,6 +15,7 @@ import type * as courses from "../courses.js";
 import type * as entitlements from "../entitlements.js";
 import type * as learnerMigration from "../learnerMigration.js";
 import type * as lessons from "../lessons.js";
+import type * as lib_billingLifecycle from "../lib/billingLifecycle.js";
 import type * as lib_entitlements from "../lib/entitlements.js";
 import type * as lib_identity from "../lib/identity.js";
 import type * as lib_migrateLearnerData from "../lib/migrateLearnerData.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   entitlements: typeof entitlements;
   learnerMigration: typeof learnerMigration;
   lessons: typeof lessons;
+  "lib/billingLifecycle": typeof lib_billingLifecycle;
   "lib/entitlements": typeof lib_entitlements;
   "lib/identity": typeof lib_identity;
   "lib/migrateLearnerData": typeof lib_migrateLearnerData;

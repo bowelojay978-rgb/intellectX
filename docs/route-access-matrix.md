@@ -12,7 +12,7 @@ This matrix documents the intended production access posture for IntellectX rout
 | `/forgot-password` | Public auth | Local auth bridge navigation only | None | Must not create a learner session. | `forgot password returns to login without creating a learner session` |
 | `/pricing` | Public, payment-sensitive | Informational pricing copy | None | Pricing cards must not grant access or enable checkout. | `pricing keeps premium plan unavailable...` |
 | `/checkout` | Public route, payment-sensitive | Checkout query params only when payments enabled | Payments must remain disabled | Must fail closed unless the explicit safe payment gate is enabled after real auth and verified entitlements. | `checkout is disabled unless payments are explicitly enabled` |
-| `/checkout_redirect/success` | Public payment return | Checkout redirect params | Payment provider flow disabled | Must not be treated as entitlement proof. | Core route/build coverage |
+| `/checkout_redirect/success` | Public payment return | Checkout redirect params | Payment provider flow disabled | Must not be treated as entitlement proof or write entitlements. | Core route/build coverage |
 | `/privacy-policy` | Public legal | Static legal content | None | Legal copy only. | Mobile smoke |
 | `/terms-and-conditions` | Public legal | Static legal content | None | Legal copy only. | Build coverage |
 | `/refund-policy` | Public legal | Static legal content | None | Legal copy only; does not enable refunds/payments. | Build coverage |
@@ -42,6 +42,7 @@ This matrix documents the intended production access posture for IntellectX rout
 | `studyStats` | User-owned query/mutation | `resolveLearnerUserKey` | Study stats are scoped to the resolved user key. | `convex-identity.test.ts` |
 | `learnerMigration` | Migration-only mutation | Authenticated destination plus strict local source key | Placeholder, authenticated, malformed, empty, and same-source keys are rejected. | `convex-identity.test.ts`, `local-learner-migration.test.ts` |
 | `entitlements.getPaidAccessDecision` | Payment/entitlement-sensitive query | `resolveLearnerUserKey` plus server entitlement record | Paid access fails closed unless an active, unexpired server entitlement exists. | `entitlements.test.ts` |
+| `entitlements.applyVerifiedBillingEntitlementEvent` | Internal payment/entitlement mutation | Internal verified billing event payload | Not callable from the frontend; maps verified billing lifecycle events into entitlement status updates. | `billing-lifecycle.test.ts` |
 | `courses`, `lessons`, catalog `quizzes` | Public/read-only catalog | None for catalog reads | Catalog content remains readable; user-owned progress is separate. | Route/build coverage |
 | `seedEducationCatalog` | Internal/admin | Internal Convex mutation | Must remain internal/developer-only. | Manual/code review |
 
@@ -51,4 +52,4 @@ This matrix documents the intended production access posture for IntellectX rout
 - Frontend Convex sync must not write without a resolved Convex learner identity. In local/Convex-only mode that means a local learner key; in Clerk+Convex mode the placeholder is acceptable only because authenticated Convex identity must override it server-side.
 - `ALLOW_LOCAL_USERKEY_FALLBACK` must stay unset or `false` in production.
 - `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured.
-- Checkout and paid access remain blocked until real auth, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete.
+- Checkout and paid access remain blocked until real auth, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.

@@ -45,4 +45,6 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 - `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
 - Do not treat the placeholder path as paid-production safe. Remove or further restrict fallback `userKey` trust before enabling paid access.
 - Paid access requires server-side entitlements. Only `active` entitlement status unlocks paid content; `none`, `expired`, `cancelled`, `refunded`, and `payment_failed` remain blocked.
+- Billing lifecycle mapping is documented in `docs/billing-entitlement-lifecycle.md`; only verified server/provider events may write entitlements.
+- Checkout success redirects are not proof of entitlement.
 - Payments remain blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle handling are complete.

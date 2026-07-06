@@ -139,10 +139,23 @@ export default defineSchema({
     provider: v.optional(v.string()),
     providerCustomerId: v.optional(v.string()),
     providerSubscriptionId: v.optional(v.string()),
+    providerEventId: v.optional(v.string()),
+    lastBillingEventType: v.optional(
+      v.union(
+        v.literal("checkout_completed"),
+        v.literal("subscription_created"),
+        v.literal("subscription_renewed"),
+        v.literal("subscription_cancelled"),
+        v.literal("subscription_expired"),
+        v.literal("payment_failed"),
+        v.literal("payment_refunded"),
+      ),
+    ),
     updatedAt: v.number(),
   })
     .index("by_user", ["userKey"])
     .index("by_user_product", ["userKey", "productKey"])
+    .index("by_user_product_provider_subscription", ["userKey", "productKey", "provider", "providerSubscriptionId"])
     .index("by_product_status", ["productKey", "status"]),
 });
 
