@@ -826,7 +826,7 @@ test("signed out dashboard is guarded when no learner session exists and redirec
   await expect(page.getByRole("button", { name: "Logout" })).toHaveCount(0);
 });
 
-test("pricing keeps premium plan unavailable for free MVP", async ({ page }) => {
+test("pricing keeps premium plan unavailable until production payments are enabled", async ({ page }) => {
   await page.goto("/pricing");
 
   await expect(page.getByText("Scholar")).toBeVisible();

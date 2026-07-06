@@ -35,6 +35,24 @@ describe("frontend Convex learner identity resolution", () => {
     ).toBeNull();
   });
 
+  it("does not produce a write identity in local fallback mode when Convex sync is unavailable", () => {
+    expect(
+      resolveConvexLearnerIdentity({
+        authEnvironment: authEnvironment({ mode: "local-fallback", canRunConvexSync: false }),
+        localIdentity: { userKey: "learner:local@example.com" },
+      }),
+    ).toBeNull();
+  });
+
+  it("does not produce a write identity in Clerk-only mode without Convex sync", () => {
+    expect(
+      resolveConvexLearnerIdentity({
+        authEnvironment: authEnvironment({ mode: "clerk-only", canRunConvexSync: false }),
+        localIdentity: { userKey: "learner:local@example.com" },
+      }),
+    ).toBeNull();
+  });
+
   it("keeps a local learner key as the temporary fallback when Clerk and Convex are both configured", () => {
     expect(
       resolveConvexLearnerIdentity({

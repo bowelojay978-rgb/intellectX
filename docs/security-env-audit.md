@@ -35,6 +35,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Migration only runs when authenticated Convex identity exists; automatic frontend migration uses only the current browser's local learner identity as the source key.
 - [ ] Local-to-auth migration records a local attempted/succeeded marker per auth mode and source key so failed auto-migration does not retry or log forever.
 - [ ] Convex migration planning rejects empty, authenticated, placeholder, and malformed local source keys.
+- [ ] Route and data access decisions are documented in `docs/route-access-matrix.md`.
 - [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
 - [ ] Existing Convex calls still pass a `userKey` argument for compatibility. In Clerk+Convex mode without a local key, the frontend passes a placeholder that must be ignored by authenticated Convex identity once `convex/auth.config.ts` is active.
 - [ ] Client-supplied `userKey` remains only as a temporary local/development fallback and is not production-trusted.
@@ -44,6 +45,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 - [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.
 - [ ] Entitlement statuses are `none`, `active`, `expired`, `cancelled`, `refunded`, and `payment_failed`; only `active` unlocks paid access.
+- [ ] Protected app routes, user-owned Convex data, and payment-sensitive routes match `docs/route-access-matrix.md` before production release.
 
 ## Secrets Hygiene
 

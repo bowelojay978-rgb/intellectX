@@ -81,6 +81,22 @@ describe("Convex learner identity resolution", () => {
     });
   });
 
+  it("does not let the authenticated placeholder override real authenticated identity", () => {
+    expect(
+      resolveLearnerUserKeyFromIdentity(
+        identity({ tokenIdentifier: "https://clerk.example|user_real" }),
+        AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
+        {
+          NODE_ENV: "production",
+          ALLOW_LOCAL_USERKEY_FALLBACK: "false",
+        },
+      ),
+    ).toEqual({
+      userKey: "auth:https://clerk.example|user_real",
+      source: "authenticated",
+    });
+  });
+
   it("rejects missing authenticated identity and missing fallback userKey", () => {
     expect(() => resolveLearnerUserKeyFromIdentity(null, null)).toThrow(
       "A learner identity is required for this operation.",
@@ -90,6 +106,7 @@ describe("Convex learner identity resolution", () => {
   it("detects when local userKey fallback is allowed", () => {
     expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "production" })).toBe(true);
     expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", NODE_ENV: "development" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", CONVEX_DEPLOYMENT: "dev:example" })).toBe(false);
     expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "production" })).toBe(false);
     expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "development" })).toBe(true);
     expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "test" })).toBe(true);

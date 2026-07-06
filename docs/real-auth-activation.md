@@ -36,6 +36,7 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 ## Safety Notes
 
 - Local fallback remains active when Clerk env is missing.
+- Route access, protected data surfaces, and payment-sensitive paths are tracked in `docs/route-access-matrix.md`.
 - Clerk mode without Convex URL must not attempt local-to-auth Convex migration.
 - Convex URL without Clerk is not real auth; it is local fallback with Convex sync.
 - Clerk+Convex frontend sync still passes a `userKey` argument because the existing Convex function signatures require it. If no local learner key exists, the client uses an authenticated-user placeholder; production security depends on Convex authenticated identity overriding that placeholder server-side.
