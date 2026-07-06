@@ -62,8 +62,8 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
   }
 
   return (
-    <section className="mx-auto max-w-3xl">
-      <div className="mb-4 flex items-center justify-between gap-4 text-sm text-muted-foreground">
+    <section className="mx-auto w-full">
+      <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
         <span>
           Card {currentIndex + 1} of {cards.length}
         </span>
@@ -72,10 +72,10 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
         </Link>
       </div>
 
-      <article className="animate-widget min-h-80 rounded-lg border border-white/70 bg-white/60 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60">
+      <article className="animate-widget min-h-80 rounded-lg border border-white/70 bg-white/60 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60">
         <p className="text-muted-foreground text-sm">{currentCard.lessonTitle}</p>
         <p className="mt-3 text-xs font-medium uppercase tracking-normal text-muted-foreground">Flashcard-style review</p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight">{getFront(currentCard)}</h2>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight">{getFront(currentCard)}</h2>
         <div className="my-6 rounded-lg bg-secondary/60 p-5 text-center font-medium">{getCue(currentCard)}</div>
         {revealed ? (
           <p className="text-muted-foreground text-sm leading-6">{getBack(currentCard)}</p>
@@ -85,9 +85,10 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
       </article>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:flex">
           <Button
             variant="outline"
+            className="min-h-12"
             disabled={!hasMultipleCards || currentIndex === 0}
             onClick={() => goToCard(currentIndex - 1)}
           >
@@ -96,6 +97,7 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
           </Button>
           <Button
             variant="outline"
+            className="min-h-12"
             disabled={!hasMultipleCards || currentIndex === cards.length - 1}
             onClick={() => goToCard(currentIndex + 1)}
           >
@@ -103,7 +105,7 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
             <ArrowRightIcon />
           </Button>
         </div>
-        <Button onClick={() => setRevealed((value) => !value)}>
+        <Button className="min-h-12 w-full sm:w-auto" onClick={() => setRevealed((value) => !value)}>
           {revealed ? (
             <>
               <RotateCcwIcon />

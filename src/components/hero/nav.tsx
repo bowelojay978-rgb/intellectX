@@ -47,6 +47,21 @@ const appNavItems = [
   },
 ];
 
+const mobileFreeNavItems = [
+  {
+    label: "Quizzes",
+    href: "/mobile-quizzes",
+  },
+  {
+    label: "Flashcards",
+    href: "/mobile-flashcards",
+  },
+  {
+    label: "Notes",
+    href: "/mobile-notes",
+  },
+];
+
 type SessionState = LearnerSession | null | undefined;
 
 type MaybeCapacitorWindow = Window & {
@@ -82,7 +97,7 @@ function ClerkNav() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn && pathname === "/" && isNativeAppSurface()) {
-      router.replace("/courses");
+      router.replace("/mobile-quizzes");
     }
   }, [isLoaded, isSignedIn, pathname, router]);
 
@@ -93,7 +108,7 @@ function ClerkNav() {
 
   return (
     <>
-      <MobileNav className="flex md:hidden" items={navItems} logoHref={logoHref} session={null} />
+      <MobileNav className="flex md:hidden" items={mobileFreeNavItems} logoHref="/mobile-quizzes" session={null} />
       <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={null} />
     </>
   );
@@ -110,7 +125,7 @@ function LocalSessionNav() {
       setSession(nextSession);
 
       if (nextSession && pathname === "/" && isNativeAppSurface()) {
-        router.replace("/courses");
+        router.replace("/mobile-quizzes");
       }
     }
 
@@ -143,7 +158,7 @@ function LocalSessionNav() {
 
   return (
     <>
-      <MobileNav className="flex md:hidden" items={navItems} logoHref={logoHref} session={session} />
+      <MobileNav className="flex md:hidden" items={mobileFreeNavItems} logoHref="/mobile-quizzes" session={session} />
       <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={session} />
     </>
   );

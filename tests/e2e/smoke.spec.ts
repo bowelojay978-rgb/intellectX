@@ -189,12 +189,13 @@ test.describe("production support routes", () => {
 test("mobile study entry route exposes the limited mobile scope", async ({ page }) => {
   await page.goto("/mobile-study");
 
-  await expect(page.getByRole("heading", { name: "Study essentials for the mobile app" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Free mobile study tools" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Flashcards" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
-  await expect(page.getByRole("link", { name: "Open notes" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Open notes" })).toHaveAttribute("href", "/mobile-notes");
 });
 
 test("signed-out homepage shows only public nav links", async ({ page }) => {
@@ -272,7 +273,7 @@ test.describe("global loading indicator", () => {
   });
 });
 
-test("native app restores logged-in learners from home to courses", async ({ page }) => {
+test("native app restores logged-in learners from home to the free mobile quiz hub", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       "intellectx:learner-session",
@@ -295,8 +296,8 @@ test("native app restores logged-in learners from home to courses", async ({ pag
   });
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/\/courses$/);
-  await expectAppNav(page);
+  await expect(page).toHaveURL(/\/mobile-quizzes$/);
+  await expect(page.getByRole("heading", { name: "Practice with focused quizzes" })).toBeVisible();
 });
 
 test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
@@ -312,9 +313,9 @@ test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
 
 test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await page.goto("/mobile-notes");
-  await expect(page.getByRole("heading", { name: "Notes are part of each lesson" })).toBeVisible();
-  await expect(page.getByText("Instructor notes, explanations, examples, and video-attached learning material")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Browse lessons" })).toHaveAttribute("href", "/courses");
+  await expect(page.getByRole("heading", { name: "Lesson notes for review" })).toBeVisible();
+  await expect(page.getByText("Compact notes from the existing lesson material")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Browse lessons" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open lesson notes" })).toHaveCount(0);
 
   await page.goto("/mobile-flashcards");
@@ -621,6 +622,9 @@ test.describe("mobile smoke", () => {
 
   const mobileRoutes = [
     { route: "/", text: "IntellectX" },
+    { route: "/mobile-quizzes", text: "Practice with focused quizzes" },
+    { route: "/mobile-flashcards", text: "Flashcards from lesson cards" },
+    { route: "/mobile-notes", text: "Lesson notes for review" },
     { route: "/courses", text: "Choose your next intelligent learning path" },
     { route: "/quizzes", text: "Practice where learning becomes visible" },
     { route: "/privacy-policy", text: "Privacy Policy" },
@@ -639,6 +643,21 @@ test.describe("mobile smoke", () => {
       await expect(page.locator("body")).not.toContainText("Unhandled Runtime Error");
     });
   }
+
+  test("mobile free navigation only exposes quizzes flashcards and notes", async ({ page }) => {
+    await page.goto("/mobile-quizzes");
+
+    const bottomNav = page.locator("nav").filter({ has: page.getByRole("link", { name: "Flashcards" }) });
+    await expect(bottomNav.getByRole("link", { name: "Quizzes" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "Flashcards" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "Notes" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "Courses" })).toHaveCount(0);
+    await expect(bottomNav.getByRole("link", { name: "Pricing" })).toHaveCount(0);
+    await expect(bottomNav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+    await expect(bottomNav.getByRole("link", { name: "Progress" })).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText("premium");
+    await expect(page.locator("body")).not.toContainText("checkout");
+  });
 
   test("lesson page keeps lesson content and quiz access visible while hiding video on mobile", async ({ page }) => {
     await seedLearnerAccess(page);

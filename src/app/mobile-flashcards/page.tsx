@@ -1,5 +1,5 @@
 import { MobileFlashcardReview } from "@/components/education/mobile-flashcard-review";
-import { PageShell } from "@/components/education/page-shell";
+import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { Badge } from "@/components/ui/badge";
 import { lessons, type LessonBlock } from "@/data/lessons";
 import type { Metadata } from "next";
@@ -26,21 +26,18 @@ const reviewCards = lessons.flatMap((lesson) => {
 
 export default function MobileFlashcardsPage() {
   return (
-    <PageShell>
-      <section className="mb-10 flex flex-col items-center gap-5 text-center">
+    <MobileAppShell>
+      <section className="mb-6 flex flex-col items-start gap-4">
         <Badge variant="secondary" className="uppercase">
           Flashcard-style review
         </Badge>
-        <h1 className="max-w-3xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
-          Flashcards from lesson cards
-        </h1>
-        <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-          A mobile review hub backed by existing tap-reveal and visual memory cards. Spaced repetition and analytics can
-          come later without changing the lesson content model today.
+        <h1 className="text-3xl leading-[1.08] font-medium tracking-tight">Flashcards from lesson cards</h1>
+        <p className="text-muted-foreground text-base leading-7">
+          Review existing tap-reveal and visual memory cards in a touch-friendly flow.
         </p>
       </section>
 
       <MobileFlashcardReview cards={reviewCards} />
-    </PageShell>
+    </MobileAppShell>
   );
 }

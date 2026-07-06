@@ -1,8 +1,8 @@
-import { PageShell } from "@/components/education/page-shell";
+import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { featureScope, isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
-import { BookOpenTextIcon, Layers3Icon } from "lucide-react";
+import { BookOpenTextIcon, Layers3Icon, StickyNoteIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -38,37 +38,43 @@ export default function MobileStudyPage() {
       cta: "Open flashcards",
       icon: Layers3Icon,
     },
+    {
+      feature: "notes" as const,
+      title: "Notes",
+      description: "Read compact lesson notes and key ideas from the existing lesson content.",
+      href: "/mobile-notes",
+      cta: "Open notes",
+      icon: StickyNoteIcon,
+    },
   ].filter((item) => isFeatureAllowedOnMobile(item.feature));
 
   return (
-    <PageShell>
-      <section className="mb-10 flex flex-col items-center gap-5 text-center">
+    <MobileAppShell>
+      <section className="mb-6 flex flex-col items-start gap-4">
         <Badge variant="secondary" className="uppercase">
           Mobile study
         </Badge>
-        <h1 className="max-w-3xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
-          Study essentials for the mobile app
-        </h1>
-        <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-          A focused entry point for the mobile IntellectX experience: quizzes and flashcards.
+        <h1 className="text-3xl leading-[1.08] font-medium tracking-tight">Free mobile study tools</h1>
+        <p className="text-muted-foreground text-base leading-7">
+          A focused IntellectX mobile experience for quizzes, flashcards, and notes.
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
+      <section className="grid gap-3">
         {studyItems.map((item) => {
           const Icon = item.icon;
 
           return (
             <article
               key={item.feature}
-              className="animate-widget flex min-h-72 flex-col rounded-lg border border-white/70 bg-white/60 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60"
+              className="animate-widget flex min-h-56 flex-col rounded-lg border border-white/70 bg-white/60 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60"
             >
               <span className="bg-primary text-primary-foreground grid size-11 place-items-center rounded-full">
                 <Icon className="size-5" />
               </span>
-              <h2 className="mt-5 text-2xl font-semibold tracking-tight">{item.title}</h2>
+              <h2 className="mt-5 text-xl font-semibold tracking-tight">{item.title}</h2>
               <p className="text-muted-foreground mt-3 flex-1 text-sm leading-6">{item.description}</p>
-              <Button className="mt-6" asChild>
+              <Button className="mt-6 min-h-12 w-full" asChild>
                 <Link href={item.href}>{item.cta}</Link>
               </Button>
             </article>
@@ -79,6 +85,6 @@ export default function MobileStudyPage() {
       <p className="text-muted-foreground mt-8 text-center text-sm">
         Mobile scope: {featureScope.mobileStudyFeatures.join(", ")}.
       </p>
-    </PageShell>
+    </MobileAppShell>
   );
 }

@@ -2,7 +2,7 @@
 
 import { BackgroundBlur } from "@/components/ui/background-blur";
 import { cn } from "@/lib/utils";
-import { BookOpenCheckIcon, HomeIcon, Layers3Icon } from "lucide-react";
+import { BookOpenCheckIcon, Layers3Icon, StickyNoteIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,24 +11,24 @@ type MobileAppShellProps = {
 };
 
 const tabs = [
-  { href: "/mobile-study", label: "Study", icon: HomeIcon },
   { href: "/mobile-quizzes", label: "Quizzes", icon: BookOpenCheckIcon },
-  { href: "/mobile-flashcards", label: "Cards", icon: Layers3Icon },
+  { href: "/mobile-flashcards", label: "Flashcards", icon: Layers3Icon },
+  { href: "/mobile-notes", label: "Notes", icon: StickyNoteIcon },
 ];
 
 export function MobileAppShell({ children }: MobileAppShellProps) {
   const pathname = usePathname();
 
   return (
-    <div className="relative isolate min-h-dvh overflow-hidden bg-background px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
+    <div className="relative isolate min-h-dvh overflow-x-hidden bg-background px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
       <BackgroundBlur className="-top-48" />
 
-      <header className="sticky top-0 z-20 mx-auto mb-4 flex w-full max-w-md items-center justify-between rounded-full border border-white/70 bg-background/80 px-4 py-3 shadow-sm backdrop-blur dark:border-white/10">
-        <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
+      <header className="sticky top-2 z-20 mx-auto mb-5 flex w-full max-w-md items-center justify-between rounded-full border border-white/70 bg-background/85 px-4 py-3 shadow-sm backdrop-blur dark:border-white/10">
+        <Link href="/mobile-quizzes" className="text-sm font-semibold tracking-tight">
           IntellectX
         </Link>
         <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-          Mobile
+          Free mobile
         </span>
       </header>
 
@@ -46,7 +46,7 @@ export function MobileAppShell({ children }: MobileAppShellProps) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition",
+                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium text-muted-foreground transition",
                   active && "bg-primary text-primary-foreground",
                 )}
               >
