@@ -17,6 +17,7 @@ import {
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
+import type { ContentAccessLevel } from "@/lib/entitlements";
 import { ClockIcon, FileQuestionIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -30,6 +31,7 @@ type ConvexQuiz = {
   difficulty: Quiz["difficulty"];
   estimatedTime: string;
   questions: unknown[];
+  accessLevel?: ContentAccessLevel;
 };
 
 type ConvexQuizzesSectionProps = {
@@ -68,6 +70,7 @@ function normalizeQuiz(quiz: ConvexQuiz, fallbackQuizzes: Quiz[]): Quiz | null {
     difficulty: quiz.difficulty,
     estimatedTime: quiz.estimatedTime,
     questions: fallbackQuiz.questions,
+    accessLevel: quiz.accessLevel ?? fallbackQuiz.accessLevel,
   };
 }
 

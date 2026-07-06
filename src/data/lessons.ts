@@ -1,3 +1,5 @@
+import type { ContentAccessLevel } from "../lib/entitlements";
+
 export type LessonBlock =
   | { type: "text"; body: string }
   | { type: "keyTerm"; term: string; definition: string }
@@ -18,6 +20,7 @@ export type Lesson = {
   blocks?: LessonBlock[];
   nextLessonId?: string;
   quizId?: string;
+  accessLevel?: ContentAccessLevel;
 };
 
 export const lessons: Lesson[] = [

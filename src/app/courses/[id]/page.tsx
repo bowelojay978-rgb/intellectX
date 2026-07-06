@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses, getCourse } from "@/data/courses";
 import { getLessonsByCourse } from "@/data/lessons";
 import { getQuizzesByCourse } from "@/data/quizzes";
+import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
 import { ArrowRightIcon, BookOpenIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -35,6 +36,12 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   const course = getCourse(id);
 
   if (!course) {
+    notFound();
+  }
+
+  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(course) });
+
+  if (!accessDecision.allowed) {
     notFound();
   }
 

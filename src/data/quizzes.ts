@@ -1,3 +1,5 @@
+import type { ContentAccessLevel } from "../lib/entitlements";
+
 export type QuizQuestion = {
   id: string;
   prompt: string;
@@ -14,6 +16,7 @@ export type Quiz = {
   difficulty: "Foundational" | "Applied" | "Challenge";
   estimatedTime: string;
   questions: QuizQuestion[];
+  accessLevel?: ContentAccessLevel;
 };
 
 export const quizzes: Quiz[] = [

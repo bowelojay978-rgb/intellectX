@@ -1,3 +1,5 @@
+import type { ContentAccessLevel } from "../lib/entitlements";
+
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 
 export type Course = {
@@ -12,6 +14,7 @@ export type Course = {
   lessonIds: string[];
   quizIds: string[];
   accent: string;
+  accessLevel?: ContentAccessLevel;
 };
 
 export const courses: Course[] = [

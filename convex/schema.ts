@@ -16,6 +16,7 @@ export default defineSchema({
     level: v.string(),
     duration: v.string(),
     accent: v.string(),
+    accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_slug", ["slug"]),
@@ -28,6 +29,7 @@ export default defineSchema({
     content: v.array(v.string()),
     videoUrl: v.optional(v.string()),
     posterUrl: v.optional(v.string()),
+    accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
     order: v.number(),
   })
     .index("by_stable_id", ["stableId"])
@@ -39,6 +41,7 @@ export default defineSchema({
     title: v.string(),
     difficulty: v.string(),
     estimatedTime: v.string(),
+    accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_course_stable_id", ["courseStableId"]),
@@ -121,6 +124,26 @@ export default defineSchema({
     subjectsOrModules: v.array(v.string()),
     updatedAt: v.number(),
   }).index("by_user", ["userKey"]),
+  entitlements: defineTable({
+    userKey: v.string(),
+    productKey: v.string(),
+    status: v.union(
+      v.literal("none"),
+      v.literal("active"),
+      v.literal("expired"),
+      v.literal("cancelled"),
+      v.literal("refunded"),
+      v.literal("payment_failed"),
+    ),
+    currentPeriodEndsAt: v.optional(v.number()),
+    provider: v.optional(v.string()),
+    providerCustomerId: v.optional(v.string()),
+    providerSubscriptionId: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userKey"])
+    .index("by_user_product", ["userKey", "productKey"])
+    .index("by_product_status", ["productKey", "status"]),
 });
 
 

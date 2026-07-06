@@ -42,6 +42,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - [ ] Keep payments blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
+- [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.
+- [ ] Entitlement statuses are `none`, `active`, `expired`, `cancelled`, `refunded`, and `payment_failed`; only `active` unlocks paid access.
 
 ## Secrets Hygiene
 
@@ -76,6 +78,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Keep paid checkout disabled until real authentication, entitlements, and Paddle webhook verification exist.
 - [ ] Do not enable Paddle from a client-only checkout path.
 - [ ] Do not claim paid production readiness until server-side authorization protects learner and entitlement data.
+- [ ] Do not grant paid access from frontend flags, localStorage, pricing cards, or checkout query params.
+- [ ] Subscription lifecycle and refund/payment-failure updates must write server-authorized entitlement status before any paid content is exposed.
 
 ## TGC Alignment
 

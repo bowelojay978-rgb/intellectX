@@ -42,6 +42,9 @@ export const convexApi = {
       "learnerMigration:migrateLocalLearnerDataToAuthenticatedAccount",
     ),
   },
+  entitlements: {
+    getPaidAccessDecision: makeFunctionReference<"query">("entitlements:getPaidAccessDecision"),
+  },
   aiTutor: {
     getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
   },

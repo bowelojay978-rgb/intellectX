@@ -21,6 +21,7 @@ import {
   toggleSelectedCourse,
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
+import type { ContentAccessLevel } from "@/lib/entitlements";
 import { BookOpenIcon, GraduationCapIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -35,6 +36,7 @@ type ConvexCourse = {
   level: Course["level"];
   duration: string;
   accent: string;
+  accessLevel?: ContentAccessLevel;
 };
 
 type ConvexCoursesSectionProps = {
@@ -56,6 +58,7 @@ function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Cours
     lessonIds: fallback?.lessonIds ?? [],
     quizIds: fallback?.quizIds ?? [],
     accent: course.accent,
+    accessLevel: course.accessLevel ?? fallback?.accessLevel,
   };
 }
 
@@ -290,4 +293,3 @@ export function ConvexCoursesSection({ fallbackCourses }: ConvexCoursesSectionPr
 
   return <LiveCoursesSection fallbackCourses={fallbackCourses} />;
 }
-

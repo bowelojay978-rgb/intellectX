@@ -43,4 +43,5 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 - Authenticated Convex identity is the production source of truth for user-owned data. In production-like environments, user-owned Convex functions fail closed when `ctx.auth.getUserIdentity()` is missing.
 - `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
 - Do not treat the placeholder path as paid-production safe. Remove or further restrict fallback `userKey` trust before enabling paid access.
+- Paid access requires server-side entitlements. Only `active` entitlement status unlocks paid content; `none`, `expired`, `cancelled`, `refunded`, and `payment_failed` remain blocked.
 - Payments remain blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle handling are complete.

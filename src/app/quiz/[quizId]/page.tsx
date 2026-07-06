@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCourse } from "@/data/courses";
 import { getQuiz, quizzes } from "@/data/quizzes";
+import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,6 +32,12 @@ export default async function QuizPage({ params }: QuizPageProps) {
   const quiz = getQuiz(quizId);
 
   if (!quiz) {
+    notFound();
+  }
+
+  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(quiz) });
+
+  if (!accessDecision.allowed) {
     notFound();
   }
 

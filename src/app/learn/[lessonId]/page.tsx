@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCourse } from "@/data/courses";
 import { getLesson, lessons } from "@/data/lessons";
+import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
 import { ArrowRightIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -38,6 +39,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const lesson = getLesson(lessonId);
 
   if (!lesson) {
+    notFound();
+  }
+
+  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(lesson) });
+
+  if (!accessDecision.allowed) {
     notFound();
   }
 
