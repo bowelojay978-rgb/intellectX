@@ -10,6 +10,7 @@ import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
 import { useAuth } from "@clerk/nextjs";
+import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession } from "@/lib/learner-session";
 import { isLearnerAppPath } from "@/lib/learner-routes";
@@ -37,7 +38,7 @@ function ClerkPageShell({ children }: PageShellProps) {
   const guarded = isLearnerAppPath(pathname);
   const { isLoaded, isSignedIn } = useAuth();
   const canShowApp = !guarded || (isLoaded && isSignedIn);
-  const hasConvexClient = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
+  const authEnvironment = getAuthEnvironmentStatus();
 
   useEffect(() => {
     if (guarded && isLoaded && !isSignedIn) {
@@ -47,7 +48,9 @@ function ClerkPageShell({ children }: PageShellProps) {
 
   return (
     <>
-      {hasConvexClient ? <LocalLearnerDataMigrationSync isAuthLoaded={isLoaded} isSignedIn={isSignedIn} /> : null}
+      {authEnvironment.canRunLocalToAuthMigration ? (
+        <LocalLearnerDataMigrationSync isAuthLoaded={isLoaded} isSignedIn={isSignedIn} />
+      ) : null}
       <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
     </>
   );

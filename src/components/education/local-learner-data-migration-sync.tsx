@@ -33,7 +33,6 @@ export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: Loca
 
     attemptedSourceKey.current = localIdentity.userKey;
     migrateLocalLearnerData({ sourceUserKey: localIdentity.userKey }).catch((error) => {
-      attemptedSourceKey.current = null;
       console.warn("Unable to migrate local learner data to authenticated account", error);
     });
   }, [isAuthLoaded, isSignedIn, migrateLocalLearnerData]);

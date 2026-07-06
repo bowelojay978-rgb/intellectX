@@ -30,6 +30,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Authenticated Clerk/Convex identity is preferred when available.
 - [ ] Local-to-auth learner data migration bridge exists for account activation.
 - [ ] Migration only runs when authenticated Convex identity exists; the client may provide only the local source key.
+- [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
 - [ ] Client-supplied `userKey` remains only as a temporary local/free fallback and is not paid-production safe.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
