@@ -1,4 +1,4 @@
-# Real Auth Activation
+﻿# Real Auth Activation
 
 This checklist is developer-facing and must be completed before IntellectX treats Clerk and Convex auth as production-ready. Do not commit secret values or screenshots containing secret values.
 
@@ -31,7 +31,7 @@ Do not add `convex/auth.config.ts` until these values are present in the correct
 
 Get `CLERK_JWT_ISSUER_DOMAIN` from the Clerk Dashboard after activating the Convex integration. Use the Clerk app's Frontend API URL: development values usually look like `https://verb-noun-00.clerk.accounts.dev`, while production values usually use the custom Clerk domain. Set it in the Convex dashboard or with Convex env tooling; do not hardcode it into source.
 
-After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx convex codegen`, then run the full validation set. Real auth is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads/writes.
+After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx convex codegen`, then run the full validation set. Real authentication is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads/writes.
 
 ## Safety Notes
 
@@ -43,8 +43,8 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 - Local-to-auth auto-migration only uses the current browser's local learner session key, records a local attempted/succeeded marker, and rejects authenticated, placeholder, or malformed source keys during migration planning.
 - Authenticated Convex identity is the production source of truth for user-owned data. In production-like environments, user-owned Convex functions fail closed when `ctx.auth.getUserIdentity()` is missing.
 - `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
-- Do not treat the placeholder path as paid-production safe. Remove or further restrict fallback `userKey` trust before enabling paid access.
+- Do not treat the placeholder path as production-safe for paid access. Remove or further restrict fallback `userKey` trust before enabling paid access.
 - Paid access requires server-side entitlements. Only `active` entitlement status unlocks paid content; `none`, `expired`, `cancelled`, `refunded`, and `payment_failed` remain blocked.
 - Billing lifecycle mapping is documented in `docs/billing-entitlement-lifecycle.md`; only verified server/provider events may write entitlements.
 - Checkout success redirects are not proof of entitlement.
-- Payments remain blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle handling are complete.
+- Payments remain blocked until real authentication, secure entitlements, checkout verification, webhook verification, and subscription lifecycle handling are complete.

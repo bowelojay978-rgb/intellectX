@@ -4,6 +4,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 
 ## Vercel Env Var Review
 
+- [ ] Run `npm run check:prod-env` before deployment to confirm the expected production env names are present or missing without printing values.
 - [ ] Confirm required public variables are intentionally public and prefixed only when safe.
 - [ ] Confirm secret variables are stored as server-side environment variables.
 - [ ] Confirm development, preview, and production environments do not accidentally share unsafe values.
@@ -41,7 +42,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Client-supplied `userKey` remains only as a temporary local/development fallback and is not production-trusted.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
-- [ ] Keep payments blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
+- [ ] Keep payments blocked until real authentication, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 - [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.
 - [ ] Entitlement statuses are `none`, `active`, `expired`, `cancelled`, `refunded`, and `payment_failed`; only `active` unlocks paid access.
@@ -81,7 +82,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 
 - [ ] Keep paid checkout disabled until real authentication, entitlements, and Paddle webhook verification exist.
 - [ ] Do not enable Paddle from a client-only checkout path.
-- [ ] Do not claim paid production readiness until server-side authorization protects learner and entitlement data.
+- [ ] Do not claim production readiness for paid access until server-side authorization protects learner and entitlement data.
 - [ ] Do not grant paid access from frontend flags, localStorage, pricing cards, or checkout query params.
 - [ ] Do not treat `/checkout_redirect/success` as entitlement proof.
 - [ ] Subscription lifecycle and refund/payment-failure updates must write server-authorized entitlement status before any paid content is exposed.

@@ -1,6 +1,6 @@
 ﻿# Billing Entitlement Lifecycle
 
-Payments and checkout remain disabled. This document defines the production entitlement lifecycle foundation that future verified webhook handling must use before any paid content is exposed.
+Payments and checkout remain disabled. This document defines the production entitlements lifecycle foundation that future verified webhook handling must use before any paid content is exposed.
 
 ## Event Contract
 

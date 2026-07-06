@@ -52,4 +52,4 @@ This matrix documents the intended production access posture for IntellectX rout
 - Frontend Convex sync must not write without a resolved Convex learner identity. In local/Convex-only mode that means a local learner key; in Clerk+Convex mode the placeholder is acceptable only because authenticated Convex identity must override it server-side.
 - `ALLOW_LOCAL_USERKEY_FALLBACK` must stay unset or `false` in production.
 - `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured.
-- Checkout and paid access remain blocked until real auth, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.
+- Checkout and paid access remain blocked until real authentication, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.
