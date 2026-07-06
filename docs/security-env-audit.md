@@ -28,6 +28,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
 - [ ] Convex learner identity resolution is centralized for user-owned data.
 - [ ] Authenticated Clerk/Convex identity is preferred when available.
+- [ ] Local-to-auth learner data migration bridge exists for account activation.
+- [ ] Migration only runs when authenticated Convex identity exists; the client may provide only the local source key.
 - [ ] Client-supplied `userKey` remains only as a temporary local/free fallback and is not paid-production safe.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
 - [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.

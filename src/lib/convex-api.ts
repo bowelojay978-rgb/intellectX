@@ -37,6 +37,11 @@ export const convexApi = {
     getLessonNote: makeFunctionReference<"query">("notes:getLessonNote"),
     upsertLessonNote: makeFunctionReference<"mutation">("notes:upsertLessonNote"),
   },
+  learnerMigration: {
+    migrateLocalLearnerDataToAuthenticatedAccount: makeFunctionReference<"mutation">(
+      "learnerMigration:migrateLocalLearnerDataToAuthenticatedAccount",
+    ),
+  },
   aiTutor: {
     getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
   },

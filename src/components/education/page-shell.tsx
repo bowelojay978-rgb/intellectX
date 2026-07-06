@@ -3,6 +3,7 @@
 import { AcademicProfileSync } from "@/components/education/academic-profile-sync";
 import { CourseSelectionSync } from "@/components/education/course-selection-sync";
 import { LessonProgressHistorySync } from "@/components/education/lesson-progress-history-sync";
+import { LocalLearnerDataMigrationSync } from "@/components/education/local-learner-data-migration-sync";
 import { QuizAttemptHistorySync } from "@/components/education/quiz-attempt-history-sync";
 import { StudyActivitySync } from "@/components/education/study-activity-sync";
 import { Footer } from "@/components/footer/footer";
@@ -36,6 +37,7 @@ function ClerkPageShell({ children }: PageShellProps) {
   const guarded = isLearnerAppPath(pathname);
   const { isLoaded, isSignedIn } = useAuth();
   const canShowApp = !guarded || (isLoaded && isSignedIn);
+  const hasConvexClient = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
   useEffect(() => {
     if (guarded && isLoaded && !isSignedIn) {
@@ -43,7 +45,12 @@ function ClerkPageShell({ children }: PageShellProps) {
     }
   }, [guarded, isLoaded, isSignedIn, pathname]);
 
-  return <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>;
+  return (
+    <>
+      {hasConvexClient ? <LocalLearnerDataMigrationSync isAuthLoaded={isLoaded} isSignedIn={isSignedIn} /> : null}
+      <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
+    </>
+  );
 }
 
 function LocalPageShell({ children }: PageShellProps) {
