@@ -1,12 +1,14 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getAcademicProfile = queryGeneric({
   args: { userKey: v.string() },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const profiles = await ctx.db
       .query("academicProfiles")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
 
     return profiles.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
@@ -22,14 +24,15 @@ export const upsertAcademicProfile = mutationGeneric({
     subjectsOrModules: v.array(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existingProfiles = await ctx.db
       .query("academicProfiles")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
 
     const [existing, ...duplicates] = existingProfiles.sort((left, right) => right.updatedAt - left.updatedAt);
     const nextProfile = {
-      userKey: args.userKey,
+      userKey,
       educationLevel: args.educationLevel,
       curriculumOrInstitution: args.curriculumOrInstitution,
       gradeOrYear: args.gradeOrYear,
@@ -50,9 +53,10 @@ export const upsertAcademicProfile = mutationGeneric({
 export const clearAcademicProfile = mutationGeneric({
   args: { userKey: v.string() },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const profiles = await ctx.db
       .query("academicProfiles")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
 
     await Promise.all(profiles.map((profile) => ctx.db.delete(profile._id)));

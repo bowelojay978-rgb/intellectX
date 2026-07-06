@@ -26,9 +26,13 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Clerk-aware nav, session, and profile UI exists.
 - [ ] Dual-mode route guard exists for protected app routes.
 - [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
-- [ ] Real secure Convex identity is still not complete.
+- [ ] Convex learner identity resolution is centralized for user-owned data.
+- [ ] Authenticated Clerk/Convex identity is preferred when available.
+- [ ] Client-supplied `userKey` remains only as a temporary local/free fallback and is not paid-production safe.
 - [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
+- [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - [ ] Keep payments blocked until real auth, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
+- [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 
 ## Secrets Hygiene
 

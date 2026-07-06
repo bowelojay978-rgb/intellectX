@@ -13,6 +13,7 @@ import type * as aiTutor from "../aiTutor.js";
 import type * as courseSelections from "../courseSelections.js";
 import type * as courses from "../courses.js";
 import type * as lessons from "../lessons.js";
+import type * as lib_identity from "../lib/identity.js";
 import type * as notes from "../notes.js";
 import type * as progress from "../progress.js";
 import type * as quizzes from "../quizzes.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   courseSelections: typeof courseSelections;
   courses: typeof courses;
   lessons: typeof lessons;
+  "lib/identity": typeof lib_identity;
   notes: typeof notes;
   progress: typeof progress;
   quizzes: typeof quizzes;

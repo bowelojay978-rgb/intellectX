@@ -1,12 +1,14 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getCourseSelection = queryGeneric({
   args: { userKey: v.string() },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const selections = await ctx.db
       .query("courseSelections")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
 
     return selections.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
@@ -23,13 +25,14 @@ export const upsertCourseSelection = mutationGeneric({
     locked: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existingSelections = await ctx.db
       .query("courseSelections")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
     const [existing, ...duplicates] = existingSelections.sort((left, right) => right.updatedAt - left.updatedAt);
     const nextSelection = {
-      userKey: args.userKey,
+      userKey,
       selectedCourseIds: args.selectedCourseIds,
       selectedAt: args.selectedAt,
       gracePeriodEndsAt: args.gracePeriodEndsAt,

@@ -1,5 +1,6 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getLessonNote = queryGeneric({
   args: {
@@ -7,9 +8,10 @@ export const getLessonNote = queryGeneric({
     lessonStableId: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const notes = await ctx.db
       .query("notes")
-      .withIndex("by_user_lesson", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user_lesson", (q) => q.eq("userKey", userKey))
       .filter((q) => q.eq(q.field("lessonId"), args.lessonStableId))
       .collect();
 
@@ -24,9 +26,10 @@ export const upsertLessonNote = mutationGeneric({
     body: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existingNotes = await ctx.db
       .query("notes")
-      .withIndex("by_user_lesson", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user_lesson", (q) => q.eq("userKey", userKey))
       .filter((q) => q.eq(q.field("lessonId"), args.lessonStableId))
       .collect();
     const [existing, ...duplicates] = existingNotes.sort((left, right) => right.updatedAt - left.updatedAt);
@@ -38,7 +41,7 @@ export const upsertLessonNote = mutationGeneric({
     }
 
     return await ctx.db.insert("notes", {
-      userKey: args.userKey,
+      userKey,
       lessonId: args.lessonStableId,
       body: args.body,
       updatedAt: Date.now(),

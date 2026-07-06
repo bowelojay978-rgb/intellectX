@@ -1,5 +1,6 @@
-﻿import { queryGeneric, mutationGeneric } from "convex/server";
+import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getLessonsByCourse = queryGeneric({
   args: { courseStableId: v.string() },
@@ -29,9 +30,10 @@ export const updateLessonProgress = mutationGeneric({
     progress: v.number(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existing = await ctx.db
       .query("lessonProgress")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .filter((q) => q.eq(q.field("lessonId"), args.lessonId))
       .first();
 
@@ -40,7 +42,7 @@ export const updateLessonProgress = mutationGeneric({
 
     if (!existing) {
       return await ctx.db.insert("lessonProgress", {
-        userKey: args.userKey,
+        userKey,
         lessonId: args.lessonId,
         status: nextStatus,
         progress: nextProgress,

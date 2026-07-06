@@ -1,5 +1,6 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const listQuizzes = queryGeneric({
   args: {},
@@ -47,8 +48,15 @@ export const submitQuizAttempt = mutationGeneric({
     completedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     return await ctx.db.insert("quizAttempts", {
-      ...args,
+      userKey,
+      quizId: args.quizId,
+      score: args.score,
+      totalQuestions: args.totalQuestions,
+      answers: args.answers,
+      quizTitle: args.quizTitle,
+      percentage: args.percentage,
       completedAt: args.completedAt ?? Date.now(),
     });
   },
@@ -57,9 +65,10 @@ export const submitQuizAttempt = mutationGeneric({
 export const getQuizAttempts = queryGeneric({
   args: { userKey: v.string() },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const attempts = await ctx.db
       .query("quizAttempts")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
 
     return attempts.sort((left, right) => right.completedAt - left.completedAt).slice(0, 20);

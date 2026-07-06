@@ -1,5 +1,6 @@
-﻿import { mutationGeneric } from "convex/server";
+import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
+import { resolveLearnerUserKey } from "./lib/identity";
 
 export const updateStudyStats = mutationGeneric({
   args: {
@@ -10,13 +11,14 @@ export const updateStudyStats = mutationGeneric({
     lastStudiedDate: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existing = await ctx.db
       .query("studyStats")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .first();
 
     const nextStats = {
-      userKey: args.userKey,
+      userKey,
       currentStreak: Math.max(0, args.currentStreak),
       longestStreak: Math.max(existing?.longestStreak ?? 0, args.longestStreak, args.currentStreak),
       weeklyActiveDays: args.weeklyActiveDays,
@@ -41,14 +43,15 @@ export const updateStudyStreak = mutationGeneric({
     lastStudiedDate: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userKey } = await resolveLearnerUserKey(ctx, args);
     const existing = await ctx.db
       .query("studyStats")
-      .withIndex("by_user", (q) => q.eq("userKey", args.userKey))
+      .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .first();
 
     if (!existing) {
       return await ctx.db.insert("studyStats", {
-        userKey: args.userKey,
+        userKey,
         currentStreak: args.currentStreak,
         longestStreak: args.currentStreak,
         weeklyActiveDays: [],
