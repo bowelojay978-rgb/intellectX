@@ -16,6 +16,8 @@ Related references:
 - Admin: reviews submitted courses, approves or requests changes, publishes or unpublishes approved courses, and manages instructor access.
 - Learner: can view only courses that are both approved and published.
 
+The frontend policy foundation for this workflow now lives in [src/lib/course-workflow-policy.ts](../src/lib/course-workflow-policy.ts). It defines the role constants, lifecycle/status constants, learner visibility rules, and explicit transition checks for the future workflow.
+
 ## 3. Course lifecycle statuses
 
 The course lifecycle should use the following statuses:
@@ -72,7 +74,7 @@ Future routes should be role-protected and separate by function:
 - Future `/admin/course-review`.
 - Future `/admin/instructors`.
 
-Placeholder routes now exist in the app router for these paths, but they are intentionally locked and not production-ready. All admin and instructor routes must be role-protected once real RBAC and server authorization are implemented.
+Placeholder routes now exist in the app router for these paths, but they are intentionally locked and not production-ready. The new course workflow policy foundation is a small real step forward, but all admin and instructor routes must still be role-protected once real RBAC and server authorization are implemented.
 
 ## 8. Future Convex/schema needs
 
