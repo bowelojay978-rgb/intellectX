@@ -25,7 +25,7 @@ The following hardening work is in place and should be considered completed foun
 - Mobile scope locked away from paid flows so mobile entry points do not imply paid access.
 - Placeholder admin and instructor routes exist as locked, non-production-ready surfaces until real RBAC, server authorization, and audit logging are implemented.
 - Staff routes now have fail-closed runtime protection around the current placeholders. Access is denied unless trusted Clerk session claims resolve to an allowed staff role, but production RBAC is still incomplete until the real claim source is configured and QA'd.
-- A small course workflow policy and metadata foundation is now in place for future instructor/admin course review and learner visibility decisions, including learner-facing approved/published filtering. It does not replace real RBAC, server-authorized workflow actions, or audit logging.
+- A server-side course workflow foundation is now in place for instructor/admin course review. Convex mutations fail closed without trusted staff role claims, learner-facing reads remain approved plus published only, and workflow actions append audit logs.
 
 ## 3. Remaining critical blockers
 
@@ -41,8 +41,8 @@ These items are still blocking production readiness:
 - Server entitlement writes from real provider events must be proven end to end.
 - Subscription lifecycle QA must be completed for renewal, cancellation, expiry, refund, and payment failure scenarios.
 - A production deployment smoke pass must be completed against the real deployment environment.
-- Admin and instructor workflow placeholders must remain locked until trusted auth-claim RBAC is configured and validated with server authorization and audit logging.
-- Real course workflow enforcement still requires trusted role claims, server-side workflow mutations, and audit logging beyond the current policy/schema/query foundation.
+- Admin and instructor workflow placeholders must remain locked until trusted auth-claim RBAC is configured, propagated to Convex identity, integrated into real dashboards, and QA'd.
+- Real course workflow enforcement now has server mutations and audit logging, but production remains blocked until Clerk role claim configuration and end-to-end staff workflow QA are completed.
 
 ## 4. What must stay disabled
 
@@ -67,3 +67,4 @@ These controls must not be enabled as a shortcut around auth, webhook verificati
 - [ ] Subscription lifecycle QA passes for active, cancelled, expired, refunded, and payment-failed states.
 - [ ] A production deployment smoke pass succeeds without bypassing guardrails.
 - [ ] Checkout and paid access remain disabled until the above checks are complete.
+- [ ] Clerk staff role claims are configured, propagated to Convex identity, and QA'd for instructor/admin workflow mutations.

@@ -47,6 +47,20 @@ export default defineSchema({
   })
     .index("by_stable_id", ["stableId"])
     .index("by_slug", ["slug"]),
+  auditLogs: defineTable({
+    eventType: v.string(),
+    actorUserId: v.string(),
+    actorRole: v.union(v.literal("learner"), v.literal("instructor"), v.literal("admin")),
+    targetType: v.string(),
+    targetId: v.string(),
+    createdAt: v.number(),
+    reason: v.optional(v.string()),
+    before: v.optional(v.any()),
+    after: v.optional(v.any()),
+  })
+    .index("by_target", ["targetType", "targetId"])
+    .index("by_actor", ["actorUserId"])
+    .index("by_event_type", ["eventType"]),
   lessons: defineTable({
     stableId: v.string(),
     courseStableId: v.string(),
