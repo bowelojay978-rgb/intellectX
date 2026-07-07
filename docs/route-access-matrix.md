@@ -60,7 +60,7 @@ This matrix documents the intended production access posture for IntellectX rout
 - `PageShell` is the route guard boundary for learner app routes. Clerk auth is required when Clerk env exists; local learner sessions remain the development fallback when Clerk env is missing.
 - Frontend Convex sync must not write without a resolved Convex learner identity. In local/Convex-only mode that means a local learner key; in Clerk+Convex mode the placeholder is acceptable only because authenticated Convex identity must override it server-side.
 - `ALLOW_LOCAL_USERKEY_FALLBACK` must stay unset or `false` in production.
-- `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured.
+- `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured in Convex. When added, it must use that env var with Convex application ID `convex`.
 - Checkout and paid access remain blocked until real authentication, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.
 - Admin and instructor placeholder routes now fail closed at runtime unless trusted Clerk session claims contain an allowed staff role. Convex workflow mutations also fail closed unless the Convex identity exposes a trusted role claim at `staff.role`, `metadata.role`, `publicMetadata.role`, or `appMetadata.role`.
 - Learner-facing course visibility is limited by policy/schema/query helpers to courses that are both approved and published; direct learner course lookup must continue to fail closed for hidden workflow states.

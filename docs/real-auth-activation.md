@@ -7,7 +7,7 @@ This checklist is developer-facing and must be completed before IntellectX treat
 - `local-fallback`: no Clerk publishable key and no Convex URL. Browser-backed learner sessions guard app routes.
 - `clerk-only`: Clerk publishable key exists, Convex URL is missing. Clerk handles signed-in state, but Convex migration and account-backed persistence do not run.
 - `convex-only`: Convex URL exists, Clerk publishable key is missing. Local fallback remains active while Convex sync can use browser-derived local learner keys.
-- `clerk-convex-ready`: Clerk publishable key and Convex URL exist. Clerk handles signed-in state, frontend Convex sync can run without a local browser learner session, and the local-to-auth migration bridge can run when a local source key exists. Convex identity is fully secure only after `convex/auth.config.ts` is added with the configured issuer.
+- `clerk-convex-ready`: Clerk publishable key and Convex URL exist. Clerk handles signed-in state, frontend Convex sync can run without a local browser learner session, and the local-to-auth migration bridge can run when a local source key exists. Convex identity is fully secure only after `CLERK_JWT_ISSUER_DOMAIN` is configured in Convex and `convex/auth.config.ts` is added and deployed.
 
 ## Activation Order
 
@@ -16,13 +16,13 @@ This checklist is developer-facing and must be completed before IntellectX treat
 3. Add `CLERK_SECRET_KEY` only where needed server-side.
 4. Activate Clerk's Convex integration and copy the Clerk Frontend API URL.
 5. Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex environment to that Clerk Frontend API URL.
-6. Only then add `convex/auth.config.ts`.
+6. Add and deploy `convex/auth.config.ts` using `CLERK_JWT_ISSUER_DOMAIN` and `applicationID: "convex"`.
 7. Run `npx convex codegen`, `npm run typecheck`, `npm run test:unit`, the focused auth E2E smoke tests, and `npm run build`.
 8. QA login, signup, route guards, Convex identity, and local-to-auth data migration.
 
 ## Missing Env Gate
 
-Do not add `convex/auth.config.ts` until these values are present in the correct environments:
+Do not deploy `convex/auth.config.ts` to an environment until these values are present in the correct places:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY` where server-side Clerk access is required
@@ -31,7 +31,24 @@ Do not add `convex/auth.config.ts` until these values are present in the correct
 
 Get `CLERK_JWT_ISSUER_DOMAIN` from the Clerk Dashboard after activating the Convex integration. Use the Clerk app's Frontend API URL: development values usually look like `https://verb-noun-00.clerk.accounts.dev`, while production values usually use the custom Clerk domain. Set it in the Convex dashboard or with Convex env tooling; do not hardcode it into source.
 
-After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx convex codegen`, then run the full validation set. Real authentication is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads/writes.
+After adding the missing env and auth config, run `npx convex codegen`, then run the full validation set. Real authentication is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads/writes.
+
+## Staff role claim setup
+
+Staff route guards and Convex staff workflow mutations accept only these role values:
+
+- `learner`
+- `instructor`
+- `admin`
+
+Configure one trusted Clerk JWT claim path for staff role propagation:
+
+- `staff.role`
+- `metadata.role`
+- `publicMetadata.role`
+- `appMetadata.role`
+
+Do not use unsafe metadata, query params, browser storage, emails, or client-passed roles. The Clerk JWT template used by `ConvexProviderWithClerk` must be named `convex`; the template must preserve the default Convex audience and include the chosen staff role claim.
 
 ## Safety Notes
 
@@ -42,6 +59,7 @@ After adding the missing env, add the minimal `convex/auth.config.ts`, run `npx 
 - Clerk+Convex frontend sync still passes a `userKey` argument because the existing Convex function signatures require it. If no local learner key exists, the client uses an authenticated-user placeholder; production security depends on Convex authenticated identity overriding that placeholder server-side.
 - Local-to-auth auto-migration only uses the current browser's local learner session key, records a local attempted/succeeded marker, and rejects authenticated, placeholder, or malformed source keys during migration planning.
 - Authenticated Convex identity is the production source of truth for user-owned data. In production-like environments, user-owned Convex functions fail closed when `ctx.auth.getUserIdentity()` is missing.
+- Staff workflow mutations use only Convex `ctx.auth.getUserIdentity()` and trusted role claims. Missing role claims fail closed.
 - `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
 - Do not treat the placeholder path as production-safe for paid access. Remove or further restrict fallback `userKey` trust before enabling paid access.
 - Paid access requires server-side entitlements. Only `active` entitlement status unlocks paid content; `none`, `expired`, `cancelled`, `refunded`, and `payment_failed` remain blocked.

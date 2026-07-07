@@ -32,8 +32,8 @@ The following hardening work is in place and should be considered completed foun
 These items are still blocking production readiness:
 
 - Clerk environment keys are not yet fully validated in the intended production environments.
-- CLERK_JWT_ISSUER_DOMAIN is still required before production identity can be trusted.
-- The production Clerk-to-Convex auth configuration in convex/auth.config.ts must be added and validated only after the issuer domain is configured.
+- CLERK_JWT_ISSUER_DOMAIN is still required in the Convex environment before production identity can be trusted.
+- The production Clerk-to-Convex auth configuration in convex/auth.config.ts must be added, deployed, and validated only after the issuer domain is configured.
 - Real Clerk to Convex identity QA must be completed with an authenticated user path that proves protected routes and user-owned Convex reads/writes are resolved through trusted identity.
 - A verified webhook endpoint must exist and be reachable from the provider.
 - Webhook signature verification must be implemented and enforced before any billing event is accepted.
@@ -58,7 +58,8 @@ These controls must not be enabled as a shortcut around auth, webhook verificati
 
 - [ ] Clerk env keys are configured and verified in the target production environment.
 - [ ] CLERK_JWT_ISSUER_DOMAIN is configured in the Convex environment.
-- [ ] The production Clerk-to-Convex auth configuration is present and validated.
+- [ ] The production Clerk-to-Convex auth configuration is deployed and validated.
+- [ ] The Clerk Convex JWT template is named `convex` and includes the trusted staff role claim path selected for staff workflow QA.
 - [ ] Real Clerk to Convex identity QA passes for authenticated access and protected data paths.
 - [ ] The webhook endpoint is verified and reachable.
 - [ ] Webhook signature verification is enforced.

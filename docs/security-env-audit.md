@@ -40,8 +40,11 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
 - [ ] Existing Convex calls still pass a `userKey` argument for compatibility. In Clerk+Convex mode without a local key, the frontend passes a placeholder that must be ignored by authenticated Convex identity once `convex/auth.config.ts` is active.
 - [ ] Client-supplied `userKey` remains only as a temporary local/development fallback and is not production-trusted.
-- [ ] Do not commit `convex/auth.config.ts` until `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard.
-- [ ] Full production Convex identity security still requires `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
+- [ ] `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard before adding or deploying auth configuration.
+- [ ] `convex/auth.config.ts` is added only after the issuer exists and uses `CLERK_JWT_ISSUER_DOMAIN` with Convex application ID `convex`.
+- [ ] Clerk has a JWT template named `convex` with the default Convex audience plus any required trusted staff role claim.
+- [ ] Staff role claims use only `learner`, `instructor`, or `admin` at `staff.role`, `metadata.role`, `publicMetadata.role`, or `appMetadata.role`.
+- [ ] Full production Convex identity security still requires adding, deploying, and validating `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - [ ] Keep payments blocked until real authentication, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 - [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.

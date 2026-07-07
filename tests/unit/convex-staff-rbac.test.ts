@@ -36,8 +36,16 @@ describe("Convex staff RBAC", () => {
 
   it("accepts only learner, instructor, and admin trusted claim roles", () => {
     expect(resolveStaffRoleFromIdentity(identity({ staff: { role: "learner" } }))).toBe("learner");
+    expect(resolveStaffRoleFromIdentity(identity({ metadata: { role: "admin" } }))).toBe("admin");
+    expect(resolveStaffRoleFromIdentity(identity({ publicMetadata: { role: "instructor" } }))).toBe("instructor");
+    expect(resolveStaffRoleFromIdentity(identity({ appMetadata: { role: "learner" } }))).toBe("learner");
     expect(resolveStaffRoleFromIdentity(identity({ staff: { role: "INSTRUCTOR" } }))).toBe("instructor");
     expect(resolveStaffRoleFromIdentity(identity({ staff: { role: " admin " } }))).toBe("admin");
+  });
+
+  it("does not trust root or unsafe metadata role values", () => {
+    expect(resolveStaffRoleFromIdentity(identity({ role: "admin" }))).toBeNull();
+    expect(resolveStaffRoleFromIdentity(identity({ unsafeMetadata: { role: "admin" } }))).toBeNull();
   });
 
   it("denies learners for staff mutation intent", () => {
