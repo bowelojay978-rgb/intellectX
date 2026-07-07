@@ -16,7 +16,7 @@ Related references:
 - Admin: reviews submitted courses, approves or requests changes, publishes or unpublishes approved courses, and manages instructor access.
 - Learner: can view only courses that are both approved and published.
 
-The frontend policy foundation for this workflow now lives in [src/lib/course-workflow-policy.ts](../src/lib/course-workflow-policy.ts). It defines the role constants, lifecycle/status constants, learner visibility rules, explicit transition checks, and small role-intent helpers for the future workflow.
+The frontend policy foundation for this workflow now lives in [src/lib/course-workflow-policy.ts](../src/lib/course-workflow-policy.ts). It defines the role constants, lifecycle/status constants, learner visibility rules, explicit transition checks, and small role-intent helpers for the future workflow. Current placeholder staff route access intent lives in [src/lib/staff-route-access-policy.ts](../src/lib/staff-route-access-policy.ts), but it is not trusted runtime RBAC.
 
 ## 3. Course lifecycle statuses
 
@@ -108,7 +108,7 @@ Audit logging must exist before real course operations are trusted. Required aud
 The following blockers must be resolved before this workflow is production-safe:
 
 - Locked placeholder admin and instructor routes exist, but real dashboards and actions do not.
-- RBAC route protection must be implemented and wired to trusted auth claims.
+- RBAC route protection must be implemented and wired to trusted auth claims; the staff route access policy helper is only a foundation.
 - Admin and instructor actions must be server-authorized.
 - Audit logging must exist before real course operations are trusted.
 

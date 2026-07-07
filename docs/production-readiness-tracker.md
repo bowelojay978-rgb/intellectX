@@ -24,6 +24,7 @@ The following hardening work is in place and should be considered completed foun
 - Route and data access matrix documenting auth and access boundaries.
 - Mobile scope locked away from paid flows so mobile entry points do not imply paid access.
 - Placeholder admin and instructor routes exist as locked, non-production-ready surfaces until real RBAC, server authorization, and audit logging are implemented.
+- A small staff route RBAC policy foundation documents role and route intent for current placeholder staff routes, but it is not wired to trusted auth claims and is not production enforcement.
 - A small course workflow policy and metadata foundation is now in place for future instructor/admin course review and learner visibility decisions, including learner-facing approved/published filtering. It does not replace real RBAC, server-authorized workflow actions, or audit logging.
 
 ## 3. Remaining critical blockers
@@ -40,7 +41,7 @@ These items are still blocking production readiness:
 - Server entitlement writes from real provider events must be proven end to end.
 - Subscription lifecycle QA must be completed for renewal, cancellation, expiry, refund, and payment failure scenarios.
 - A production deployment smoke pass must be completed against the real deployment environment.
-- Admin and instructor workflow placeholders must remain locked until server-authorized RBAC and audit logging are implemented.
+- Admin and instructor workflow placeholders must remain locked until trusted auth-claim RBAC, server authorization, and audit logging are implemented.
 - Real course workflow enforcement still requires trusted role claims, server-side workflow mutations, and audit logging beyond the current policy/schema/query foundation.
 
 ## 4. What must stay disabled
