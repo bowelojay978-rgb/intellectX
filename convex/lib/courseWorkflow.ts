@@ -1,4 +1,4 @@
-export const APPROVED = "approved" as const;
+﻿export const APPROVED = "approved" as const;
 export const PUBLISHED = "published" as const;
 
 export const courseStatuses = [
@@ -23,6 +23,10 @@ export type CourseWorkflowState = {
 export type CourseWorkflowVisibilityOptions = {
   trustedLegacyCourseIds?: readonly string[];
 };
+
+export const learnerCourseVisibilityOptions = {
+  trustedLegacyCourseIds: ["ai-study-systems", "critical-thinking", "exam-accelerator"],
+} as const satisfies CourseWorkflowVisibilityOptions;
 
 function getCourseWorkflowRecordId(course: CourseWorkflowState) {
   return course.stableId ?? course.id;

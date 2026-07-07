@@ -1,20 +1,66 @@
-import { mutationGeneric, queryGeneric } from "convex/server";
+﻿import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import { isLearnerVisibleCourseRecord, learnerCourseVisibilityOptions } from "./lib/courseWorkflow";
 import { resolveLearnerUserKey } from "./lib/identity";
+
+async function getLearnerVisibleCourseByStableId(ctx: any, courseStableId: string) {
+  const course = await ctx.db
+    .query("courses")
+    .withIndex("by_stable_id", (q: any) => q.eq("stableId", courseStableId))
+    .first();
+
+  if (!course || !isLearnerVisibleCourseRecord(course, learnerCourseVisibilityOptions)) {
+    return null;
+  }
+
+  return course;
+}
+
+async function getQuestionsByQuizStableId(ctx: any, quizStableId: string) {
+  const questions = await ctx.db
+    .query("questions")
+    .withIndex("by_quiz_stable_id", (q: any) => q.eq("quizStableId", quizStableId))
+    .collect();
+
+  return questions.sort((left: any, right: any) => left.order - right.order);
+}
 
 export const listQuizzes = queryGeneric({
   args: {},
   handler: async (ctx) => {
     const quizzes = await ctx.db.query("quizzes").collect();
-    return await Promise.all(
-      quizzes.map(async (quiz) => {
-        const questions = await ctx.db
-          .query("questions")
-          .withIndex("by_quiz_stable_id", (q) => q.eq("quizStableId", quiz.stableId))
-          .collect();
+    const visibleQuizzes = [];
 
-        return { ...quiz, questions };
-      }),
+    for (const quiz of quizzes) {
+      const course = await getLearnerVisibleCourseByStableId(ctx, quiz.courseStableId);
+
+      if (!course) {
+        continue;
+      }
+
+      visibleQuizzes.push({ ...quiz, questions: await getQuestionsByQuizStableId(ctx, quiz.stableId) });
+    }
+
+    return visibleQuizzes;
+  },
+});
+
+export const getQuizzesByCourse = queryGeneric({
+  args: { courseStableId: v.string() },
+  handler: async (ctx, args) => {
+    const course = await getLearnerVisibleCourseByStableId(ctx, args.courseStableId);
+
+    if (!course) {
+      return [];
+    }
+
+    const quizzes = await ctx.db
+      .query("quizzes")
+      .withIndex("by_course_stable_id", (q) => q.eq("courseStableId", args.courseStableId))
+      .collect();
+
+    return await Promise.all(
+      quizzes.map(async (quiz) => ({ ...quiz, questions: await getQuestionsByQuizStableId(ctx, quiz.stableId) })),
     );
   },
 });
@@ -27,12 +73,13 @@ export const getQuizById = queryGeneric({
       .withIndex("by_stable_id", (q) => q.eq("stableId", args.quizId))
       .first();
     if (!quiz) return null;
-    const questions = await ctx.db
-      .query("questions")
-      .withIndex("by_quiz_stable_id", (q) => q.eq("quizStableId", args.quizId))
-      .collect();
+    const course = await getLearnerVisibleCourseByStableId(ctx, quiz.courseStableId);
 
-    return { ...quiz, questions };
+    if (!course) {
+      return null;
+    }
+
+    return { ...quiz, questions: await getQuestionsByQuizStableId(ctx, args.quizId) };
   },
 });
 

@@ -4,10 +4,8 @@ import { clickableGlassCardClassName, glassCardClassName } from "@/components/ed
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { courses, getCourse } from "@/data/courses";
-import { getLessonsByCourse } from "@/data/lessons";
-import { getQuizzesByCourse } from "@/data/quizzes";
-import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
+import { courses } from "@/data/courses";
+import { getLearnerCourseDetail } from "@/lib/learner-catalog";
 import { ArrowRightIcon, BookOpenIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -23,7 +21,8 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  const course = getCourse(id);
+  const detail = await getLearnerCourseDetail(id);
+  const course = detail?.course;
 
   return {
     title: course ? `${course.title} - IntellectX` : "Course - IntellectX",
@@ -33,20 +32,14 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { id } = await params;
-  const course = getCourse(id);
+  const detail = await getLearnerCourseDetail(id);
+  const course = detail?.course;
 
-  if (!course) {
+  if (!detail || !course) {
     notFound();
   }
 
-  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(course) });
-
-  if (!accessDecision.allowed) {
-    notFound();
-  }
-
-  const lessons = getLessonsByCourse(course.id);
-  const quizzes = getQuizzesByCourse(course.id);
+  const { lessons, quizzes } = detail;
   const firstLesson = lessons[0];
 
   return (

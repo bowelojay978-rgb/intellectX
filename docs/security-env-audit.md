@@ -15,6 +15,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 
 - [ ] Confirm Convex deployment points to the intended project.
 - [ ] Confirm read/write functions expose only the intended data.
+- [ ] Confirm learner course, lesson, and quiz detail reads expose only approved and published parent courses.
 - [ ] Confirm seed data is safe for the intended release audience.
 - [ ] Confirm catalog seeding remains internal/developer-only and is not exposed to client runtime.
 - [ ] Confirm generated Convex files are not manually edited.
@@ -49,6 +50,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Keep payments blocked until real authentication, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.
 - [ ] Paid content fails closed unless a server-side entitlement has `active` status and an unexpired access period.
+- [ ] Convex-backed learner detail routes keep paid content blocked unless verified server entitlement integration is present.
 - [ ] Entitlement statuses are `none`, `active`, `expired`, `cancelled`, `refunded`, and `payment_failed`; only `active` unlocks paid access.
 - [ ] Billing lifecycle events are documented in `docs/billing-entitlement-lifecycle.md`.
 - [ ] Only internal/server-verified billing events may write entitlement records.

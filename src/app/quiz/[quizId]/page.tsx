@@ -2,9 +2,8 @@ import { PageShell } from "@/components/education/page-shell";
 import { QuizPlayer } from "@/components/education/quiz-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCourse } from "@/data/courses";
 import { getQuiz, quizzes } from "@/data/quizzes";
-import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
+import { getLearnerQuizDetail } from "@/lib/learner-catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,7 +18,8 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: QuizPageProps): Promise<Metadata> {
   const { quizId } = await params;
-  const quiz = getQuiz(quizId);
+  const detail = await getLearnerQuizDetail(quizId);
+  const quiz = detail?.quiz ?? getQuiz(quizId);
 
   return {
     title: quiz ? `${quiz.title} - IntellectX` : "Quiz - IntellectX",
@@ -29,19 +29,13 @@ export async function generateMetadata({ params }: QuizPageProps): Promise<Metad
 
 export default async function QuizPage({ params }: QuizPageProps) {
   const { quizId } = await params;
-  const quiz = getQuiz(quizId);
+  const detail = await getLearnerQuizDetail(quizId);
+  const quiz = detail?.quiz;
+  const course = detail?.course;
 
-  if (!quiz) {
+  if (!quiz || !course) {
     notFound();
   }
-
-  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(quiz) });
-
-  if (!accessDecision.allowed) {
-    notFound();
-  }
-
-  const course = getCourse(quiz.courseId);
 
   return (
     <PageShell>
@@ -55,11 +49,9 @@ export default async function QuizPage({ params }: QuizPageProps) {
           Convex until your environment is configured, so this release stores attempts locally in the browser.
         </p>
         <QuizPlayer quiz={quiz} />
-        {course && (
-          <Button className="mt-6" variant="ghost" asChild>
-            <Link href={`/courses/${course.id}`}>Back to course</Link>
-          </Button>
-        )}
+        <Button className="mt-6" variant="ghost" asChild>
+          <Link href={`/courses/${course.id}`}>Back to course</Link>
+        </Button>
       </section>
     </PageShell>
   );

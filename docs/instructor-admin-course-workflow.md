@@ -5,6 +5,7 @@
 This document defines the production workflow foundation for courses created by instructors and approved by admins before learners can access them. Course publishing must be controlled by role-based workflow, not direct learner visibility.
 
 Related references:
+
 - [./production-readiness-tracker.md](./production-readiness-tracker.md)
 - [./route-access-matrix.md](./route-access-matrix.md)
 - [./production-smoke-test-checklist.md](./production-smoke-test-checklist.md)
@@ -63,7 +64,7 @@ Learner visibility must be intentionally restricted:
 - Learners only see courses that are both `approved` and `published`.
 - Draft courses must never leak to learners.
 - Submitted, changes-requested, unpublished, and archived courses must fail closed.
-- Direct URLs must not bypass visibility rules.
+- Direct course, lesson, and quiz URLs must not bypass visibility rules; learner detail routes now verify Convex parent-course visibility before rendering backend-backed lessons or quizzes.
 
 ## 7. Route plan
 
@@ -76,7 +77,7 @@ Future routes should be role-protected and separate by function:
 - Future `/admin/course-review`.
 - Future `/admin/instructors`.
 
-Locked placeholder routes now exist in the app router for these paths, but they are not real dashboards and are not production-ready. They expose no course-management actions. Server-authorized Convex workflow mutations now exist, but the dashboards still need real UI integration, Clerk role claim configuration, and production QA before these routes can become operational.
+Locked placeholder routes now exist in the app router for these paths, but they are not real dashboards and are not production-ready. They expose no course-management actions. Server-authorized Convex workflow mutations and learner-safe detail reads now exist, but the dashboards still need real UI integration, Clerk role claim configuration, and production QA before these routes can become operational.
 
 ## 8. Future Convex/schema needs
 

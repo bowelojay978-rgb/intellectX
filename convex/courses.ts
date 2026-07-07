@@ -1,6 +1,10 @@
-import { mutationGeneric, queryGeneric } from "convex/server";
+﻿import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
-import { filterLearnerVisibleCourseRecords, isLearnerVisibleCourseRecord } from "./lib/courseWorkflow";
+import {
+  filterLearnerVisibleCourseRecords,
+  isLearnerVisibleCourseRecord,
+  learnerCourseVisibilityOptions,
+} from "./lib/courseWorkflow";
 import {
   APPROVED,
   ARCHIVED,
@@ -18,16 +22,12 @@ import {
 } from "./lib/courseWorkflowMutations";
 import { canManageInstructorCourse, requireAdmin, requireInstructorOrAdmin } from "./lib/staffRbac";
 
-const learnerVisibilityOptions = {
-  trustedLegacyCourseIds: ["ai-study-systems", "critical-thinking", "exam-accelerator"],
-};
-
 export const listCourses = queryGeneric({
   args: {},
   handler: async (ctx) => {
     const courses = await ctx.db.query("courses").collect();
 
-    return filterLearnerVisibleCourseRecords(courses, learnerVisibilityOptions);
+    return filterLearnerVisibleCourseRecords(courses, learnerCourseVisibilityOptions);
   },
 });
 
@@ -39,7 +39,7 @@ export const getCourseBySlug = queryGeneric({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!course || !isLearnerVisibleCourseRecord(course, learnerVisibilityOptions)) {
+    if (!course || !isLearnerVisibleCourseRecord(course, learnerCourseVisibilityOptions)) {
       return null;
     }
 
@@ -55,7 +55,7 @@ export const getCourseByStableId = queryGeneric({
       .withIndex("by_stable_id", (q) => q.eq("stableId", args.stableId))
       .first();
 
-    if (!course || !isLearnerVisibleCourseRecord(course, learnerVisibilityOptions)) {
+    if (!course || !isLearnerVisibleCourseRecord(course, learnerCourseVisibilityOptions)) {
       return null;
     }
 

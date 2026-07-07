@@ -8,9 +8,8 @@ import { VideoPlayer } from "@/components/education/video-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCourse } from "@/data/courses";
 import { getLesson, lessons } from "@/data/lessons";
-import { getContentAccessLevel, getEntitlementAccessDecision } from "@/lib/entitlements";
+import { getLearnerLessonDetail } from "@/lib/learner-catalog";
 import { ArrowRightIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,7 +25,8 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: LessonPageProps): Promise<Metadata> {
   const { lessonId } = await params;
-  const lesson = getLesson(lessonId);
+  const detail = await getLearnerLessonDetail(lessonId);
+  const lesson = detail?.lesson ?? getLesson(lessonId);
 
   return {
     title: lesson ? `${lesson.title} - IntellectX` : "Lesson - IntellectX",
@@ -36,19 +36,13 @@ export async function generateMetadata({ params }: LessonPageProps): Promise<Met
 
 export default async function LessonPage({ params }: LessonPageProps) {
   const { lessonId } = await params;
-  const lesson = getLesson(lessonId);
+  const detail = await getLearnerLessonDetail(lessonId);
+  const lesson = detail?.lesson;
+  const course = detail?.course;
 
-  if (!lesson) {
+  if (!lesson || !course) {
     notFound();
   }
-
-  const accessDecision = getEntitlementAccessDecision({ accessLevel: getContentAccessLevel(lesson) });
-
-  if (!accessDecision.allowed) {
-    notFound();
-  }
-
-  const course = getCourse(lesson.courseId);
 
   return (
     <PageShell>
@@ -104,11 +98,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </Link>
             </Button>
           )}
-          {course && (
-            <Button variant="ghost" size="lg" asChild>
-              <Link href={`/courses/${course.id}`}>Back to course</Link>
-            </Button>
-          )}
+          <Button variant="ghost" size="lg" asChild>
+            <Link href={`/courses/${course.id}`}>Back to course</Link>
+          </Button>
         </div>
       </article>
     </PageShell>

@@ -4,6 +4,7 @@ export const convexApi = {
   courses: {
     listCourses: makeFunctionReference<"query">("courses:listCourses"),
     getCourseBySlug: makeFunctionReference<"query">("courses:getCourseBySlug"),
+    getCourseByStableId: makeFunctionReference<"query">("courses:getCourseByStableId"),
   },
   courseSelections: {
     getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
@@ -29,6 +30,7 @@ export const convexApi = {
   },
   quizzes: {
     listQuizzes: makeFunctionReference<"query">("quizzes:listQuizzes"),
+    getQuizzesByCourse: makeFunctionReference<"query">("quizzes:getQuizzesByCourse"),
     getQuizById: makeFunctionReference<"query">("quizzes:getQuizById"),
     getQuizAttempts: makeFunctionReference<"query">("quizzes:getQuizAttempts"),
     submitQuizAttempt: makeFunctionReference<"mutation">("quizzes:submitQuizAttempt"),
