@@ -15,6 +15,8 @@ const courseDocs = courses.map((course) => ({
   level: course.level,
   duration: course.duration,
   accent: course.accent,
+  reviewStatus: course.reviewStatus,
+  publicationStatus: course.publicationStatus,
 }));
 
 const lessonDocs = lessons.map((lesson) => ({

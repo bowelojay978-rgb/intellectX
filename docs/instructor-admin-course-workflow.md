@@ -16,7 +16,7 @@ Related references:
 - Admin: reviews submitted courses, approves or requests changes, publishes or unpublishes approved courses, and manages instructor access.
 - Learner: can view only courses that are both approved and published.
 
-The frontend policy foundation for this workflow now lives in [src/lib/course-workflow-policy.ts](../src/lib/course-workflow-policy.ts). It defines the role constants, lifecycle/status constants, learner visibility rules, and explicit transition checks for the future workflow.
+The frontend policy foundation for this workflow now lives in [src/lib/course-workflow-policy.ts](../src/lib/course-workflow-policy.ts). It defines the role constants, lifecycle/status constants, learner visibility rules, explicit transition checks, and small role-intent helpers for the future workflow.
 
 ## 3. Course lifecycle statuses
 
@@ -74,11 +74,13 @@ Future routes should be role-protected and separate by function:
 - Future `/admin/course-review`.
 - Future `/admin/instructors`.
 
-Placeholder routes now exist in the app router for these paths, but they are intentionally locked and not production-ready. The new course workflow policy foundation is a small real step forward, but all admin and instructor routes must still be role-protected once real RBAC and server authorization are implemented.
+Locked placeholder routes now exist in the app router for these paths, but they are not real dashboards and are not production-ready. They expose no course-management actions. Real RBAC, server authorization, schema-backed workflow actions, and audit logging are still missing before these routes can become operational.
 
 ## 8. Future Convex/schema needs
 
-The production workflow will require course metadata and workflow state stored server-side, including:
+The production workflow now has a narrow schema foundation for course metadata and workflow state. Existing learner-visible seed/static courses resolve to `approved` plus `published`, and learner-facing course reads filter through that state. Full production workflow support still requires server-authorized writes and audit logging.
+
+Current narrow fields:
 
 - Course owner or instructor ID.
 - Approval status.
@@ -105,10 +107,8 @@ Audit logging must exist before real course operations are trusted. Required aud
 
 The following blockers must be resolved before this workflow is production-safe:
 
-- No admin or instructor routes exist yet.
-- RBAC route protection must be implemented.
-- Learner course queries must filter by `approved` and `published`.
-- Direct course access must enforce `approved` and `published`.
+- Locked placeholder admin and instructor routes exist, but real dashboards and actions do not.
+- RBAC route protection must be implemented and wired to trusted auth claims.
 - Admin and instructor actions must be server-authorized.
 - Audit logging must exist before real course operations are trusted.
 
@@ -117,7 +117,7 @@ The following blockers must be resolved before this workflow is production-safe:
 A safe implementation order is:
 
 1. Design doc.
-2. Protected placeholder routes.
+2. Locked placeholder routes.
 3. Schema and status fields.
 4. Learner visibility filtering.
 5. Instructor draft creation.

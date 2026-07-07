@@ -22,12 +22,73 @@ export type CourseStatus =
   | typeof ARCHIVED;
 
 export type CourseWorkflowState = {
-  reviewStatus: CourseStatus;
-  publicationStatus: CourseStatus;
+  id?: string;
+  stableId?: string;
+  reviewStatus?: CourseStatus;
+  publicationStatus?: CourseStatus;
+  instructorId?: string;
+  submittedAt?: number;
+  reviewedAt?: number;
+  reviewedBy?: string;
+  reviewReason?: string;
 };
 
-export function isLearnerVisibleCourse(state: CourseWorkflowState) {
-  return state.reviewStatus === APPROVED && state.publicationStatus === PUBLISHED;
+export type CourseWorkflowVisibilityOptions = {
+  trustedLegacyCourseIds?: readonly string[];
+};
+
+export type StaffArea = "instructor" | "admin";
+
+function getCourseWorkflowRecordId(state: CourseWorkflowState) {
+  return state.id ?? state.stableId;
+}
+
+export function resolveCourseWorkflowState(
+  state: CourseWorkflowState,
+  options: CourseWorkflowVisibilityOptions = {},
+): CourseWorkflowState {
+  const recordId = getCourseWorkflowRecordId(state);
+
+  if (
+    recordId &&
+    options.trustedLegacyCourseIds?.includes(recordId) &&
+    !state.reviewStatus &&
+    !state.publicationStatus
+  ) {
+    return {
+      ...state,
+      reviewStatus: APPROVED,
+      publicationStatus: PUBLISHED,
+    };
+  }
+
+  return state;
+}
+
+export function isLearnerVisibleCourse(
+  state: CourseWorkflowState,
+  options: CourseWorkflowVisibilityOptions = {},
+) {
+  const resolvedState = resolveCourseWorkflowState(state, options);
+
+  return resolvedState.reviewStatus === APPROVED && resolvedState.publicationStatus === PUBLISHED;
+}
+
+export function filterLearnerVisibleCourses<T extends CourseWorkflowState>(
+  courses: T[],
+  options?: CourseWorkflowVisibilityOptions,
+) {
+  return courses.filter((course) => isLearnerVisibleCourse(course, options));
+}
+
+export function findLearnerVisibleCourse<T extends CourseWorkflowState & { id: string; slug?: string }>(
+  courses: T[],
+  idOrSlug: string,
+  options?: CourseWorkflowVisibilityOptions,
+) {
+  return filterLearnerVisibleCourses(courses, options).find(
+    (course) => course.id === idOrSlug || course.slug === idOrSlug,
+  );
 }
 
 export function canTransitionCourseStatus(from: CourseStatus, to: CourseStatus, actorRole: CourseRole) {
@@ -52,4 +113,32 @@ export function canTransitionCourseStatus(from: CourseStatus, to: CourseStatus, 
   }
 
   return false;
+}
+
+export function isCourseRole(value: string | null | undefined): value is CourseRole {
+  return value === LEARNER || value === INSTRUCTOR || value === ADMIN;
+}
+
+export function canAccessStaffArea(role: string | null | undefined, area: StaffArea) {
+  if (area === "instructor") {
+    return role === INSTRUCTOR || role === ADMIN;
+  }
+
+  if (area === "admin") {
+    return role === ADMIN;
+  }
+
+  return false;
+}
+
+export function canManageCourseWorkflow(role: string | null | undefined) {
+  return role === ADMIN;
+}
+
+export function canReviewCourses(role: string | null | undefined) {
+  return role === ADMIN;
+}
+
+export function canSubmitCourseForReview(role: string | null | undefined) {
+  return role === INSTRUCTOR || role === ADMIN;
 }

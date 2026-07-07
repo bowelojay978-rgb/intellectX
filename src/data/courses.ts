@@ -1,8 +1,15 @@
 import type { ContentAccessLevel } from "../lib/entitlements";
+import {
+  APPROVED,
+  PUBLISHED,
+  filterLearnerVisibleCourses,
+  findLearnerVisibleCourse,
+  type CourseWorkflowState,
+} from "../lib/course-workflow-policy";
 
 export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
 
-export type Course = {
+export type Course = CourseWorkflowState & {
   id: string;
   slug: string;
   title: string;
@@ -17,7 +24,7 @@ export type Course = {
   accessLevel?: ContentAccessLevel;
 };
 
-export const courses: Course[] = [
+const courseRecords: Course[] = [
   {
     id: "ai-study-systems",
     slug: "ai-study-systems",
@@ -30,6 +37,8 @@ export const courses: Course[] = [
     lessonIds: ["prompting-for-learning", "memory-systems", "weekly-review"],
     quizIds: ["ai-study-systems-check"],
     accent: "from-sky-500/20 via-white to-emerald-400/20",
+    reviewStatus: APPROVED,
+    publicationStatus: PUBLISHED,
   },
   {
     id: "critical-thinking",
@@ -43,6 +52,8 @@ export const courses: Course[] = [
     lessonIds: ["argument-maps", "source-quality", "counterexamples"],
     quizIds: ["critical-thinking-check"],
     accent: "from-violet-500/20 via-white to-amber-300/20",
+    reviewStatus: APPROVED,
+    publicationStatus: PUBLISHED,
   },
   {
     id: "exam-accelerator",
@@ -56,9 +67,17 @@ export const courses: Course[] = [
     lessonIds: ["diagnostic-review", "active-recall", "timed-practice"],
     quizIds: ["exam-accelerator-check"],
     accent: "from-rose-400/20 via-white to-cyan-400/20",
+    reviewStatus: APPROVED,
+    publicationStatus: PUBLISHED,
   },
 ];
 
+export const courses = filterLearnerVisibleCourses(courseRecords);
+
 export function getCourse(id: string) {
-  return courses.find((course) => course.id === id || course.slug === id);
+  return findLearnerVisibleCourse(courses, id);
+}
+
+export function listLearnerVisibleCourses() {
+  return filterLearnerVisibleCourses(courses);
 }

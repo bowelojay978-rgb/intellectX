@@ -5,6 +5,7 @@ import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/data/courses";
+import type { CourseStatus } from "@/lib/course-workflow-policy";
 import {
   type AcademicProfile,
   courseMatchesAcademicProfile,
@@ -37,6 +38,13 @@ type ConvexCourse = {
   duration: string;
   accent: string;
   accessLevel?: ContentAccessLevel;
+  reviewStatus?: CourseStatus;
+  publicationStatus?: CourseStatus;
+  instructorId?: string;
+  submittedAt?: number;
+  reviewedAt?: number;
+  reviewedBy?: string;
+  reviewReason?: string;
 };
 
 type ConvexCoursesSectionProps = {
@@ -59,6 +67,13 @@ function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Cours
     quizIds: fallback?.quizIds ?? [],
     accent: course.accent,
     accessLevel: course.accessLevel ?? fallback?.accessLevel,
+    reviewStatus: course.reviewStatus ?? fallback?.reviewStatus,
+    publicationStatus: course.publicationStatus ?? fallback?.publicationStatus,
+    instructorId: course.instructorId ?? fallback?.instructorId,
+    submittedAt: course.submittedAt ?? fallback?.submittedAt,
+    reviewedAt: course.reviewedAt ?? fallback?.reviewedAt,
+    reviewedBy: course.reviewedBy ?? fallback?.reviewedBy,
+    reviewReason: course.reviewReason ?? fallback?.reviewReason,
   };
 }
 

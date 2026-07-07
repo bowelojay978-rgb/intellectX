@@ -17,6 +17,33 @@ export default defineSchema({
     duration: v.string(),
     accent: v.string(),
     accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    reviewStatus: v.optional(
+      v.union(
+        v.literal("draft"),
+        v.literal("submitted_for_review"),
+        v.literal("changes_requested"),
+        v.literal("approved"),
+        v.literal("published"),
+        v.literal("unpublished"),
+        v.literal("archived"),
+      ),
+    ),
+    publicationStatus: v.optional(
+      v.union(
+        v.literal("draft"),
+        v.literal("submitted_for_review"),
+        v.literal("changes_requested"),
+        v.literal("approved"),
+        v.literal("published"),
+        v.literal("unpublished"),
+        v.literal("archived"),
+      ),
+    ),
+    instructorId: v.optional(v.string()),
+    submittedAt: v.optional(v.number()),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.string()),
+    reviewReason: v.optional(v.string()),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_slug", ["slug"]),

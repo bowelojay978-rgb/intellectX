@@ -20,8 +20,8 @@ This matrix documents the intended production access posture for IntellectX rout
 | `/mobile-quizzes` | Public mobile scope | Static/mobile quiz entry content | None | Must not expose checkout, pricing CTAs, dashboard, or progress nav. | Mobile scope E2E |
 | `/mobile-flashcards` | Public mobile scope | Static flashcard review content | None | Must not expose paid flows. | Mobile scope E2E |
 | `/mobile-notes` | Public mobile scope | Static notes entry content | None | Must not expose paid flows. | Mobile scope E2E |
-| `/courses` | Auth-required | Catalog, course selection sync, user-owned selection data | Clerk when configured; local learner session fallback otherwise | User-owned Convex data must resolve through authenticated identity or allowed local fallback. | Signed-out guard E2E |
-| `/courses/[id]` | Auth-required, entitlement-sensitive | Course catalog, lessons, optional access metadata | Same as `/courses` | Future paid courses must fail closed unless server entitlement is active. | Build/SSG, route guard via learner path coverage |
+| `/courses` | Auth-required | Learner-visible catalog, course selection sync, user-owned selection data | Clerk when configured; local learner session fallback otherwise | User-owned Convex data must resolve through authenticated identity or allowed local fallback; catalog reads must stay limited to approved and published courses. | Signed-out guard E2E, workflow unit tests |
+| `/courses/[id]` | Auth-required, entitlement-sensitive | Learner-visible course catalog, lessons, optional access metadata | Same as `/courses` | Future paid courses must fail closed unless server entitlement is active; direct course access must not expose unapproved or unpublished courses. | Build/SSG, route guard via learner path coverage, workflow unit tests |
 | `/learn/[lessonId]` | Auth-required, user-owned writes, entitlement-sensitive | Lesson catalog, lesson progress, notes, tutor placeholder | Same as `/courses` | Lesson progress and notes must not write to another user; future paid lessons must fail closed. | Mobile lesson smoke, Convex identity unit tests |
 | `/quizzes` | Auth-required | Quiz catalog and quiz attempt history | Same as `/courses` | Attempt history is user-owned and must resolve server-side identity in production. | Signed-out guard E2E |
 | `/quiz/[quizId]` | Auth-required, user-owned writes, entitlement-sensitive | Quiz content and submitted attempts | Same as `/courses` | Quiz submissions must not trust forged client `userKey`; future paid quizzes must fail closed. | Quiz completion E2E, Convex identity unit tests |
@@ -49,7 +49,7 @@ This matrix documents the intended production access posture for IntellectX rout
 | `learnerMigration` | Migration-only mutation | Authenticated destination plus strict local source key | Placeholder, authenticated, malformed, empty, and same-source keys are rejected. | `convex-identity.test.ts`, `local-learner-migration.test.ts` |
 | `entitlements.getPaidAccessDecision` | Payment/entitlement-sensitive query | `resolveLearnerUserKey` plus server entitlement record | Paid access fails closed unless an active, unexpired server entitlement exists. | `entitlements.test.ts` |
 | `entitlements.applyVerifiedBillingEntitlementEvent` | Internal payment/entitlement mutation | Internal verified billing event payload | Not callable from the frontend; maps verified billing lifecycle events into entitlement status updates. | `billing-lifecycle.test.ts` |
-| `courses`, `lessons`, catalog `quizzes` | Public/read-only catalog | None for catalog reads | Catalog content remains readable; user-owned progress is separate. | Route/build coverage |
+| `courses`, `lessons`, catalog `quizzes` | Public/read-only catalog | None for catalog reads | Learner course reads are filtered to approved and published records. Trusted legacy compatibility keeps only known existing seeded course records visible until explicit workflow fields are present; user-owned progress is separate. | Route/build coverage, workflow unit tests |
 | `seedEducationCatalog` | Internal/admin | Internal Convex mutation | Must remain internal/developer-only. | Manual/code review |
 
 ## Production Notes
@@ -60,4 +60,4 @@ This matrix documents the intended production access posture for IntellectX rout
 - `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - Checkout and paid access remain blocked until real authentication, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.
 - Admin and instructor placeholder routes are not production-ready workflows; they must remain locked until real RBAC, server authorization, and audit logging are implemented.
-- Learner-facing course visibility must remain limited to courses that are both approved and published; direct route access must fail closed when production RBAC is implemented.
+- Learner-facing course visibility is limited by policy/schema/query helpers to courses that are both approved and published; direct learner course lookup must continue to fail closed for hidden workflow states.
