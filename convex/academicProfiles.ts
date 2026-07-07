@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getAcademicProfile = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const profiles = await ctx.db
@@ -17,7 +17,7 @@ export const getAcademicProfile = queryGeneric({
 
 export const upsertAcademicProfile = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     educationLevel: v.string(),
     curriculumOrInstitution: v.string(),
     gradeOrYear: v.string(),
@@ -51,7 +51,7 @@ export const upsertAcademicProfile = mutationGeneric({
 });
 
 export const clearAcademicProfile = mutationGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const profiles = await ctx.db

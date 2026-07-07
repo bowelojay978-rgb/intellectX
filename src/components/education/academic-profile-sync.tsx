@@ -10,7 +10,7 @@ import {
   saveAcademicProfile,
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
+import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { useConvex, useMutation } from "convex/react";
@@ -29,11 +29,11 @@ function academicProfilesMatch(left: AcademicProfile, right: AcademicProfile) {
   );
 }
 
-function persistAcademicProfileArgs(userKey: string, profile: AcademicProfile) {
+function persistAcademicProfileArgs(identityArgs: ConvexLearnerArgs, profile: AcademicProfile) {
   const normalizedProfile = normalizeAcademicProfileForLevel(profile);
 
   return {
-    userKey,
+    ...identityArgs,
     educationLevel: normalizedProfile.educationLevel,
     curriculumOrInstitution: normalizedProfile.curriculumOrInstitution,
     gradeOrYear: normalizedProfile.gradeOrYear,
@@ -51,17 +51,17 @@ export function AcademicProfileSync() {
 
 function ConvexAcademicProfileSync() {
   const convex = useConvex();
-  const [userKey, setUserKey] = useState<string | null>(null);
+  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
   const upsertAcademicProfile = useMutation(convexApi.academicProfiles.upsertAcademicProfile);
   const clearRemoteAcademicProfile = useMutation(convexApi.academicProfiles.clearAcademicProfile);
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
 
   useEffect(() => {
-    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+    setIdentityArgs(getCurrentConvexLearnerArgs());
 
     function syncIdentity() {
-      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+      setIdentityArgs(getCurrentConvexLearnerArgs());
       remoteHydrated.current = false;
     }
 
@@ -75,14 +75,14 @@ function ConvexAcademicProfileSync() {
   }, []);
 
   useEffect(() => {
-    if (!userKey) {
+    if (!identityArgs) {
       return;
     }
 
     let cancelled = false;
 
     convex
-      .query(convexApi.academicProfiles.getAcademicProfile, { userKey })
+      .query(convexApi.academicProfiles.getAcademicProfile, identityArgs)
       .then((remoteProfile) => {
         if (cancelled) return;
 
@@ -107,7 +107,7 @@ function ConvexAcademicProfileSync() {
 
         const localProfile = loadAcademicProfile();
         if (localProfile && isAcademicProfileComplete(localProfile)) {
-          upsertAcademicProfile(persistAcademicProfileArgs(userKey, localProfile)).catch((error) => {
+          upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
             console.warn("Unable to sync local academic profile to Convex", error);
           });
         }
@@ -122,24 +122,24 @@ function ConvexAcademicProfileSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, upsertAcademicProfile, userKey]);
+  }, [convex, identityArgs, upsertAcademicProfile]);
 
   useEffect(() => {
     function syncLocalProfileToConvex() {
-      if (!userKey || !remoteHydrated.current || syncingRemoteToLocal.current) {
+      if (!identityArgs || !remoteHydrated.current || syncingRemoteToLocal.current) {
         return;
       }
 
       const localProfile = loadAcademicProfile();
 
       if (localProfile && isAcademicProfileComplete(localProfile)) {
-        upsertAcademicProfile(persistAcademicProfileArgs(userKey, localProfile)).catch((error) => {
+        upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
           console.warn("Unable to sync academic profile to Convex", error);
         });
         return;
       }
 
-      clearRemoteAcademicProfile({ userKey }).catch((error) => {
+      clearRemoteAcademicProfile(identityArgs).catch((error) => {
         console.warn("Unable to clear academic profile from Convex", error);
       });
     }
@@ -149,7 +149,7 @@ function ConvexAcademicProfileSync() {
     return () => {
       window.removeEventListener(ACADEMIC_PROFILE_CHANGE_EVENT, syncLocalProfileToConvex);
     };
-  }, [clearRemoteAcademicProfile, upsertAcademicProfile, userKey]);
+  }, [clearRemoteAcademicProfile, identityArgs, upsertAcademicProfile]);
 
   return null;
 }

@@ -24,7 +24,7 @@ export const getLessonById = queryGeneric({
 
 export const updateLessonProgress = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     lessonId: v.string(),
     status: v.string(),
     progress: v.number(),

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getDashboardSummary = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const lessonProgress = await ctx.db
@@ -20,7 +20,7 @@ export const getDashboardSummary = queryGeneric({
 });
 
 export const getProgressSummary = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const lessonProgress = await ctx.db
@@ -41,7 +41,7 @@ export const getProgressSummary = queryGeneric({
 });
 
 export const getProfileLearningSummary = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const studyStats = await ctx.db

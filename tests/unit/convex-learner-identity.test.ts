@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
+  resolveConvexLearnerArgs,
   resolveConvexLearnerIdentity,
 } from "@/lib/convex-learner-identity";
 import type { AuthEnvironmentStatus } from "@/lib/auth-env";
@@ -22,8 +23,17 @@ describe("frontend Convex learner identity resolution", () => {
     ).toEqual({
       userKey: "learner:local@example.com",
       source: "local-session",
-      isPlaceholder: false,
+      isAuthenticatedCall: false,
     });
+  });
+
+  it("returns local userKey args for local fallback sync", () => {
+    expect(
+      resolveConvexLearnerArgs({
+        authEnvironment: authEnvironment({ mode: "convex-only", canRunConvexSync: true }),
+        localIdentity: { userKey: "learner:local@example.com" },
+      }),
+    ).toEqual({ userKey: "learner:local@example.com" });
   });
 
   it("does not allow local fallback Convex sync without a local learner key", () => {
@@ -62,21 +72,36 @@ describe("frontend Convex learner identity resolution", () => {
     ).toEqual({
       userKey: "learner:migrating@example.com",
       source: "local-session",
-      isPlaceholder: false,
+      isAuthenticatedCall: false,
     });
   });
 
-  it("allows Clerk and Convex mode to call existing Convex functions without a local learner key", () => {
+  it("allows Clerk and Convex mode to call Convex functions without a local learner key", () => {
     expect(
       resolveConvexLearnerIdentity({
         authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
         localIdentity: null,
       }),
     ).toEqual({
-      userKey: AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
-      source: "authenticated-convex-placeholder",
-      isPlaceholder: true,
+      source: "authenticated-convex",
+      isAuthenticatedCall: true,
     });
+
+    expect(
+      resolveConvexLearnerArgs({
+        authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
+        localIdentity: null,
+      }),
+    ).toEqual({});
+  });
+
+  it("prefers a stale local learner key for migration compatibility when Clerk and Convex are configured", () => {
+    expect(
+      resolveConvexLearnerArgs({
+        authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
+        localIdentity: { userKey: "learner:stale@example.com" },
+      }),
+    ).toEqual({ userKey: "learner:stale@example.com" });
   });
 
   it("does not produce a user key when Convex sync is unavailable", () => {
@@ -86,5 +111,16 @@ describe("frontend Convex learner identity resolution", () => {
         localIdentity: { userKey: "learner:local@example.com" },
       }),
     ).toBeNull();
+
+    expect(
+      resolveConvexLearnerArgs({
+        authEnvironment: authEnvironment({ mode: "clerk-only", canRunConvexSync: false }),
+        localIdentity: { userKey: "learner:local@example.com" },
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps the old placeholder only as a migration rejection sentinel", () => {
+    expect(AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER).toBe("auth:convex-authenticated-user");
   });
 });

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getCourseSelection = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const selections = await ctx.db
@@ -17,7 +17,7 @@ export const getCourseSelection = queryGeneric({
 
 export const upsertCourseSelection = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     selectedCourseIds: v.array(v.string()),
     selectedAt: v.union(v.number(), v.null()),
     gracePeriodEndsAt: v.union(v.number(), v.null()),

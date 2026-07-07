@@ -38,7 +38,8 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Convex migration planning rejects empty, authenticated, placeholder, and malformed local source keys.
 - [ ] Route and data access decisions are documented in `docs/route-access-matrix.md`.
 - [ ] Auth environment mode detection is documented in `docs/real-auth-activation.md`.
-- [ ] Existing Convex calls still pass a `userKey` argument for compatibility. In Clerk+Convex mode without a local key, the frontend passes a placeholder that must be ignored by authenticated Convex identity once `convex/auth.config.ts` is active.
+- [ ] User-owned Convex functions accept authenticated calls without a client `userKey`; Clerk+Convex frontend sync does not require a local browser learner session.
+- [ ] Local/Convex-only fallback still passes `learner:<email>` only for local/development compatibility.
 - [ ] Client-supplied `userKey` remains only as a temporary local/development fallback and is not production-trusted.
 - [ ] `CLERK_JWT_ISSUER_DOMAIN` is set in the Convex dashboard before adding or deploying auth configuration.
 - [ ] `convex/auth.config.ts` is added only after the issuer exists and uses `CLERK_JWT_ISSUER_DOMAIN` with Convex application ID `convex`.

@@ -56,12 +56,13 @@ Do not use unsafe metadata, query params, browser storage, emails, or client-pas
 - Route access, protected data surfaces, and payment-sensitive paths are tracked in `docs/route-access-matrix.md`.
 - Clerk mode without Convex URL must not attempt local-to-auth Convex migration.
 - Convex URL without Clerk is not real auth; it is local fallback with Convex sync.
-- Clerk+Convex frontend sync still passes a `userKey` argument because the existing Convex function signatures require it. If no local learner key exists, the client uses an authenticated-user placeholder; production security depends on Convex authenticated identity overriding that placeholder server-side.
+- Clerk+Convex frontend sync can call user-owned Convex profile, course-selection, quiz, lesson-progress, and study-activity functions without a local browser learner session. In that mode the client omits `userKey`; production security still depends on Convex authenticated identity resolving server-side.
+- Local/Convex-only fallback still passes a browser-derived `learner:<email>` key for development/free fallback mode only.
 - Local-to-auth auto-migration only uses the current browser's local learner session key, records a local attempted/succeeded marker, and rejects authenticated, placeholder, or malformed source keys during migration planning.
 - Authenticated Convex identity is the production source of truth for user-owned data. In production-like environments, user-owned Convex functions fail closed when `ctx.auth.getUserIdentity()` is missing.
 - Staff workflow mutations use only Convex `ctx.auth.getUserIdentity()` and trusted role claims. Missing role claims fail closed.
 - `ALLOW_LOCAL_USERKEY_FALLBACK=true` is for local/development compatibility only. Keep it unset or `false` in production so browser-supplied `userKey` values cannot read or write protected user data.
-- Do not treat the placeholder path as production-safe for paid access. Remove or further restrict fallback `userKey` trust before enabling paid access.
+- The old authenticated placeholder key remains only as a migration rejection sentinel; it is not used for normal Clerk+Convex learner sync.
 - Paid access requires server-side entitlements. Only `active` entitlement status unlocks paid content; `none`, `expired`, `cancelled`, `refunded`, and `payment_failed` remain blocked.
 - Billing lifecycle mapping is documented in `docs/billing-entitlement-lifecycle.md`; only verified server/provider events may write entitlements.
 - Checkout success redirects are not proof of entitlement.

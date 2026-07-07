@@ -7,7 +7,7 @@ import {
   QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT,
 } from "@/lib/quiz-attempt-history";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
+import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { readStudyActivitySummary } from "@/lib/study-activity-summary";
@@ -27,9 +27,9 @@ function ConvexStudyActivitySync() {
   const lastSyncedPayload = useRef<string | null>(null);
 
   const syncStudyStats = useCallback(() => {
-    const identity = getCurrentConvexLearnerIdentity();
+    const identityArgs = getCurrentConvexLearnerArgs();
 
-    if (!identity) {
+    if (!identityArgs) {
       return;
     }
 
@@ -40,7 +40,7 @@ function ConvexStudyActivitySync() {
     }
 
     const payload = {
-      userKey: identity.userKey,
+      ...identityArgs,
       currentStreak: summary.currentStreak,
       longestStreak: summary.longestStreak,
       weeklyActiveDays: summary.weeklyActiveDayLabels,

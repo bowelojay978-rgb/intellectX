@@ -5,12 +5,16 @@ import { getCurrentLearnerIdentity, type LearnerIdentity } from "@/lib/learner-s
 
 export const AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER = "auth:convex-authenticated-user";
 
-type ConvexLearnerIdentitySource = "local-session" | "authenticated-convex-placeholder";
+type ConvexLearnerIdentitySource = "local-session" | "authenticated-convex";
 
 export type ConvexLearnerIdentity = {
-  userKey: string;
+  userKey?: string;
   source: ConvexLearnerIdentitySource;
-  isPlaceholder: boolean;
+  isAuthenticatedCall: boolean;
+};
+
+export type ConvexLearnerArgs = {
+  userKey?: string;
 };
 
 type ResolveConvexLearnerIdentityArgs = {
@@ -30,26 +34,42 @@ export function resolveConvexLearnerIdentity({
     return {
       userKey: localIdentity.userKey,
       source: "local-session",
-      isPlaceholder: false,
+      isAuthenticatedCall: false,
     };
   }
 
   if (authEnvironment.mode === "clerk-convex-ready") {
     return {
-      // Existing Convex functions still accept a userKey argument. Once Convex
-      // auth.config.ts is active, authenticated server identity wins over this
-      // client placeholder in convex/lib/identity.ts.
-      userKey: AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER,
-      source: "authenticated-convex-placeholder",
-      isPlaceholder: true,
+      source: "authenticated-convex",
+      isAuthenticatedCall: true,
     };
   }
 
   return null;
 }
 
+export function resolveConvexLearnerArgs({
+  authEnvironment,
+  localIdentity,
+}: ResolveConvexLearnerIdentityArgs): ConvexLearnerArgs | null {
+  const identity = resolveConvexLearnerIdentity({ authEnvironment, localIdentity });
+
+  if (!identity) {
+    return null;
+  }
+
+  return identity.userKey ? { userKey: identity.userKey } : {};
+}
+
 export function getCurrentConvexLearnerIdentity() {
   return resolveConvexLearnerIdentity({
+    authEnvironment: getAuthEnvironmentStatus(),
+    localIdentity: getCurrentLearnerIdentity(),
+  });
+}
+
+export function getCurrentConvexLearnerArgs() {
+  return resolveConvexLearnerArgs({
     authEnvironment: getAuthEnvironmentStatus(),
     localIdentity: getCurrentLearnerIdentity(),
   });

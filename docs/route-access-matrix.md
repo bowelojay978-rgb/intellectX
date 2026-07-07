@@ -39,13 +39,13 @@ This matrix documents the intended production access posture for IntellectX rout
 
 | Function group | Category | Identity source | Production behavior | Test coverage |
 | --- | --- | --- | --- | --- |
-| `academicProfiles` | User-owned query/mutation | `resolveLearnerUserKey` | Authenticated Convex identity wins; production-like fallback rejects browser `userKey`. | `convex-identity.test.ts` |
-| `courseSelections` | User-owned query/mutation | `resolveLearnerUserKey` | Same policy as academic profiles. | `convex-identity.test.ts` |
-| `quizzes.submitQuizAttempt`, `quizzes.getQuizAttempts` | User-owned mutation/query | `resolveLearnerUserKey` | Forged client `userKey` cannot override authenticated identity. | `convex-identity.test.ts`, quiz E2E |
-| `lessons.updateLessonProgress` | User-owned mutation | `resolveLearnerUserKey` | Missing trusted identity fails closed in production-like environments. | `convex-identity.test.ts` |
-| `progress` summaries | User-owned queries | `resolveLearnerUserKey` | Reads are scoped to the resolved user key. | `convex-identity.test.ts` |
-| `notes` | User-owned query/mutation | `resolveLearnerUserKey` | Notes are scoped by resolved user key plus lesson id. | `convex-identity.test.ts` |
-| `studyStats` | User-owned query/mutation | `resolveLearnerUserKey` | Study stats are scoped to the resolved user key. | `convex-identity.test.ts` |
+| `academicProfiles` | User-owned query/mutation | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Authenticated Convex identity wins; production-like fallback rejects browser `userKey`. | `convex-identity.test.ts`, `convex-learner-identity.test.ts` |
+| `courseSelections` | User-owned query/mutation | `resolveLearnerUserKey` | Same policy as academic profiles. Clerk+Convex frontend sync can run without a local learner session. | `convex-identity.test.ts`, `convex-learner-identity.test.ts` |
+| `quizzes.submitQuizAttempt`, `quizzes.getQuizAttempts` | User-owned mutation/query | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Forged client `userKey` cannot override authenticated identity. | `convex-identity.test.ts`, `convex-learner-identity.test.ts`, quiz E2E |
+| `lessons.updateLessonProgress` | User-owned mutation | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Missing trusted identity fails closed in production-like environments. | `convex-identity.test.ts`, `convex-learner-identity.test.ts` |
+| `progress` summaries | User-owned queries | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Reads are scoped to the resolved user key. | `convex-identity.test.ts`, `convex-learner-identity.test.ts` |
+| `notes` | User-owned query/mutation | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Notes are scoped by resolved user key plus lesson id. | `convex-identity.test.ts` |
+| `studyStats` | User-owned query/mutation | `resolveLearnerUserKey` | `userKey` is optional for authenticated calls. Study stats are scoped to the resolved user key. | `convex-identity.test.ts`, `convex-learner-identity.test.ts` |
 | `learnerMigration` | Migration-only mutation | Authenticated destination plus strict local source key | Placeholder, authenticated, malformed, empty, and same-source keys are rejected. | `convex-identity.test.ts`, `local-learner-migration.test.ts` |
 | `entitlements.getPaidAccessDecision` | Payment/entitlement-sensitive query | `resolveLearnerUserKey` plus server entitlement record | Paid access fails closed unless an active, unexpired server entitlement exists. | `entitlements.test.ts` |
 | `entitlements.applyVerifiedBillingEntitlementEvent` | Internal payment/entitlement mutation | Internal verified billing event payload | Not callable from the frontend; maps verified billing lifecycle events into entitlement status updates. | `billing-lifecycle.test.ts` |
@@ -58,7 +58,7 @@ This matrix documents the intended production access posture for IntellectX rout
 ## Production Notes
 
 - `PageShell` is the route guard boundary for learner app routes. Clerk auth is required when Clerk env exists; local learner sessions remain the development fallback when Clerk env is missing.
-- Frontend Convex sync must not write without a resolved Convex learner identity. In local/Convex-only mode that means a local learner key; in Clerk+Convex mode the placeholder is acceptable only because authenticated Convex identity must override it server-side.
+- Frontend Convex sync must not write without a resolved Convex learner call mode. In local/Convex-only mode that means a local learner key; in Clerk+Convex mode with no local session it sends no `userKey` and relies on authenticated Convex identity server-side.
 - `ALLOW_LOCAL_USERKEY_FALLBACK` must stay unset or `false` in production.
 - `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured in Convex. When added, it must use that env var with Convex application ID `convex`.
 - Checkout and paid access remain blocked until real authentication, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.

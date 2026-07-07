@@ -4,7 +4,7 @@ import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getLessonNote = queryGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     lessonStableId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -21,7 +21,7 @@ export const getLessonNote = queryGeneric({
 
 export const upsertLessonNote = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     lessonStableId: v.string(),
     body: v.string(),
   },

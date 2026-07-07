@@ -26,6 +26,7 @@ The following hardening work is in place and should be considered completed foun
 - Placeholder admin and instructor routes exist as locked, non-production-ready surfaces until real RBAC, server authorization, and audit logging are implemented.
 - Staff routes now have fail-closed runtime protection around the current placeholders. Access is denied unless trusted Clerk session claims resolve to an allowed staff role, but production RBAC is still incomplete until the real claim source is configured and QA'd.
 - A server-side course workflow foundation is now in place for instructor/admin course review. Convex mutations fail closed without trusted staff role claims, learner-facing reads remain approved plus published only, and workflow actions append audit logs.
+- User-owned learner Convex sync no longer requires a local browser learner session in Clerk+Convex mode. Profile, course selection, quiz attempt, lesson progress, and study activity calls can omit client `userKey` and resolve through authenticated Convex identity once Clerk-to-Convex auth is configured.
 
 ## 3. Remaining critical blockers
 

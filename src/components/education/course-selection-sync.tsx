@@ -1,7 +1,7 @@
 "use client";
 
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
+import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
@@ -29,11 +29,11 @@ function courseSelectionsMatch(left: CourseSelection, right: CourseSelection) {
   );
 }
 
-function persistCourseSelectionArgs(userKey: string, selection: CourseSelection) {
+function persistCourseSelectionArgs(identityArgs: ConvexLearnerArgs, selection: CourseSelection) {
   const normalizedSelection = normalizeCourseSelection(selection);
 
   return {
-    userKey,
+    ...identityArgs,
     selectedCourseIds: normalizedSelection.selectedCourseIds,
     selectedAt: normalizedSelection.selectedAt,
     gracePeriodEndsAt: normalizedSelection.gracePeriodEndsAt,
@@ -52,16 +52,16 @@ export function CourseSelectionSync() {
 
 function ConvexCourseSelectionSync() {
   const convex = useConvex();
-  const [userKey, setUserKey] = useState<string | null>(null);
+  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
   const upsertCourseSelection = useMutation(convexApi.courseSelections.upsertCourseSelection);
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
 
   useEffect(() => {
-    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+    setIdentityArgs(getCurrentConvexLearnerArgs());
 
     function syncIdentity() {
-      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+      setIdentityArgs(getCurrentConvexLearnerArgs());
       remoteHydrated.current = false;
     }
 
@@ -75,14 +75,14 @@ function ConvexCourseSelectionSync() {
   }, []);
 
   useEffect(() => {
-    if (!userKey) {
+    if (!identityArgs) {
       return;
     }
 
     let cancelled = false;
 
     convex
-      .query(convexApi.courseSelections.getCourseSelection, { userKey })
+      .query(convexApi.courseSelections.getCourseSelection, identityArgs)
       .then((remoteSelection) => {
         if (cancelled) return;
 
@@ -107,7 +107,7 @@ function ConvexCourseSelectionSync() {
 
         const localSelection = loadCourseSelection();
         if (localSelection.selectedCourseIds.length > 0) {
-          upsertCourseSelection(persistCourseSelectionArgs(userKey, localSelection)).catch((error) => {
+          upsertCourseSelection(persistCourseSelectionArgs(identityArgs, localSelection)).catch((error) => {
             console.warn("Unable to sync local course selection to Convex", error);
           });
         }
@@ -122,15 +122,15 @@ function ConvexCourseSelectionSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, upsertCourseSelection, userKey]);
+  }, [convex, identityArgs, upsertCourseSelection]);
 
   useEffect(() => {
     function syncLocalSelectionToConvex() {
-      if (!userKey || !remoteHydrated.current || syncingRemoteToLocal.current) {
+      if (!identityArgs || !remoteHydrated.current || syncingRemoteToLocal.current) {
         return;
       }
 
-      upsertCourseSelection(persistCourseSelectionArgs(userKey, loadCourseSelection())).catch((error) => {
+      upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())).catch((error) => {
         console.warn("Unable to sync course selection to Convex", error);
       });
     }
@@ -140,7 +140,7 @@ function ConvexCourseSelectionSync() {
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
     };
-  }, [upsertCourseSelection, userKey]);
+  }, [identityArgs, upsertCourseSelection]);
 
   return null;
 }

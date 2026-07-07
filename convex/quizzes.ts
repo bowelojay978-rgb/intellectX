@@ -38,7 +38,7 @@ export const getQuizById = queryGeneric({
 
 export const submitQuizAttempt = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     quizId: v.string(),
     score: v.number(),
     totalQuestions: v.number(),
@@ -63,7 +63,7 @@ export const submitQuizAttempt = mutationGeneric({
 });
 
 export const getQuizAttempts = queryGeneric({
-  args: { userKey: v.string() },
+  args: { userKey: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
     const attempts = await ctx.db

@@ -4,7 +4,7 @@ import { resolveLearnerUserKey } from "./lib/identity";
 
 export const updateStudyStats = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     currentStreak: v.number(),
     longestStreak: v.number(),
     weeklyActiveDays: v.array(v.string()),
@@ -38,7 +38,7 @@ export const updateStudyStats = mutationGeneric({
 
 export const updateStudyStreak = mutationGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     currentStreak: v.number(),
     lastStudiedDate: v.string(),
   },

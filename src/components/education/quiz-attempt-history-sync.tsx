@@ -2,7 +2,7 @@
 
 import { quizzes } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
+import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { mergeQuizAttemptHistory, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
@@ -61,13 +61,13 @@ export function QuizAttemptHistorySync() {
 
 function ConvexQuizAttemptHistorySync() {
   const convex = useConvex();
-  const [userKey, setUserKey] = useState<string | null>(null);
+  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
 
   useEffect(() => {
-    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+    setIdentityArgs(getCurrentConvexLearnerArgs());
 
     function syncIdentity() {
-      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+      setIdentityArgs(getCurrentConvexLearnerArgs());
     }
 
     window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
@@ -80,14 +80,14 @@ function ConvexQuizAttemptHistorySync() {
   }, []);
 
   useEffect(() => {
-    if (!userKey) {
+    if (!identityArgs) {
       return;
     }
 
     let cancelled = false;
 
     convex
-      .query(convexApi.quizzes.getQuizAttempts, { userKey })
+      .query(convexApi.quizzes.getQuizAttempts, identityArgs)
       .then((remoteAttempts) => {
         if (cancelled || !Array.isArray(remoteAttempts)) {
           return;
@@ -110,7 +110,7 @@ function ConvexQuizAttemptHistorySync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, userKey]);
+  }, [convex, identityArgs]);
 
   return null;
 }

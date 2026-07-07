@@ -2,7 +2,7 @@
 
 import { lessons } from "@/data/lessons";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerIdentity } from "@/lib/convex-learner-identity";
+import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { mergeLessonProgressHistory, type LessonProgressHistoryItem } from "@/lib/lesson-progress-history";
@@ -56,13 +56,13 @@ export function LessonProgressHistorySync() {
 
 function ConvexLessonProgressHistorySync() {
   const convex = useConvex();
-  const [userKey, setUserKey] = useState<string | null>(null);
+  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
 
   useEffect(() => {
-    setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+    setIdentityArgs(getCurrentConvexLearnerArgs());
 
     function syncIdentity() {
-      setUserKey(getCurrentConvexLearnerIdentity()?.userKey ?? null);
+      setIdentityArgs(getCurrentConvexLearnerArgs());
     }
 
     window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
@@ -75,14 +75,14 @@ function ConvexLessonProgressHistorySync() {
   }, []);
 
   useEffect(() => {
-    if (!userKey) {
+    if (!identityArgs) {
       return;
     }
 
     let cancelled = false;
 
     convex
-      .query(convexApi.progress.getProgressSummary, { userKey })
+      .query(convexApi.progress.getProgressSummary, identityArgs)
       .then((summary) => {
         if (cancelled || !summary || typeof summary !== "object") {
           return;
@@ -111,7 +111,7 @@ function ConvexLessonProgressHistorySync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, userKey]);
+  }, [convex, identityArgs]);
 
   return null;
 }
