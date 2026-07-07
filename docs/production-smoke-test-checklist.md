@@ -58,7 +58,14 @@ Use this checklist before treating IntellectX as production-ready. The goal is t
 - [ ] Mobile routes do not expose checkout.
 - [ ] Mobile routes do not imply paid access.
 
-## 8. Final production decision
+## 8. Placeholder staff-route checks
+
+- [ ] Admin and instructor placeholder routes render a locked, not-production-ready message.
+- [ ] Placeholder staff routes do not expose real course-management actions.
+- [ ] Learner-facing course visibility remains limited to approved and published courses.
+- [ ] Direct route access remains fail-closed once real auth and RBAC are implemented.
+
+## 9. Final production decision
 
 - [ ] Production auth checks passed.
 - [ ] Production entitlement checks passed.

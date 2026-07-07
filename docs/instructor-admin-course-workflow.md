@@ -72,7 +72,7 @@ Future routes should be role-protected and separate by function:
 - Future `/admin/course-review`.
 - Future `/admin/instructors`.
 
-All admin and instructor routes must be role-protected.
+Placeholder routes now exist in the app router for these paths, but they are intentionally locked and not production-ready. All admin and instructor routes must be role-protected once real RBAC and server authorization are implemented.
 
 ## 8. Future Convex/schema needs
 

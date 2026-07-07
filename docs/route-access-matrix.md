@@ -28,6 +28,12 @@ This matrix documents the intended production access posture for IntellectX rout
 | `/dashboard` | Auth-required, user-owned data | Local/Convex profile, course, quiz, lesson, study stats summaries | Same as `/courses` | Dashboard must not show fabricated progress or leak another learner's data. | Signed-out guard E2E, no mock progress E2E |
 | `/progress` | Auth-required, user-owned data | Course selection, quiz history, lesson progress, study stats | Same as `/courses` | Progress summaries must not silently write/read without trusted identity. | Signed-out guard E2E, no mock progress E2E |
 | `/profile` | Auth-required, user-owned data | Learner session, Clerk/local profile display, academic profile | Same as `/courses` | Profile data must remain scoped to the resolved learner identity. | Signed-out guard E2E |
+| `/admin` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose privileged management actions. | Build coverage |
+| `/admin/course-review` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose review or approval actions. | Build coverage |
+| `/admin/instructors` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose instructor-management actions. | Build coverage |
+| `/instructor` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose course-management actions. | Build coverage |
+| `/instructor/courses` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose course-management actions. | Build coverage |
+| `/instructor/courses/new` | Placeholder, staff-only | Not yet implemented | Must remain role-protected and fail closed until real RBAC is implemented | Placeholder route only; must not expose course creation. | Build coverage |
 
 ## Convex User-Owned Data Paths
 
@@ -53,3 +59,5 @@ This matrix documents the intended production access posture for IntellectX rout
 - `ALLOW_LOCAL_USERKEY_FALLBACK` must stay unset or `false` in production.
 - `convex/auth.config.ts` must not be added until `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - Checkout and paid access remain blocked until real authentication, verified webhook writes, subscription lifecycle handling, and server-side entitlements are complete. See `docs/billing-entitlement-lifecycle.md`.
+- Admin and instructor placeholder routes are not production-ready workflows; they must remain locked until real RBAC, server authorization, and audit logging are implemented.
+- Learner-facing course visibility must remain limited to courses that are both approved and published; direct route access must fail closed when production RBAC is implemented.

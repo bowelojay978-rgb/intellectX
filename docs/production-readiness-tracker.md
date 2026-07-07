@@ -23,6 +23,7 @@ The following hardening work is in place and should be considered completed foun
 - Billing entitlement lifecycle foundation for future verified provider events.
 - Route and data access matrix documenting auth and access boundaries.
 - Mobile scope locked away from paid flows so mobile entry points do not imply paid access.
+- Placeholder admin and instructor routes exist as locked, non-production-ready surfaces until real RBAC, server authorization, and audit logging are implemented.
 
 ## 3. Remaining critical blockers
 
@@ -38,6 +39,7 @@ These items are still blocking production readiness:
 - Server entitlement writes from real provider events must be proven end to end.
 - Subscription lifecycle QA must be completed for renewal, cancellation, expiry, refund, and payment failure scenarios.
 - A production deployment smoke pass must be completed against the real deployment environment.
+- Admin and instructor workflow placeholders must remain locked until server-authorized RBAC, learner visibility filtering, and audit logging are implemented.
 
 ## 4. What must stay disabled
 

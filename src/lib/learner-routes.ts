@@ -10,3 +10,7 @@ export function isLearnerAppPath(pathname: string) {
     pathname.startsWith("/quiz/")
   );
 }
+
+export function isAuthenticatedAppPath(pathname: string) {
+  return isLearnerAppPath(pathname) || pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/instructor" || pathname.startsWith("/instructor/");
+}

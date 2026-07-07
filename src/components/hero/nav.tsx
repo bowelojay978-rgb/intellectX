@@ -5,7 +5,7 @@ import { DesktopNav } from "@/components/hero/desktop-nav";
 import { useUser } from "@clerk/nextjs";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
-import { isLearnerAppPath } from "@/lib/learner-routes";
+import { isAuthenticatedAppPath } from "@/lib/learner-routes";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -101,7 +101,7 @@ function ClerkNav() {
     }
   }, [isLoaded, isSignedIn, pathname, router]);
 
-  const isAppRoute = isLearnerAppPath(pathname);
+  const isAppRoute = isAuthenticatedAppPath(pathname);
   const showAuthenticatedNav = isAppRoute || (isLoaded && isSignedIn);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
@@ -151,7 +151,7 @@ function LocalSessionNav() {
     };
   }, [pathname, router]);
 
-  const isAppRoute = isLearnerAppPath(pathname);
+  const isAppRoute = isAuthenticatedAppPath(pathname);
   const showAuthenticatedNav = isAppRoute || Boolean(session);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
