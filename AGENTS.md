@@ -11,6 +11,15 @@ These rules apply to AI coding agents and automated contributors working in this
 - Do not claim a browser flow, test, build, or validation passed unless it was actually executed successfully.
 - Never hide failed validation. Report failures and remaining uncertainty explicitly.
 
+## Reusable workflows
+
+Use the repository workflows in `docs/agent-workflows/` whenever they match the task:
+
+- `deep-scan.md` before major architecture work or when current behavior is not fully understood.
+- `auth-review.md` for Clerk, Convex auth, identity, roles, protected routes, migration, logout, or account switching.
+- `precommit-review.md` before commit, PR approval, or merge.
+- `runtime-smoke.md` for user-facing lifecycle changes that require browser validation and evidence.
+
 ## Protected areas
 
 - Do not enable payments or payment processing unless explicitly authorized.
