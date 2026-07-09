@@ -9,6 +9,17 @@ Use the narrowest workflow that matches the task:
 - `deep-scan.md` — full architectural or feature-level repository investigation before major changes.
 - `runtime-smoke.md` — browser lifecycle validation with evidence capture.
 
+## Validation automation
+
+Prefer the repository validation orchestrator instead of repeatedly typing long command chains:
+
+- `npm run validate:quick` — typecheck + unit tests.
+- `npm run validate:standard` — typecheck + lint + unit tests + build.
+- `npm run validate:full` — standard validation + Playwright E2E.
+- `npm run validate:convex` — Convex codegen + typecheck + lint + unit tests + build.
+
+The orchestrator stops at the first failed step and returns that exit code.
+
 ## Operating rules
 
 - Inspect before editing.
