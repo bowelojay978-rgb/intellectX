@@ -1,6 +1,4 @@
 "use client";
-
-import { lessons } from "@/data/lessons";
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
@@ -11,6 +9,7 @@ import { useEffect, useState } from "react";
 
 type RemoteLessonProgress = {
   lessonId?: unknown;
+  lessonTitle?: unknown;
   status?: unknown;
   progress?: unknown;
   updatedAt?: unknown;
@@ -32,14 +31,9 @@ function toLessonProgressHistoryItem(value: unknown): LessonProgressHistoryItem 
     return null;
   }
 
-  const lessonExists = lessons.some((lesson) => lesson.id === progress.lessonId);
-
-  if (!lessonExists) {
-    return null;
-  }
-
   return {
     lessonId: progress.lessonId,
+    lessonTitle: typeof progress.lessonTitle === "string" ? progress.lessonTitle : undefined,
     status: progress.status,
     progress: progress.progress,
     updatedAt: new Date(progress.updatedAt).toISOString(),

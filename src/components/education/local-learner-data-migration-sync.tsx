@@ -4,7 +4,7 @@ import { convexApi } from "@/lib/convex-api";
 import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { getCurrentLearnerIdentity } from "@/lib/learner-session";
 import {
-  readLocalLearnerMigrationMarker,
+  hasCompletedLocalLearnerMigration,
   resolveLocalLearnerMigrationSource,
   writeLocalLearnerMigrationMarker,
 } from "@/lib/local-learner-migration";
@@ -17,7 +17,7 @@ type LocalLearnerDataMigrationSyncProps = {
 };
 
 export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: LocalLearnerDataMigrationSyncProps) {
-  const attemptedSourceKey = useRef<string | null>(null);
+  const attemptedMarkerKey = useRef<string | null>(null);
   const migrateLocalLearnerData = useMutation(
     convexApi.learnerMigration.migrateLocalLearnerDataToAuthenticatedAccount,
   );
@@ -37,15 +37,15 @@ export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: Loca
       return;
     }
 
-    if (attemptedSourceKey.current === migrationSource.sourceUserKey) {
+    if (attemptedMarkerKey.current === migrationSource.markerKey) {
       return;
     }
 
-    if (readLocalLearnerMigrationMarker(migrationSource.markerKey)) {
+    if (hasCompletedLocalLearnerMigration(migrationSource.markerKey)) {
       return;
     }
 
-    attemptedSourceKey.current = migrationSource.sourceUserKey;
+    attemptedMarkerKey.current = migrationSource.markerKey;
     writeLocalLearnerMigrationMarker(migrationSource.markerKey, "attempted");
 
     migrateLocalLearnerData({ sourceUserKey: migrationSource.sourceUserKey })
@@ -54,6 +54,7 @@ export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: Loca
       })
       .catch((error) => {
         console.warn("Unable to migrate local learner data to authenticated account", error);
+        writeLocalLearnerMigrationMarker(migrationSource.markerKey, "failed");
       });
   }, [isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
 

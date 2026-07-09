@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { normalizeLearnerCourse, normalizeLearnerLesson, normalizeLearnerQuiz } from "@/lib/learner-catalog";
+import { buildLearnerCatalog } from "@/lib/learner-catalog-client";
 import type { Course } from "@/data/courses";
 import type { Lesson } from "@/data/lessons";
 
@@ -226,5 +227,77 @@ describe("learner catalog normalization", () => {
         { course: visibleCourse },
       ),
     ).toBeNull();
+  });
+
+  it("builds a learner catalog with Convex-only selected courses, lessons, and quizzes", () => {
+    const catalog = buildLearnerCatalog({
+      convexCourses: [visibleCourseRecord],
+      convexLessons: [
+        {
+          stableId: "convex-lesson",
+          courseStableId: "convex-course",
+          title: "Convex Lesson",
+          duration: "11 min",
+          summary: "A dynamic lesson.",
+          content: ["Dynamic content."],
+          order: 1,
+        },
+      ],
+      convexQuizzes: [
+        {
+          stableId: "convex-quiz",
+          courseStableId: "convex-course",
+          lessonStableId: "convex-lesson",
+          title: "Convex Quiz",
+          difficulty: "Applied",
+          estimatedTime: "4 min",
+          questions: [
+            {
+              stableId: "invalid",
+              prompt: "Invalid?",
+              choices: ["Only one"],
+              answerIndex: 0,
+              explanation: "Nope",
+              order: 1,
+            },
+            {
+              stableId: "valid",
+              prompt: "Valid?",
+              choices: ["No", "Yes"],
+              answerIndex: 1,
+              explanation: "Playable",
+              order: 2,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(catalog.courseById.get("convex-course")?.lessonIds).toEqual(["convex-lesson"]);
+    expect(catalog.courseById.get("convex-course")?.quizIds).toEqual(["convex-quiz"]);
+    expect(catalog.lessonById.get("convex-lesson")?.title).toBe("Convex Lesson");
+    expect(catalog.quizById.get("convex-quiz")?.questions).toHaveLength(1);
+  });
+
+  it("blocks hidden and paid dynamic records while preserving static fallback mode", () => {
+    const liveCatalog = buildLearnerCatalog({
+      convexCourses: [
+        {
+          ...visibleCourseRecord,
+          stableId: "hidden-course",
+          publicationStatus: "unpublished",
+        },
+        {
+          ...visibleCourseRecord,
+          stableId: "paid-course",
+          accessLevel: "paid",
+        },
+      ],
+      convexLessons: [],
+      convexQuizzes: [],
+    });
+
+    expect(liveCatalog.courses).toHaveLength(0);
+    expect(buildLearnerCatalog().courses.length).toBeGreaterThan(0);
   });
 });

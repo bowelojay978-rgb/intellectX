@@ -16,6 +16,7 @@ export const convexApi = {
     clearAcademicProfile: makeFunctionReference<"mutation">("academicProfiles:clearAcademicProfile"),
   },
   lessons: {
+    listLessons: makeFunctionReference<"query">("lessons:listLessons"),
     getLessonsByCourse: makeFunctionReference<"query">("lessons:getLessonsByCourse"),
     getLessonById: makeFunctionReference<"query">("lessons:getLessonById"),
     updateLessonProgress: makeFunctionReference<"mutation">("lessons:updateLessonProgress"),

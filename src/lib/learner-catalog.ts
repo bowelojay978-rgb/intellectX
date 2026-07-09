@@ -7,7 +7,7 @@ import { getContentAccessLevel, getEntitlementAccessDecision, type ContentAccess
 import { isLearnerVisibleCourse } from "@/lib/course-workflow-policy";
 import { ConvexHttpClient } from "convex/browser";
 
-type ConvexCourseRecord = {
+export type ConvexCourseRecord = {
   stableId: string;
   slug: string;
   title: string;
@@ -21,7 +21,7 @@ type ConvexCourseRecord = {
   publicationStatus?: Course["publicationStatus"];
 };
 
-type ConvexLessonRecord = {
+export type ConvexLessonRecord = {
   stableId: string;
   courseStableId: string;
   title: string;
@@ -34,16 +34,16 @@ type ConvexLessonRecord = {
   order?: number;
 };
 
-type ConvexQuestionRecord = {
-  stableId: string;
-  prompt: string;
-  choices: string[];
-  answerIndex: number;
-  explanation: string;
-  order?: number;
+export type ConvexQuestionRecord = {
+  stableId?: unknown;
+  prompt?: unknown;
+  choices?: unknown;
+  answerIndex?: unknown;
+  explanation?: unknown;
+  order?: unknown;
 };
 
-type ConvexQuizRecord = {
+export type ConvexQuizRecord = {
   stableId: string;
   courseStableId: string;
   lessonStableId?: string;
@@ -148,8 +148,8 @@ export function normalizeLearnerQuiz(
     return null;
   }
 
-  const questions = [...(quiz.questions ?? [])]
-    .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+  const questions = (Array.isArray(quiz.questions) ? [...quiz.questions] : [])
+    .sort((left, right) => getQuestionOrder(left) - getQuestionOrder(right))
     .map(normalizeLearnerQuizQuestion)
     .filter((question): question is QuizQuestion => Boolean(question));
 
@@ -171,6 +171,18 @@ export function normalizeLearnerQuiz(
 
 function normalizeLearnerQuizQuestion(question: ConvexQuestionRecord): QuizQuestion | null {
   if (
+    typeof question.stableId !== "string" ||
+    typeof question.prompt !== "string" ||
+    !Array.isArray(question.choices) ||
+    !question.choices.every((choice) => typeof choice === "string") ||
+    typeof question.answerIndex !== "number" ||
+    !Number.isInteger(question.answerIndex) ||
+    typeof question.explanation !== "string"
+  ) {
+    return null;
+  }
+
+  if (
     !question.prompt ||
     question.choices.length < 2 ||
     question.answerIndex < 0 ||
@@ -186,6 +198,10 @@ function normalizeLearnerQuizQuestion(question: ConvexQuestionRecord): QuizQuest
     answerIndex: question.answerIndex,
     explanation: question.explanation,
   };
+}
+
+function getQuestionOrder(question: ConvexQuestionRecord) {
+  return typeof question.order === "number" ? question.order : 0;
 }
 
 function getStaticCourseDetail(id: string): LearnerCourseDetail | null {

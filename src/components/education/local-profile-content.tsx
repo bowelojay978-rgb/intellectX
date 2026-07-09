@@ -12,7 +12,7 @@ import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { courses } from "@/data/courses";
+import type { Course } from "@/data/courses";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
@@ -29,6 +29,7 @@ import {
   readQuizAttemptHistory,
   summarizeQuizAttemptHistory,
 } from "@/lib/quiz-attempt-history";
+import { useLearnerCatalog } from "@/lib/learner-catalog-client";
 import {
   emptyStudyActivitySummary,
   formatStudyStreakValue,
@@ -54,6 +55,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 };
 
 export function LocalProfileContent() {
+  const catalog = useLearnerCatalog();
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
@@ -114,8 +116,10 @@ export function LocalProfileContent() {
 
   const selectedCourses = useMemo(() => {
     const selectedIds = selection?.selectedCourseIds ?? [];
-    return courses.filter((course) => selectedIds.includes(course.id));
-  }, [selection]);
+    return selectedIds
+      .map((courseId) => catalog.courseById.get(courseId))
+      .filter((course): course is Course => Boolean(course));
+  }, [catalog.courseById, selection]);
 
   return (
     <>

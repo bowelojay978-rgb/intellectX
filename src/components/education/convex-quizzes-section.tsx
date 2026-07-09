@@ -6,8 +6,7 @@ import { clickableGlassCardClassName, glassCardClassName } from "@/components/ed
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { courses } from "@/data/courses";
-import { lessons } from "@/data/lessons";
+import type { Course } from "@/data/courses";
 import type { Quiz } from "@/data/quizzes";
 import { readQuizAttemptHistory } from "@/lib/quiz-attempt-history";
 import {
@@ -15,24 +14,11 @@ import {
   loadAcademicProfile,
   quizMatchesAcademicProfile,
 } from "@/lib/academic-profile";
-import { convexApi } from "@/lib/convex-api";
 import { convexEnv } from "@/lib/education-data";
-import type { ContentAccessLevel } from "@/lib/entitlements";
+import { type LearnerCatalog, useLearnerCatalog } from "@/lib/learner-catalog-client";
 import { ClockIcon, FileQuestionIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useQuery } from "convex/react";
-
-type ConvexQuiz = {
-  stableId: string;
-  courseStableId: string;
-  lessonStableId?: string;
-  title: string;
-  difficulty: Quiz["difficulty"];
-  estimatedTime: string;
-  questions: unknown[];
-  accessLevel?: ContentAccessLevel;
-};
 
 type ConvexQuizzesSectionProps = {
   fallbackQuizzes: Quiz[];
@@ -53,24 +39,6 @@ function getStoredAttempt(quizId: string): QuizAttemptSummary {
   return {
     completed: true,
     percent: latestAttempt.percentage,
-  };
-}
-function normalizeQuiz(quiz: ConvexQuiz, fallbackQuizzes: Quiz[]): Quiz | null {
-  const fallbackQuiz = fallbackQuizzes.find((item) => item.id === quiz.stableId);
-
-  if (!fallbackQuiz) {
-    return null;
-  }
-
-  return {
-    id: quiz.stableId,
-    courseId: quiz.courseStableId,
-    lessonId: quiz.lessonStableId,
-    title: quiz.title,
-    difficulty: quiz.difficulty,
-    estimatedTime: quiz.estimatedTime,
-    questions: fallbackQuiz.questions,
-    accessLevel: quiz.accessLevel ?? fallbackQuiz.accessLevel,
   };
 }
 
@@ -95,7 +63,7 @@ function useAcademicProfile() {
   return profile;
 }
 
-function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
+function QuizGrid({ quizzes, catalog }: { quizzes: Quiz[]; catalog: LearnerCatalog }) {
   const [localAttempts, setLocalAttempts] = useState<Record<string, QuizAttemptSummary>>({});
 
   useEffect(() => {
@@ -118,8 +86,8 @@ function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
       {quizzes.length > 0 ? (
         <section className="grid gap-5 md:grid-cols-3">
           {quizzes.map((quiz) => {
-            const course = courses.find((item) => item.id === quiz.courseId);
-            const lesson = lessons.find((item) => item.id === quiz.lessonId);
+            const course = catalog.courseById.get(quiz.courseId);
+            const lesson = quiz.lessonId ? catalog.lessonById.get(quiz.lessonId) : null;
             const localAttempt = localAttempts[quiz.id];
             const score = localAttempt?.percent;
             const hasScore = typeof score === "number";
@@ -180,11 +148,11 @@ function QuizGrid({ quizzes }: { quizzes: Quiz[] }) {
   );
 }
 
-function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
+function PersonalizedQuizzes({ quizzes, courses, catalog }: { quizzes: Quiz[]; courses: Course[]; catalog: LearnerCatalog }) {
   const profile = useAcademicProfile();
 
   if (!profile) {
-    return <QuizGrid quizzes={quizzes} />;
+    return <QuizGrid quizzes={quizzes} catalog={catalog} />;
   }
 
   const matchedQuizzes = quizzes.filter((quiz) => quizMatchesAcademicProfile(quiz, courses, profile));
@@ -192,7 +160,7 @@ function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
   return (
     <div className="space-y-6">
       {matchedQuizzes.length > 0 ? (
-        <QuizGrid quizzes={matchedQuizzes} />
+        <QuizGrid quizzes={matchedQuizzes} catalog={catalog} />
       ) : (
         <>
           <EmptyState
@@ -204,7 +172,7 @@ function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
           />
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold tracking-tight">All available quizzes</h2>
-            <QuizGrid quizzes={quizzes} />
+            <QuizGrid quizzes={quizzes} catalog={catalog} />
           </section>
         </>
       )}
@@ -213,36 +181,21 @@ function PersonalizedQuizzes({ quizzes }: { quizzes: Quiz[] }) {
 }
 
 function FallbackQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
+  const catalog = useLearnerCatalog();
+  const quizzes = convexEnv.isConfigured ? catalog.quizzes : fallbackQuizzes;
+
   return (
     <>
       <div className="mb-4 flex justify-center">
         <DataSourceBadge />
       </div>
-      <PersonalizedQuizzes quizzes={fallbackQuizzes} />
+      <PersonalizedQuizzes quizzes={quizzes} courses={catalog.courses} catalog={catalog} />
     </>
   );
 }
 
-function LiveQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
-  const quizzes = useQuery(convexApi.quizzes.listQuizzes, {});
-
-  if (!quizzes) {
-    return <FallbackQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
-  }
-
-  const playableQuizzes = (quizzes as ConvexQuiz[])
-    .map((quiz) => normalizeQuiz(quiz, fallbackQuizzes))
-    .filter((quiz): quiz is Quiz => Boolean(quiz));
-
-  return <FallbackQuizzesSection fallbackQuizzes={playableQuizzes.length > 0 ? playableQuizzes : fallbackQuizzes} />;
-}
-
 export function ConvexQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
-  if (!convexEnv.isConfigured) {
-    return <FallbackQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
-  }
-
-  return <LiveQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
+  return <FallbackQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
 }
 
 

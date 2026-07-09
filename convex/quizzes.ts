@@ -16,6 +16,10 @@ async function getLearnerVisibleCourseByStableId(ctx: any, courseStableId: strin
   return course;
 }
 
+function hasFreeLearnerAccess(record: { accessLevel?: string }) {
+  return record.accessLevel !== "paid";
+}
+
 async function getQuestionsByQuizStableId(ctx: any, quizStableId: string) {
   const questions = await ctx.db
     .query("questions")
@@ -34,7 +38,7 @@ export const listQuizzes = queryGeneric({
     for (const quiz of quizzes) {
       const course = await getLearnerVisibleCourseByStableId(ctx, quiz.courseStableId);
 
-      if (!course) {
+      if (!course || !hasFreeLearnerAccess(course) || !hasFreeLearnerAccess(quiz)) {
         continue;
       }
 
@@ -50,7 +54,7 @@ export const getQuizzesByCourse = queryGeneric({
   handler: async (ctx, args) => {
     const course = await getLearnerVisibleCourseByStableId(ctx, args.courseStableId);
 
-    if (!course) {
+    if (!course || !hasFreeLearnerAccess(course)) {
       return [];
     }
 
@@ -60,7 +64,9 @@ export const getQuizzesByCourse = queryGeneric({
       .collect();
 
     return await Promise.all(
-      quizzes.map(async (quiz) => ({ ...quiz, questions: await getQuestionsByQuizStableId(ctx, quiz.stableId) })),
+      quizzes
+        .filter(hasFreeLearnerAccess)
+        .map(async (quiz) => ({ ...quiz, questions: await getQuestionsByQuizStableId(ctx, quiz.stableId) })),
     );
   },
 });
@@ -75,7 +81,7 @@ export const getQuizById = queryGeneric({
     if (!quiz) return null;
     const course = await getLearnerVisibleCourseByStableId(ctx, quiz.courseStableId);
 
-    if (!course) {
+    if (!course || !hasFreeLearnerAccess(course) || !hasFreeLearnerAccess(quiz)) {
       return null;
     }
 
@@ -117,7 +123,30 @@ export const getQuizAttempts = queryGeneric({
       .query("quizAttempts")
       .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
+    const visibleAttempts = [];
 
-    return attempts.sort((left, right) => right.completedAt - left.completedAt).slice(0, 20);
+    for (const attempt of attempts) {
+      const quiz = await ctx.db
+        .query("quizzes")
+        .withIndex("by_stable_id", (q) => q.eq("stableId", attempt.quizId))
+        .first();
+
+      if (!quiz) {
+        continue;
+      }
+
+      const course = await getLearnerVisibleCourseByStableId(ctx, quiz.courseStableId);
+
+      if (course && hasFreeLearnerAccess(course) && hasFreeLearnerAccess(quiz)) {
+        visibleAttempts.push({
+          ...attempt,
+          quizTitle: attempt.quizTitle ?? quiz.title,
+          courseStableId: quiz.courseStableId,
+          courseTitle: course.title,
+        });
+      }
+    }
+
+    return visibleAttempts.sort((left, right) => right.completedAt - left.completedAt).slice(0, 20);
   },
 });

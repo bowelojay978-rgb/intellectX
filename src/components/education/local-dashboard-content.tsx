@@ -8,8 +8,7 @@ import { RecentQuizAttempts } from "@/components/education/recent-quiz-attempts"
 import { StatCard } from "@/components/education/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { courses } from "@/data/courses";
-import { lessons } from "@/data/lessons";
+import type { Course } from "@/data/courses";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
@@ -26,6 +25,7 @@ import {
   readQuizAttemptHistory,
   summarizeQuizAttemptHistory,
 } from "@/lib/quiz-attempt-history";
+import { useLearnerCatalog } from "@/lib/learner-catalog-client";
 import {
   emptyStudyActivitySummary,
   formatStudyStreakValue,
@@ -52,6 +52,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 };
 
 export function LocalDashboardContent() {
+  const catalog = useLearnerCatalog();
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
@@ -112,18 +113,22 @@ export function LocalDashboardContent() {
 
   const selectedCourses = useMemo(() => {
     const selectedIds = selection?.selectedCourseIds ?? [];
-    return courses.filter((course) => selectedIds.includes(course.id));
-  }, [selection]);
+    return selectedIds
+      .map((courseId) => catalog.courseById.get(courseId))
+      .filter((course): course is Course => Boolean(course));
+  }, [catalog.courseById, selection]);
 
   const recentLessons = useMemo(
     () =>
       lessonSummary.latestLessons
         .map((item) => {
-          const lesson = lessons.find((candidate) => candidate.id === item.lessonId);
-          return lesson ? { lesson, progress: item } : null;
+          const lesson = catalog.lessonById.get(item.lessonId);
+          return lesson || item.lessonTitle
+            ? { lesson, lessonTitle: lesson?.title ?? item.lessonTitle ?? item.lessonId, progress: item }
+            : null;
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
-    [lessonSummary.latestLessons],
+    [catalog.lessonById, lessonSummary.latestLessons],
   );
 
   return (
@@ -203,13 +208,13 @@ export function LocalDashboardContent() {
             <CardContent>
               {recentLessons.length > 0 ? (
                 <div className="grid gap-3">
-                  {recentLessons.map(({ lesson, progress }) => (
+                  {recentLessons.map(({ lesson, lessonTitle, progress }) => (
                     <Link
-                      key={lesson.id}
-                      href={`/learn/${lesson.id}`}
+                      key={progress.lessonId}
+                      href={`/learn/${lesson?.id ?? progress.lessonId}`}
                       className={`bg-secondary/40 rounded-lg p-4 text-sm ${clickableGlassCardClassName}`}
                     >
-                      <p className="font-medium">{lesson.title}</p>
+                      <p className="font-medium">{lessonTitle}</p>
                       <p className="text-muted-foreground mt-1">
                         {progress.progress}% {progress.status.replace("_", " ")}
                       </p>

@@ -7,7 +7,7 @@ import type { LearnerIdentity } from "@/lib/learner-session";
 const LOCAL_LEARNER_MIGRATION_MARKER_PREFIX = "intellectx:local-auth-migration";
 const localLearnerUserKeyPattern = /^learner:[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type LocalLearnerMigrationMarkerStatus = "attempted" | "succeeded";
+export type LocalLearnerMigrationMarkerStatus = "attempted" | "failed" | "succeeded";
 
 export type LocalLearnerMigrationSource = {
   sourceUserKey: string;
@@ -55,7 +55,14 @@ export function readLocalLearnerMigrationMarker(
 ): LocalLearnerMigrationMarkerStatus | null {
   const marker = storage.getItem(markerKey);
 
-  return marker === "attempted" || marker === "succeeded" ? marker : null;
+  return marker === "attempted" || marker === "failed" || marker === "succeeded" ? marker : null;
+}
+
+export function hasCompletedLocalLearnerMigration(
+  markerKey: string,
+  storage: Pick<Storage, "getItem"> = window.localStorage,
+) {
+  return readLocalLearnerMigrationMarker(markerKey, storage) === "succeeded";
 }
 
 export function writeLocalLearnerMigrationMarker(

@@ -23,6 +23,7 @@ import {
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
 import type { ContentAccessLevel } from "@/lib/entitlements";
+import { normalizeLearnerCourse } from "@/lib/learner-catalog";
 import { BookOpenIcon, GraduationCapIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -51,30 +52,20 @@ type ConvexCoursesSectionProps = {
   fallbackCourses: Course[];
 };
 
-function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Course {
+function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Course | null {
   const fallback = fallbackCourses.find((item) => item.id === course.stableId);
+  const normalizedCourse = normalizeLearnerCourse(course, fallback);
 
-  return {
-    id: course.stableId,
-    slug: course.slug,
-    title: course.title,
-    description: course.description,
-    subject: course.subject,
-    level: course.level,
-    duration: course.duration,
-    progress: fallback?.progress ?? 0,
-    lessonIds: fallback?.lessonIds ?? [],
-    quizIds: fallback?.quizIds ?? [],
-    accent: course.accent,
-    accessLevel: course.accessLevel ?? fallback?.accessLevel,
-    reviewStatus: course.reviewStatus ?? fallback?.reviewStatus,
-    publicationStatus: course.publicationStatus ?? fallback?.publicationStatus,
-    instructorId: course.instructorId ?? fallback?.instructorId,
-    submittedAt: course.submittedAt ?? fallback?.submittedAt,
-    reviewedAt: course.reviewedAt ?? fallback?.reviewedAt,
-    reviewedBy: course.reviewedBy ?? fallback?.reviewedBy,
-    reviewReason: course.reviewReason ?? fallback?.reviewReason,
-  };
+  return normalizedCourse
+    ? {
+        ...normalizedCourse,
+        instructorId: course.instructorId ?? fallback?.instructorId,
+        submittedAt: course.submittedAt ?? fallback?.submittedAt,
+        reviewedAt: course.reviewedAt ?? fallback?.reviewedAt,
+        reviewedBy: course.reviewedBy ?? fallback?.reviewedBy,
+        reviewReason: course.reviewReason ?? fallback?.reviewReason,
+      }
+    : null;
 }
 
 function useCourseSelection() {
@@ -296,7 +287,9 @@ function LiveCoursesSection({ fallbackCourses }: ConvexCoursesSectionProps) {
     return <FallbackCoursesSection fallbackCourses={fallbackCourses} />;
   }
 
-  const normalizedCourses = (courses as ConvexCourse[]).map((course) => normalizeCourse(course, fallbackCourses));
+  const normalizedCourses = (courses as ConvexCourse[])
+    .map((course) => normalizeCourse(course, fallbackCourses))
+    .filter((course): course is Course => Boolean(course));
 
   return <FallbackCoursesSection fallbackCourses={normalizedCourses} />;
 }

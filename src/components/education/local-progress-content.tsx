@@ -7,7 +7,7 @@ import { LocalQuizAverageStat } from "@/components/education/local-quiz-average-
 import { RecentQuizAttempts } from "@/components/education/recent-quiz-attempts";
 import { StreakCard } from "@/components/education/streak-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { courses } from "@/data/courses";
+import type { Course } from "@/data/courses";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
@@ -19,6 +19,7 @@ import {
   summarizeLessonProgressHistory,
   type LessonProgressHistorySummary,
 } from "@/lib/lesson-progress-history";
+import { useLearnerCatalog } from "@/lib/learner-catalog-client";
 import { QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT } from "@/lib/quiz-attempt-history";
 import {
   emptyStudyActivitySummary,
@@ -36,6 +37,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 };
 
 export function LocalProgressContent() {
+  const catalog = useLearnerCatalog();
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
@@ -87,8 +89,10 @@ export function LocalProgressContent() {
 
   const selectedCourses = useMemo(() => {
     const selectedIds = selection?.selectedCourseIds ?? [];
-    return courses.filter((course) => selectedIds.includes(course.id));
-  }, [selection]);
+    return selectedIds
+      .map((courseId) => catalog.courseById.get(courseId))
+      .filter((course): course is Course => Boolean(course));
+  }, [catalog.courseById, selection]);
 
   return (
     <>

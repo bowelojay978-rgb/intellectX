@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER } from "@/lib/convex-learner-identity";
 import {
   getLocalLearnerMigrationMarkerKey,
+  hasCompletedLocalLearnerMigration,
   isLocalLearnerMigrationSourceUserKey,
   readLocalLearnerMigrationMarker,
   resolveLocalLearnerMigrationSource,
@@ -80,5 +81,20 @@ describe("local learner migration source resolution", () => {
 
     writeLocalLearnerMigrationMarker(markerKey, "succeeded", storage);
     expect(readLocalLearnerMigrationMarker(markerKey, storage)).toBe("succeeded");
+  });
+
+  it("treats failed and attempted markers as retryable while success suppresses retries", () => {
+    const storage = memoryStorage();
+    const markerKey = getLocalLearnerMigrationMarkerKey("clerk-convex-ready", "learner:local@example.com");
+
+    writeLocalLearnerMigrationMarker(markerKey, "attempted", storage);
+    expect(hasCompletedLocalLearnerMigration(markerKey, storage)).toBe(false);
+
+    writeLocalLearnerMigrationMarker(markerKey, "failed", storage);
+    expect(readLocalLearnerMigrationMarker(markerKey, storage)).toBe("failed");
+    expect(hasCompletedLocalLearnerMigration(markerKey, storage)).toBe(false);
+
+    writeLocalLearnerMigrationMarker(markerKey, "succeeded", storage);
+    expect(hasCompletedLocalLearnerMigration(markerKey, storage)).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 export type LessonProgressHistoryItem = {
   lessonId: string;
+  lessonTitle?: string;
   status: string;
   progress: number;
   updatedAt: string;

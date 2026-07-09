@@ -284,6 +284,22 @@ describe("quiz attempt history", () => {
     expect(summary.averagePercentage).toBe(75);
     expect(summary.latestByQuizId["quiz-a"].percentage).toBe(100);
   });
+
+  it("preserves Convex-only quiz attempts without static quiz catalog records", () => {
+    const summary = summarizeQuizAttemptHistory([
+      {
+        quizId: "convex-only-quiz",
+        quizTitle: "Convex Only Quiz",
+        score: 4,
+        totalQuestions: 5,
+        percentage: 80,
+        completedAt: "2026-07-05T10:00:00.000Z",
+      },
+    ]);
+
+    expect(summary.attemptCount).toBe(1);
+    expect(summary.latestByQuizId["convex-only-quiz"].quizTitle).toBe("Convex Only Quiz");
+  });
 });
 
 describe("lesson progress history", () => {
@@ -320,6 +336,24 @@ describe("lesson progress history", () => {
     expect(summary.lessonCount).toBe(2);
     expect(summary.inProgressCount).toBe(1);
     expect(summary.completedCount).toBe(1);
+  });
+
+  it("preserves Convex-only lesson progress metadata", () => {
+    const history = writeLessonProgressHistory([
+      {
+        lessonId: "convex-only-lesson",
+        lessonTitle: "Convex Only Lesson",
+        status: "completed",
+        progress: 100,
+        updatedAt: "2026-07-05T10:00:00.000Z",
+      },
+    ]);
+
+    expect(history[0]).toMatchObject({
+      lessonId: "convex-only-lesson",
+      lessonTitle: "Convex Only Lesson",
+      progress: 100,
+    });
   });
 });
 

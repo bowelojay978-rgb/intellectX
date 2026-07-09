@@ -16,19 +16,43 @@ async function getLearnerVisibleCourseByStableId(ctx: any, courseStableId: strin
   return course;
 }
 
+function hasFreeLearnerAccess(record: { accessLevel?: string }) {
+  return record.accessLevel !== "paid";
+}
+
 export const getLessonsByCourse = queryGeneric({
   args: { courseStableId: v.string() },
   handler: async (ctx, args) => {
     const course = await getLearnerVisibleCourseByStableId(ctx, args.courseStableId);
 
-    if (!course) {
+    if (!course || !hasFreeLearnerAccess(course)) {
       return [];
     }
 
-    return await ctx.db
+    const lessons = await ctx.db
       .query("lessons")
       .withIndex("by_course_stable_id", (q) => q.eq("courseStableId", args.courseStableId))
       .collect();
+
+    return lessons.filter(hasFreeLearnerAccess);
+  },
+});
+
+export const listLessons = queryGeneric({
+  args: {},
+  handler: async (ctx) => {
+    const lessons = await ctx.db.query("lessons").collect();
+    const visibleLessons = [];
+
+    for (const lesson of lessons) {
+      const course = await getLearnerVisibleCourseByStableId(ctx, lesson.courseStableId);
+
+      if (course && hasFreeLearnerAccess(course) && hasFreeLearnerAccess(lesson)) {
+        visibleLessons.push(lesson);
+      }
+    }
+
+    return visibleLessons;
   },
 });
 
@@ -46,7 +70,7 @@ export const getLessonById = queryGeneric({
 
     const course = await getLearnerVisibleCourseByStableId(ctx, lesson.courseStableId);
 
-    if (!course) {
+    if (!course || !hasFreeLearnerAccess(course) || !hasFreeLearnerAccess(lesson)) {
       return null;
     }
 
