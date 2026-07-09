@@ -1,10 +1,6 @@
-type PublicAuthEnv = Partial<Record<"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | "NEXT_PUBLIC_CONVEX_URL", string>>;
+﻿type PublicAuthEnv = Partial<Record<"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | "NEXT_PUBLIC_CONVEX_URL", string>>;
 
-export type AuthEnvironmentMode =
-  | "local-fallback"
-  | "clerk-only"
-  | "convex-only"
-  | "clerk-convex-ready";
+export type AuthEnvironmentMode = "local-fallback" | "clerk-only" | "convex-only" | "clerk-convex-ready";
 
 export type AuthEnvironmentStatus = {
   clerkPublishableKeyPresent: boolean;
@@ -17,7 +13,12 @@ export type AuthEnvironmentStatus = {
   awaitingConvexAuthConfig: boolean;
 };
 
-export function getAuthEnvironmentStatus(env: PublicAuthEnv = process.env as PublicAuthEnv): AuthEnvironmentStatus {
+export function getAuthEnvironmentStatus(
+  env: PublicAuthEnv = {
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+  },
+): AuthEnvironmentStatus {
   const clerkPublishableKeyPresent = Boolean(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
   const convexUrlPresent = Boolean(env.NEXT_PUBLIC_CONVEX_URL);
   const mode: AuthEnvironmentMode = clerkPublishableKeyPresent

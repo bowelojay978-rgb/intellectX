@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { LearnerSessionStatus } from "@/components/auth/learner-session-status";
 import {
@@ -58,7 +58,7 @@ export function DesktopNav({ items, logoHref = "/", session, className }: Props)
               const isActive = isActiveNavItem(pathname, item.href);
 
               return (
-                <NavigationMenuItem key={item.href}>
+                <NavigationMenuItem key={`${item.label}:${item.href}`}>
                   <NavigationMenuLink
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
