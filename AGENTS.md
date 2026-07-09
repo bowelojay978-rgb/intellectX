@@ -37,14 +37,21 @@ Use the repository workflows in `docs/agent-workflows/` whenever they match the 
 
 ## Validation
 
-Run the smallest relevant validation first, then broader checks when appropriate:
+Prefer the validation orchestrator:
+
+- `npm run validate:quick` — typecheck + unit tests.
+- `npm run validate:standard` — typecheck + lint + unit tests + build.
+- `npm run validate:full` — standard validation + Playwright E2E.
+- `npm run validate:convex` — Convex codegen + typecheck + lint + unit tests + build.
+
+Use individual commands when a narrower check is more appropriate:
 
 - `npm run typecheck`
 - `npm run lint`
 - `npm run test:unit`
 - `npm run build`
 - `npm run test:e2e`
-- `npm run convex:codegen` when Convex schema or functions change
+- `npm run convex:codegen`
 
 Before completion, report:
 
