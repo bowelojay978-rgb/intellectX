@@ -9,9 +9,7 @@ const mobileAllowedRoutePrefixes = [
   "/mobile-quizzes",
   "/mobile-flashcards",
   "/mobile-notes",
-  "/quizzes",
   "/quiz/",
-  "/learn/",
 ] as const;
 
 export const featureScope = {
