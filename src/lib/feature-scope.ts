@@ -47,7 +47,7 @@ export function isFeatureAllowedOnSurface(feature: StudyFeature, surface: AppSur
     return true;
   }
 
-  return mobileStudyFeatures.includes(feature);
+  return (mobileStudyFeatures as readonly StudyFeature[]).includes(feature);
 }
 
 export function isFeatureAllowedOnMobile(feature: StudyFeature) {
