@@ -32,7 +32,7 @@ export function CourseCard({ course, showProgress = true }: CourseCardProps) {
           </span>
           <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
             <FileQuestionIcon className="size-4" />
-            {course.quizIds.length} quiz
+            {course.quizIds.length} {course.quizIds.length === 1 ? "quiz" : "quizzes"}
           </span>
         </div>
         <CardTitle className="text-xl tracking-tight">{course.title}</CardTitle>
