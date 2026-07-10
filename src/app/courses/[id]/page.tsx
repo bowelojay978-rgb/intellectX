@@ -1,6 +1,6 @@
 import { CourseContinueAction } from "@/components/education/course-continue-action";
+import { CourseProgressSummary } from "@/components/education/course-progress-summary";
 import { PageShell } from "@/components/education/page-shell";
-import { ProgressBar } from "@/components/education/progress-bar";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,13 +67,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               {quizzes.length} {quizzes.length === 1 ? "quiz" : "quizzes"}
             </span>
           </div>
-          <div className="mt-6 max-w-md space-y-2">
-            <div className="flex justify-between text-sm font-medium">
-              <span>Course progress</span>
-              <span>{course.progress}%</span>
-            </div>
-            <ProgressBar value={course.progress} />
-          </div>
+          <CourseProgressSummary lessonIds={lessons.map((lesson) => lesson.id)} />
           <CourseContinueAction lessons={lessons} />
         </div>
       </section>
