@@ -3,6 +3,7 @@
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { recordLessonProgress } from "@/lib/lesson-progress-history";
 import { useMutation } from "convex/react";
 import { useEffect } from "react";
@@ -34,13 +35,16 @@ function LocalLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
 function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
   const updateProgress = useMutation(convexApi.lessons.updateLessonProgress);
 
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+
   useEffect(() => {
     const localProgress = recordLessonProgress({
       lessonId,
       status: "in_progress",
       progress: 25,
     });
-    const identityArgs = getCurrentConvexLearnerArgs();
+    const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+    const identityArgs = getCurrentConvexLearnerArgs(isAuthenticated);
 
     if (!identityArgs) {
       return;
@@ -54,7 +58,7 @@ function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
     }).catch((error) => {
       console.warn("Unable to sync lesson progress to Convex", error);
     });
-  }, [lessonId, updateProgress]);
+  }, [isLoaded, isSignedIn, lessonId, updateProgress, userId]);
 
   return null;
 }

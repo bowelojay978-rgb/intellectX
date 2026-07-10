@@ -80,6 +80,11 @@ export function writeLessonProgressHistory(
   return history;
 }
 
+export function clearLessonProgressHistory(storage: Storage = window.localStorage) {
+  storage.removeItem(LESSON_PROGRESS_HISTORY_KEY);
+  window.dispatchEvent(new Event(LESSON_PROGRESS_HISTORY_CHANGE_EVENT));
+}
+
 export function mergeLessonProgressHistory(
   items: LessonProgressHistoryItem[],
   storage: Storage = window.localStorage,

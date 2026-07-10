@@ -13,6 +13,7 @@ function identity(overrides: Partial<UserIdentity> = {}): UserIdentity {
     tokenIdentifier: "https://clerk.example|user_123",
     subject: "user_123",
     issuer: "https://clerk.example",
+    email: "local@example.com",
     ...overrides,
   };
 }
@@ -151,6 +152,27 @@ describe("Convex learner data migration planning", () => {
     expect(() => prepareLearnerDataMigration(identity(), "learner:not-an-email")).toThrow(
       "Migration source userKey must be a local learner key.",
     );
+  });
+
+  it("rejects migration when authenticated identity has no email claim", () => {
+    expect(() =>
+      prepareLearnerDataMigration(identity({ email: undefined }), "learner:local@example.com"),
+    ).toThrow("Authenticated account email is required to migrate local learner data.");
+  });
+
+  it("rejects migration from a local learner key owned by another email", () => {
+    expect(() => prepareLearnerDataMigration(identity(), "learner:victim@example.com")).toThrow(
+      "Migration source must belong to the authenticated account email.",
+    );
+  });
+
+  it("matches migration ownership case-insensitively after trimming authenticated email", () => {
+    expect(
+      prepareLearnerDataMigration(identity({ email: "  Local@Example.COM  " }), "learner:local@example.com"),
+    ).toEqual({
+      sourceUserKey: "learner:local@example.com",
+      destinationUserKey: "auth:https://clerk.example|user_123",
+    });
   });
 
   it("always derives the destination userKey from authenticated identity", () => {

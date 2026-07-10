@@ -9,11 +9,18 @@ import { StudyActivitySync } from "@/components/education/study-activity-sync";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
-import { useAuth } from "@clerk/nextjs";
+import {
+  clearAuthenticatedLearnerLocalData,
+  hasPendingLocalLearnerMigrationSource,
+  readActiveClerkLearnerUserId,
+  shouldClearAuthenticatedLearnerLocalDataForTransition,
+  writeActiveClerkLearnerUserId,
+} from "@/lib/authenticated-learner-local-data";
 import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession } from "@/lib/learner-session";
-import { isLearnerAppPath } from "@/lib/learner-routes";
+import { isAuthenticatedAppPath, isLearnerAppPath } from "@/lib/learner-routes";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -36,9 +43,42 @@ export function PageShell({ children }: PageShellProps) {
 function ClerkPageShell({ children }: PageShellProps) {
   const pathname = usePathname();
   const guarded = isLearnerAppPath(pathname);
-  const { isLoaded, isSignedIn } = useAuth();
-  const canShowApp = !guarded || (isLoaded && isSignedIn);
+  const authenticatedAppPath = isAuthenticatedAppPath(pathname);
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const [preparedUserId, setPreparedUserId] = useState<string | null>(null);
+  const canShowApp =
+    !authenticatedAppPath || Boolean(isLoaded && isSignedIn && userId && preparedUserId === userId);
   const authEnvironment = getAuthEnvironmentStatus();
+
+  useEffect(() => {
+    if (!isLoaded) {
+      setPreparedUserId(null);
+      return;
+    }
+
+    if (!isSignedIn || !userId) {
+      // Route access and anonymous migration-source preservation are separate concerns.
+      // Signed-out state must never destroy legitimate local learner data.
+      setPreparedUserId(null);
+      return;
+    }
+
+    const previousUserId = readActiveClerkLearnerUserId();
+    const hasMigrationSource = hasPendingLocalLearnerMigrationSource();
+
+    if (
+      shouldClearAuthenticatedLearnerLocalDataForTransition({
+        previousUserId,
+        nextUserId: userId,
+        hasMigrationSource,
+      })
+    ) {
+      clearAuthenticatedLearnerLocalData();
+    }
+
+    writeActiveClerkLearnerUserId(userId);
+    setPreparedUserId(userId);
+  }, [isLoaded, isSignedIn, userId]);
 
   useEffect(() => {
     if (guarded && isLoaded && !isSignedIn) {
@@ -49,7 +89,11 @@ function ClerkPageShell({ children }: PageShellProps) {
   return (
     <>
       {authEnvironment.canRunLocalToAuthMigration ? (
-        <LocalLearnerDataMigrationSync isAuthLoaded={isLoaded} isSignedIn={isSignedIn} />
+        <LocalLearnerDataMigrationSync
+          isAuthLoaded={isLoaded}
+          isSignedIn={isSignedIn}
+          authenticatedUserId={userId}
+        />
       ) : null}
       <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
     </>

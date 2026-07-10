@@ -19,8 +19,8 @@ export default function ProgressPage() {
         <DataSourceBadge />
         <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">Your learning momentum</h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
-          See selected courses and activity recorded in this browser. Missing account-level data is shown as an empty
-          state instead of estimated progress.
+          See selected courses and learning activity hydrated from your account when available. Missing data is shown as
+          an empty state instead of estimated progress.
         </p>
       </section>
       <LocalProgressContent />

@@ -8,6 +8,7 @@ import type { Quiz } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
@@ -58,12 +59,14 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
 
 function ConvexQuizPlayer({ quiz }: QuizPlayerProps) {
   const saveAttempt = useMutation(convexApi.quizzes.submitQuizAttempt);
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
   return (
     <QuizPlayerCore
       quiz={quiz}
       onComplete={(answers, score, attempt) => {
-        const identityArgs = getCurrentConvexLearnerArgs();
+        const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+        const identityArgs = getCurrentConvexLearnerArgs(isAuthenticated);
 
         if (!identityArgs) {
           return;

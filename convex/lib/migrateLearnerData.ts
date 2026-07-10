@@ -4,6 +4,14 @@ import { getAuthenticatedLearnerUserKey } from "./identity";
 export const AUTHENTICATED_CONVEX_USER_KEY_PLACEHOLDER = "auth:convex-authenticated-user";
 const localLearnerUserKeyPattern = /^learner:[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function getLocalLearnerEmailFromUserKey(userKey: string) {
+  return normalizeEmail(userKey.slice("learner:".length));
+}
+
 export type LearnerDataMigrationPlan = {
   sourceUserKey: string;
   destinationUserKey: string;
@@ -45,6 +53,18 @@ export function prepareLearnerDataMigration(
 
   if (!isLocalLearnerMigrationSourceUserKey(trimmedSourceUserKey)) {
     throw new Error("Migration source userKey must be a local learner key.");
+  }
+
+  const authenticatedEmail = typeof identity.email === "string" ? normalizeEmail(identity.email) : "";
+
+  if (!authenticatedEmail) {
+    throw new Error("Authenticated account email is required to migrate local learner data.");
+  }
+
+  const sourceEmail = getLocalLearnerEmailFromUserKey(trimmedSourceUserKey);
+
+  if (sourceEmail !== authenticatedEmail) {
+    throw new Error("Migration source must belong to the authenticated account email.");
   }
 
   return {

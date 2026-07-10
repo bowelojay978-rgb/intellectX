@@ -63,16 +63,16 @@ describe("frontend Convex learner identity resolution", () => {
     ).toBeNull();
   });
 
-  it("keeps a local learner key as the temporary fallback when Clerk and Convex are both configured", () => {
+  it("uses authenticated Convex identity when Clerk and Convex are both configured even if local state exists", () => {
     expect(
       resolveConvexLearnerIdentity({
         authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
         localIdentity: { userKey: "learner:migrating@example.com" },
+        isAuthenticated: true,
       }),
     ).toEqual({
-      userKey: "learner:migrating@example.com",
-      source: "local-session",
-      isAuthenticatedCall: false,
+      source: "authenticated-convex",
+      isAuthenticatedCall: true,
     });
   });
 
@@ -81,6 +81,7 @@ describe("frontend Convex learner identity resolution", () => {
       resolveConvexLearnerIdentity({
         authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
         localIdentity: null,
+        isAuthenticated: true,
       }),
     ).toEqual({
       source: "authenticated-convex",
@@ -91,17 +92,19 @@ describe("frontend Convex learner identity resolution", () => {
       resolveConvexLearnerArgs({
         authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
         localIdentity: null,
+        isAuthenticated: true,
       }),
     ).toEqual({});
   });
 
-  it("prefers a stale local learner key for migration compatibility when Clerk and Convex are configured", () => {
+  it("omits stale local learner keys from normal Clerk and Convex calls", () => {
     expect(
       resolveConvexLearnerArgs({
         authEnvironment: authEnvironment({ mode: "clerk-convex-ready", canRunConvexSync: true }),
         localIdentity: { userKey: "learner:stale@example.com" },
+        isAuthenticated: true,
       }),
-    ).toEqual({ userKey: "learner:stale@example.com" });
+    ).toEqual({});
   });
 
   it("does not produce a user key when Convex sync is unavailable", () => {

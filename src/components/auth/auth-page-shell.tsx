@@ -10,12 +10,24 @@ type AuthPageShellProps = {
 };
 
 export function AuthPageShell({ mode }: AuthPageShellProps) {
+  const clerkAuthEnabled = isClerkAuthEnabled();
   const authPanel =
-    isClerkAuthEnabled() && mode !== "forgot-password" ? (
+    clerkAuthEnabled && mode !== "forgot-password" ? (
       <ClerkAuthPanel mode={mode} />
     ) : (
       <LearnerSessionForm mode={mode} />
     );
+  const shellCopy = clerkAuthEnabled
+    ? {
+        title: "Learner access for your account.",
+        description:
+          "Sign in to load your IntellectX courses, progress, quizzes, and study profile through your account-backed learner session.",
+      }
+    : {
+        title: "Learner access for this browser.",
+        description:
+          "These pages create a learner session stored on this device while account-level persistence is being completed. Session details can be cleared from the profile page.",
+      };
 
   return (
     <>
@@ -28,11 +40,10 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
               IntellectX learner access
             </p>
             <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">
-              Learner access for this browser.
+              {shellCopy.title}
             </h1>
             <p className="text-muted-foreground mt-5 max-w-xl leading-7">
-              These pages create a learner session stored on this device while account-level persistence is being completed.
-              Session details can be cleared from the profile page.
+              {shellCopy.description}
             </p>
           </section>
           {authPanel}

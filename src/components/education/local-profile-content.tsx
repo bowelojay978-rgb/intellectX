@@ -18,6 +18,7 @@ import {
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import {
   LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
   readLessonProgressHistory,
@@ -56,6 +57,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 
 export function LocalProfileContent() {
   const catalog = useLearnerCatalog();
+  const profileSourceLabel = isClerkAuthEnabled() ? "Account-backed learner profile" : "Browser-backed learner profile";
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
@@ -135,7 +137,7 @@ export function LocalProfileContent() {
           <h1 className="text-4xl font-medium tracking-tight">
             <LearnerSessionName />
           </h1>
-          <p className="text-muted-foreground mt-1">Browser-backed learner profile</p>
+          <p className="text-muted-foreground mt-1">{profileSourceLabel}</p>
         </div>
         <div className="grid gap-1 text-sm md:text-right">
           <span className="text-muted-foreground">Last studied</span>

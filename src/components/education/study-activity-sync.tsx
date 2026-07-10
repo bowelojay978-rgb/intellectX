@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
@@ -9,6 +9,8 @@ import {
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { hasPendingLocalLearnerMigrationSource } from "@/lib/authenticated-learner-local-data";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { readStudyActivitySummary } from "@/lib/study-activity-summary";
 import { useMutation } from "convex/react";
@@ -25,9 +27,16 @@ export function StudyActivitySync() {
 function ConvexStudyActivitySync() {
   const updateStudyStats = useMutation(convexApi.studyStats.updateStudyStats);
   const lastSyncedPayload = useRef<string | null>(null);
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
   const syncStudyStats = useCallback(() => {
-    const identityArgs = getCurrentConvexLearnerArgs();
+    const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+
+    if (isAuthenticated && hasPendingLocalLearnerMigrationSource()) {
+      return;
+    }
+
+    const identityArgs = getCurrentConvexLearnerArgs(isAuthenticated);
 
     if (!identityArgs) {
       return;
@@ -59,7 +68,11 @@ function ConvexStudyActivitySync() {
       lastSyncedPayload.current = null;
       console.warn("Unable to sync study activity to Convex", error);
     });
-  }, [updateStudyStats]);
+  }, [isLoaded, isSignedIn, updateStudyStats, userId]);
+
+  useEffect(() => {
+    lastSyncedPayload.current = null;
+  }, [userId]);
 
   useEffect(() => {
     syncStudyStats();

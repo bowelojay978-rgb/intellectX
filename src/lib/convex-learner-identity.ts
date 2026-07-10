@@ -20,14 +20,41 @@ export type ConvexLearnerArgs = {
 type ResolveConvexLearnerIdentityArgs = {
   authEnvironment: Pick<AuthEnvironmentStatus, "mode" | "canRunConvexSync">;
   localIdentity?: Pick<LearnerIdentity, "userKey"> | null;
+  // Explicit client auth readiness (from Clerk runtime). When `undefined` on
+  // the server (no `window`), server-side code may assume auth as configured.
+  isAuthenticated?: boolean | undefined;
 };
 
 export function resolveConvexLearnerIdentity({
   authEnvironment,
   localIdentity,
+  isAuthenticated,
 }: ResolveConvexLearnerIdentityArgs): ConvexLearnerIdentity | null {
   if (!authEnvironment.canRunConvexSync) {
     return null;
+  }
+
+  if (authEnvironment.mode === "clerk-convex-ready") {
+    // Server-side: preserve previous behaviour where server-side auth is
+    // authoritative and there is no `window` to inspect.
+    if (typeof window === "undefined") {
+      return {
+        source: "authenticated-convex",
+        isAuthenticatedCall: true,
+      };
+    }
+
+    // Client-side: require explicit auth readiness from the auth runtime
+    // (e.g., Clerk's `useAuth()` -> isLoaded && isSignedIn). Do NOT rely on
+    // localStorage markers as proof of authentication.
+    if (!isAuthenticated) {
+      return null;
+    }
+
+    return {
+      source: "authenticated-convex",
+      isAuthenticatedCall: true,
+    };
   }
 
   if (localIdentity?.userKey) {
@@ -38,21 +65,15 @@ export function resolveConvexLearnerIdentity({
     };
   }
 
-  if (authEnvironment.mode === "clerk-convex-ready") {
-    return {
-      source: "authenticated-convex",
-      isAuthenticatedCall: true,
-    };
-  }
-
   return null;
 }
 
 export function resolveConvexLearnerArgs({
   authEnvironment,
   localIdentity,
+  isAuthenticated,
 }: ResolveConvexLearnerIdentityArgs): ConvexLearnerArgs | null {
-  const identity = resolveConvexLearnerIdentity({ authEnvironment, localIdentity });
+  const identity = resolveConvexLearnerIdentity({ authEnvironment, localIdentity, isAuthenticated });
 
   if (!identity) {
     return null;
@@ -61,16 +82,18 @@ export function resolveConvexLearnerArgs({
   return identity.userKey ? { userKey: identity.userKey } : {};
 }
 
-export function getCurrentConvexLearnerIdentity() {
+export function getCurrentConvexLearnerIdentity(isAuthenticated?: boolean) {
   return resolveConvexLearnerIdentity({
     authEnvironment: getAuthEnvironmentStatus(),
     localIdentity: getCurrentLearnerIdentity(),
+    isAuthenticated,
   });
 }
 
-export function getCurrentConvexLearnerArgs() {
+export function getCurrentConvexLearnerArgs(isAuthenticated?: boolean) {
   return resolveConvexLearnerArgs({
     authEnvironment: getAuthEnvironmentStatus(),
     localIdentity: getCurrentLearnerIdentity(),
+    isAuthenticated,
   });
 }

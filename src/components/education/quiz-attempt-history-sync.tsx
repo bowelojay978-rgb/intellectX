@@ -2,10 +2,20 @@
 
 import { quizzes } from "@/data/quizzes";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
+import {
+  getCurrentConvexLearnerIdentity,
+  type ConvexLearnerArgs,
+  type ConvexLearnerIdentity,
+} from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { hasPendingLocalLearnerMigrationSource } from "@/lib/authenticated-learner-local-data";
+import { hydrateAuthenticatedQuizAttemptHistory } from "@/lib/authenticated-learner-hydration";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
-import { mergeQuizAttemptHistory, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
+import {
+  mergeQuizAttemptHistory,
+  type QuizAttemptHistoryItem,
+} from "@/lib/quiz-attempt-history";
 import { useConvex } from "convex/react";
 import { useEffect, useState } from "react";
 
@@ -51,6 +61,10 @@ function toQuizAttemptHistoryItem(value: unknown): QuizAttemptHistoryItem | null
   };
 }
 
+function getIdentityArgs(identity: ConvexLearnerIdentity): ConvexLearnerArgs {
+  return identity.userKey ? { userKey: identity.userKey } : {};
+}
+
 export function QuizAttemptHistorySync() {
   if (!convexEnv.isConfigured) {
     return null;
@@ -61,13 +75,16 @@ export function QuizAttemptHistorySync() {
 
 function ConvexQuizAttemptHistorySync() {
   const convex = useConvex();
-  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
+  const [identity, setIdentity] = useState<ConvexLearnerIdentity | null>(null);
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
   useEffect(() => {
-    setIdentityArgs(getCurrentConvexLearnerArgs());
+    const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+    setIdentity(getCurrentConvexLearnerIdentity(isAuthenticated));
 
     function syncIdentity() {
-      setIdentityArgs(getCurrentConvexLearnerArgs());
+      const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+      setIdentity(getCurrentConvexLearnerIdentity(isAuthenticated));
     }
 
     window.addEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
@@ -77,14 +94,15 @@ function ConvexQuizAttemptHistorySync() {
       window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
       window.removeEventListener("storage", syncIdentity);
     };
-  }, []);
+  }, [isLoaded, isSignedIn, userId]);
 
   useEffect(() => {
-    if (!identityArgs) {
+    if (!identity) {
       return;
     }
 
     let cancelled = false;
+    const identityArgs = getIdentityArgs(identity);
 
     convex
       .query(convexApi.quizzes.getQuizAttempts, identityArgs)
@@ -96,6 +114,11 @@ function ConvexQuizAttemptHistorySync() {
         const attempts = remoteAttempts
           .map((attempt) => toQuizAttemptHistoryItem(attempt))
           .filter((attempt): attempt is QuizAttemptHistoryItem => Boolean(attempt));
+
+        if (identity.source === "authenticated-convex") {
+          hydrateAuthenticatedQuizAttemptHistory(attempts, hasPendingLocalLearnerMigrationSource());
+          return;
+        }
 
         if (attempts.length > 0) {
           mergeQuizAttemptHistory(attempts);
@@ -110,7 +133,7 @@ function ConvexQuizAttemptHistorySync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identityArgs]);
+  }, [convex, identity]);
 
   return null;
 }

@@ -1,9 +1,13 @@
-﻿"use client";
+"use client";
 
+import {
+  ClerkLearnerAuthRuntimeProvider,
+  LocalLearnerAuthRuntimeProvider,
+} from "@/components/providers/learner-auth-runtime-provider";
+import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { useMemo } from "react";
 
 type ConvexClientProviderProps = {
@@ -18,21 +22,31 @@ export function ConvexClientProvider({ children }: ConvexClientProviderProps) {
 
   if (!client) {
     if (!authEnvironment.clerkPublishableKeyPresent || !clerkPublishableKey) {
-      return <>{children}</>;
+      return <LocalLearnerAuthRuntimeProvider>{children}</LocalLearnerAuthRuntimeProvider>;
     }
 
-    return <ClerkProvider publishableKey={clerkPublishableKey}>{children}</ClerkProvider>;
+    return (
+      <ClerkProvider publishableKey={clerkPublishableKey}>
+        <ClerkLearnerAuthRuntimeProvider>{children}</ClerkLearnerAuthRuntimeProvider>
+      </ClerkProvider>
+    );
   }
 
   if (!authEnvironment.clerkPublishableKeyPresent || !clerkPublishableKey) {
-    return <ConvexProvider client={client}>{children}</ConvexProvider>;
+    return (
+      <ConvexProvider client={client}>
+        <LocalLearnerAuthRuntimeProvider>{children}</LocalLearnerAuthRuntimeProvider>
+      </ConvexProvider>
+    );
   }
 
   return (
     <ClerkProvider publishableKey={clerkPublishableKey}>
-      <ConvexProviderWithClerk client={client} useAuth={useAuth}>
-        {children}
-      </ConvexProviderWithClerk>
+      <ClerkLearnerAuthRuntimeProvider>
+        <ConvexProviderWithClerk client={client} useAuth={useAuth}>
+          {children}
+        </ConvexProviderWithClerk>
+      </ClerkLearnerAuthRuntimeProvider>
     </ClerkProvider>
   );
 }
