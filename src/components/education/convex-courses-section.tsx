@@ -223,7 +223,7 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
       <EmptyState
         title="Complete your study profile first"
         description="Course selection unlocks after your academic level, curriculum, and subjects are saved."
-        actionHref="/profile#study-profile"
+        actionHref="/signup"
         actionLabel="Set up profile"
         icon={GraduationCapIcon}
       />
