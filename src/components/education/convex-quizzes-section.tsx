@@ -127,7 +127,7 @@ function QuizGrid({ quizzes, catalog }: { quizzes: Quiz[]; catalog: LearnerCatal
                   </CardContent>
                   <CardFooter>
                     <span className={buttonVariants({ className: "w-full" })}>
-                      {hasScore ? "Review quiz" : "Start quiz"}
+                      {hasScore ? "Retake quiz" : "Start quiz"}
                     </span>
                   </CardFooter>
                 </Card>
@@ -197,5 +197,3 @@ function FallbackQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) 
 export function ConvexQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
   return <FallbackQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
 }
-
-
