@@ -1,8 +1,8 @@
 "use client";
 
+import { LearnerOnboarding } from "@/components/auth/learner-onboarding";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { isAcademicProfileComplete, loadAcademicProfile } from "@/lib/academic-profile";
 import { createLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,8 @@ const contentByMode = {
   signup: {
     eyebrow: "Learner profile",
     title: "Create your learner session",
-    description: "Add your learner details, then complete your study profile before entering IntellectX.",
-    submitLabel: "Continue to study profile",
+    description: "Add your learner details, then complete your study profile and course selection before entering IntellectX.",
+    submitLabel: "Continue to onboarding",
   },
   "forgot-password": {
     eyebrow: "Account recovery",
@@ -106,13 +106,12 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
         {isProfileSetup ? (
           <div className="grid gap-5">
             <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Complete your study profile to unlock courses, quizzes, lessons, dashboard, and progress pages.
+              Complete your study profile and choose your courses before entering IntellectX.
             </div>
-            <StudyProfileCard
+            <LearnerOnboarding
               loadSavedProfile={false}
-              showReset={false}
-              submitLabel="Complete signup"
-              onSaved={completeSignup}
+              completeLabel="Complete signup"
+              onComplete={completeSignup}
             />
           </div>
         ) : (
@@ -208,7 +207,7 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
   if (mode === "signup") {
     return (
       <div className="text-muted-foreground mt-6 grid gap-2 text-center text-sm">
-        <p>After signup, complete your study profile to prioritize relevant courses and quizzes.</p>
+        <p>After signup, complete your study profile and choose your courses before entering IntellectX.</p>
         <p>
           Already have a learner session?{" "}
           <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
@@ -228,5 +227,3 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
     </p>
   );
 }
-
-
