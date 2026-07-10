@@ -15,7 +15,11 @@ function recordLessonOpened(lessonId: string) {
   const existing = readLessonProgressHistory().find((item) => item.lessonId === lessonId);
 
   if (existing && (existing.progress >= 100 || existing.status === "completed")) {
-    return existing;
+    return recordLessonProgress({
+      lessonId,
+      status: "completed",
+      progress: 100,
+    });
   }
 
   return recordLessonProgress({
