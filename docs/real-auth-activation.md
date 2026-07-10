@@ -1,4 +1,4 @@
-﻿# Real Auth Activation
+# Real Auth Activation
 
 This checklist is developer-facing and must be completed before IntellectX treats Clerk and Convex auth as production-ready. Do not commit secret values or screenshots containing secret values.
 
@@ -7,7 +7,7 @@ This checklist is developer-facing and must be completed before IntellectX treat
 - `local-fallback`: no Clerk publishable key and no Convex URL. Browser-backed learner sessions guard app routes.
 - `clerk-only`: Clerk publishable key exists, Convex URL is missing. Clerk handles signed-in state, but Convex migration and account-backed persistence do not run.
 - `convex-only`: Convex URL exists, Clerk publishable key is missing. Local fallback remains active while Convex sync can use browser-derived local learner keys.
-- `clerk-convex-ready`: Clerk publishable key and Convex URL exist. Clerk handles signed-in state, frontend Convex sync can run without a local browser learner session, and the local-to-auth migration bridge can run when a local source key exists. Convex identity is fully secure only after `CLERK_JWT_ISSUER_DOMAIN` is configured in Convex and `convex/auth.config.ts` is added and deployed.
+- `clerk-convex-ready`: Clerk publishable key and Convex URL exist. Clerk handles signed-in state, frontend Convex sync can run without a local browser learner session, and the local-to-auth migration bridge can run when a local source key exists. The environment is still reported as awaiting Convex auth config until `CLERK_JWT_ISSUER_DOMAIN` is present; Convex identity is fully secure only after that issuer is configured in Convex and `convex/auth.config.ts` is deployed.
 
 ## Activation Order
 
