@@ -113,7 +113,7 @@ export function LearnerOnboarding({
       <div className="space-y-4">
         <p className="text-muted-foreground text-sm">Step 1 of 2 · Study profile</p>
         <StudyProfileCard
-          loadSavedProfile={loadSavedProfile}
+          loadSavedProfile={loadSavedProfile || Boolean(profile)}
           showReset={false}
           submitLabel="Continue to course selection"
           onSaved={handleProfileSaved}
