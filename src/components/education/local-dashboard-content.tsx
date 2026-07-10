@@ -178,8 +178,8 @@ export function LocalDashboardContent() {
             </CardHeader>
             <CardContent className="grid gap-3">
               <Link
-                href="/mobile-quizzes"
-                aria-label="Open mobile quizzes"
+                href="/quizzes"
+                aria-label="Open quizzes"
                 className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
               >
                 <BookOpenCheckIcon className="size-5" />
