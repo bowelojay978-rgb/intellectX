@@ -6,7 +6,7 @@ type ClerkAuthPanelProps = {
 
 export function ClerkAuthPanel({ mode }: ClerkAuthPanelProps) {
   if (mode === "signup") {
-    return <SignUp forceRedirectUrl="/profile" fallbackRedirectUrl="/profile" />;
+    return <SignUp forceRedirectUrl="/onboarding" fallbackRedirectUrl="/onboarding" />;
   }
 
   return <SignIn forceRedirectUrl="/courses" fallbackRedirectUrl="/courses" />;
