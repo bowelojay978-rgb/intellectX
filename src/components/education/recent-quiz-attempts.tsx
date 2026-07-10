@@ -63,9 +63,9 @@ export function RecentQuizAttempts() {
           ))
         ) : (
           <div className="bg-secondary/40 rounded-lg p-4 text-sm text-muted-foreground">
-            <p>No local quiz attempts yet. Start a quiz to build your recent results history.</p>
+            <p>No quiz attempts yet. Start a quiz to build your recent results history.</p>
             <Button className="mt-4" size="sm" asChild>
-              <Link href="/mobile-quizzes">Start a quiz</Link>
+              <Link href="/quizzes">Start a quiz</Link>
             </Button>
           </div>
         )}
@@ -73,5 +73,3 @@ export function RecentQuizAttempts() {
     </Card>
   );
 }
-
-
