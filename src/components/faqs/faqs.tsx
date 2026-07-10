@@ -50,33 +50,42 @@ export function FAQs() {
       </div>
       <Accordion type="single" collapsible defaultValue="accounts" className="grid w-full gap-4">
         <AccordionItemFAQs value="accounts">
-          <AccordionTriggerFAQs>Is IntellectX using real student accounts yet?</AccordionTriggerFAQs>
+          <AccordionTriggerFAQs>Does IntellectX support student accounts?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>No. IntellectX uses local learner sessions and browser-based persistence for some flows while account-level persistence is being completed.</p>
+            <p>
+              Yes. IntellectX supports account-backed learner access when Clerk is enabled, with a local browser-session
+              fallback available for development and non-Clerk environments.
+            </p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="courses">
-          <AccordionTriggerFAQs>Can I browse courses without signing in?</AccordionTriggerFAQs>
+          <AccordionTriggerFAQs>Do I choose my courses during signup?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Yes. The current release is designed as an open learning experience with locally stored progress where supported.</p>
+            <p>
+              Yes. New learners complete a study profile and choose their courses during onboarding before entering the
+              main learning experience.
+            </p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="scores">
-          <AccordionTriggerFAQs>Does the quiz save my score?</AccordionTriggerFAQs>
+          <AccordionTriggerFAQs>Does IntellectX save quiz scores?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Not yet. Quiz selection and feedback happen in the browser with no backend persistence.</p>
+            <p>
+              Yes. Completed quiz attempts are saved for progress tracking and can sync to account-backed data when the
+              Convex environment is configured.
+            </p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="ai">
-          <AccordionTriggerFAQs>Will there be more AI features?</AccordionTriggerFAQs>
+          <AccordionTriggerFAQs>Where is AI used in the learning flow?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Yes. The UI is positioned for AI tutoring, study plans, and adaptive practice in later passes.</p>
+            <p>
+              Supported lessons include an AI tutor experience, while quizzes, progress tracking, and study workflows
+              keep feedback connected to the learner&apos;s activity.
+            </p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
       </Accordion>
     </div>
   );
 }
-
-
-
