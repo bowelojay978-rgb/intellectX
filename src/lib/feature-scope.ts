@@ -2,7 +2,7 @@ export type AppSurface = "web" | "mobile";
 
 export type StudyFeature = "quizzes" | "flashcards" | "notes";
 
-const mobileStudyFeatures = ["quizzes", "flashcards", "notes"] as const satisfies readonly StudyFeature[];
+const mobileStudyFeatures = ["quizzes", "flashcards"] as const satisfies readonly StudyFeature[];
 
 const mobileAllowedRoutePrefixes = [
   "/mobile-study",
