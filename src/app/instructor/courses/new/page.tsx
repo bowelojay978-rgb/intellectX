@@ -1,38 +1,40 @@
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
+import { InstructorCourseBuilder } from "@/components/instructor/instructor-course-builder";
+import { InstructorWorkspaceNav } from "@/components/instructor/instructor-workspace-nav";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getStaffPlaceholderMetadata } from "@/lib/staff-route-placeholder";
+import { getInstructorWorkspaceCourse } from "@/lib/instructor-ui-data";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Create Course - IntellectX",
-  description: "Placeholder instructor course-creation route for future production workflow controls.",
+  title: "Course Builder - IntellectX",
+  description: "Create and edit IntellectX course, lesson, and quiz frontend drafts.",
 };
 
-export default function InstructorNewCoursePage() {
-  const metadata = getStaffPlaceholderMetadata("instructor-courses-new");
+type InstructorCourseBuilderPageProps = {
+  searchParams: Promise<{ edit?: string }>;
+};
+
+export default async function InstructorNewCoursePage({ searchParams }: InstructorCourseBuilderPageProps) {
+  const { edit } = await searchParams;
+  const initialCourse = edit ? getInstructorWorkspaceCourse(edit) : null;
 
   return (
     <StaffRouteGuard pathname="/instructor/courses/new">
       <PageShell>
-        <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <Badge variant="secondary" className="uppercase">
-            {metadata.roleLabel}
+        <InstructorWorkspaceNav />
+        <section className="mb-8 flex flex-col gap-4">
+          <Badge variant="secondary" className="w-fit uppercase">
+            {initialCourse ? "Edit course" : "Create course"}
           </Badge>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{metadata.heading}</h1>
-          <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">{metadata.summary}</p>
-          <p className="text-muted-foreground max-w-2xl leading-6">{metadata.detail}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/instructor/courses">Back to instructor courses</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/courses">Browse learner courses</Link>
-            </Button>
-          </div>
+          <h1 className="max-w-4xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+            {initialCourse ? `Continue building ${initialCourse.title}` : "Build a new learning path"}
+          </h1>
+          <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
+            Move from course details to lessons, quizzes, and a final frontend review without touching backend persistence.
+          </p>
         </section>
+        <InstructorCourseBuilder initialCourse={initialCourse} />
       </PageShell>
     </StaffRouteGuard>
   );
