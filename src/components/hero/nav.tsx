@@ -56,10 +56,6 @@ const mobileFreeNavItems = [
     label: "Flashcards",
     href: "/mobile-flashcards",
   },
-  {
-    label: "Notes",
-    href: "/mobile-notes",
-  },
 ];
 
 type SessionState = LearnerSession | null | undefined;
