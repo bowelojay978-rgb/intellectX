@@ -1,38 +1,32 @@
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
+import { InstructorDashboard } from "@/components/instructor/instructor-dashboard";
+import { InstructorWorkspaceNav } from "@/components/instructor/instructor-workspace-nav";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getStaffPlaceholderMetadata } from "@/lib/staff-route-placeholder";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Instructor - IntellectX",
-  description: "Placeholder instructor workspace for future production course workflow controls.",
+  description: "Manage IntellectX course drafts, lessons, quizzes, and course workflow previews.",
 };
 
 export default function InstructorPage() {
-  const metadata = getStaffPlaceholderMetadata("instructor");
-
   return (
     <StaffRouteGuard pathname="/instructor">
       <PageShell>
-        <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <Badge variant="secondary" className="uppercase">
-            {metadata.roleLabel}
+        <InstructorWorkspaceNav />
+        <section className="mb-8 flex flex-col gap-4">
+          <Badge variant="secondary" className="w-fit uppercase">
+            Instructor workspace
           </Badge>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{metadata.heading}</h1>
-          <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">{metadata.summary}</p>
-          <p className="text-muted-foreground max-w-2xl leading-6">{metadata.detail}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/">Return home</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/courses">Browse learner courses</Link>
-            </Button>
-          </div>
+          <h1 className="max-w-4xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+            Build and manage focused learning experiences
+          </h1>
+          <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
+            Review course status, continue drafts, and move into lesson or quiz building from one instructor workspace.
+          </p>
         </section>
+        <InstructorDashboard />
       </PageShell>
     </StaffRouteGuard>
   );
