@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 
 type QuizPageProps = {
   params: Promise<{ quizId: string }>;
+  searchParams: Promise<{ from?: string }>;
 };
 
 export function generateStaticParams() {
@@ -27,11 +28,13 @@ export async function generateMetadata({ params }: QuizPageProps): Promise<Metad
   };
 }
 
-export default async function QuizPage({ params }: QuizPageProps) {
+export default async function QuizPage({ params, searchParams }: QuizPageProps) {
   const { quizId } = await params;
+  const { from } = await searchParams;
   const detail = await getLearnerQuizDetail(quizId);
   const quiz = detail?.quiz;
   const course = detail?.course;
+  const fromMobile = from === "mobile";
 
   if (!quiz || !course) {
     notFound();
@@ -50,7 +53,9 @@ export default async function QuizPage({ params }: QuizPageProps) {
         </p>
         <QuizPlayer quiz={quiz} />
         <Button className="mt-6" variant="ghost" asChild>
-          <Link href={`/courses/${course.id}`}>Back to course</Link>
+          <Link href={fromMobile ? "/mobile-quizzes" : `/courses/${course.id}`}>
+            {fromMobile ? "Back to mobile quizzes" : "Back to course"}
+          </Link>
         </Button>
       </section>
     </PageShell>
