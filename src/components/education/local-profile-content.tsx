@@ -6,10 +6,10 @@ import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
 import { glassCardClassName, elevatedGlassCardClassName } from "@/components/education/glass-card";
+import { ProfileAvatarEditor } from "@/components/education/profile-avatar-editor";
 import { StatCard } from "@/components/education/stat-card";
 import { StreakCard } from "@/components/education/streak-card";
 import { StudyProfileCard } from "@/components/education/study-profile-card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
@@ -126,9 +126,7 @@ export function LocalProfileContent() {
   return (
     <>
       <section className={`animate-widget mb-8 flex flex-col gap-6 rounded-lg p-6 md:flex-row md:items-center md:p-8 ${elevatedGlassCardClassName}`}>
-        <Avatar className="size-20">
-          <AvatarFallback>IX</AvatarFallback>
-        </Avatar>
+        <ProfileAvatarEditor />
         <div className="flex-1">
           <Badge variant="secondary" className="mb-3">
             Profile
