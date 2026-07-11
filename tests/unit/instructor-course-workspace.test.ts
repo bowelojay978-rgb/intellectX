@@ -27,7 +27,7 @@ function validDraft() {
     title: "  Biology Core  ",
     description: "  A focused biology course.  ",
     subject: "  Biology  ",
-    level: "  A-Level  ",
+    level: "  Advanced  ",
     duration: "  12 weeks  ",
     accent: "  from-slate-500 to-slate-700  ",
     lessons: [
@@ -45,7 +45,7 @@ function validDraft() {
         stableId: "cell-structure-check",
         lessonStableId: "cell-structure",
         title: "  Cell structure check  ",
-        difficulty: "  Beginner  ",
+        difficulty: "  Foundational  ",
         estimatedTime: "  5 min  ",
         questions: [
           {
@@ -96,6 +96,7 @@ describe("instructor course draft validation", () => {
 
     expect(normalized.title).toBe("Biology Core");
     expect(normalized.description).toBe("A focused biology course.");
+    expect(normalized.level).toBe("Advanced");
     expect(normalized.lessons[0]).toMatchObject({
       title: "Cell structure",
       duration: "15 min",
@@ -106,7 +107,7 @@ describe("instructor course draft validation", () => {
     });
     expect(normalized.quizzes[0]).toMatchObject({
       title: "Cell structure check",
-      difficulty: "Beginner",
+      difficulty: "Foundational",
       estimatedTime: "5 min",
       order: 0,
     });
@@ -137,6 +138,26 @@ describe("instructor course draft validation", () => {
         stableId: "Biology Core",
       }),
     ).toThrow("Course stableId must use lowercase letters, numbers, and single hyphens only.");
+  });
+
+  it("rejects unsupported learner course levels", () => {
+    expect(() =>
+      normalizeInstructorCourseDraftInput({
+        ...validDraft(),
+        level: "A-Level",
+      }),
+    ).toThrow("Course level must be one of: Beginner, Intermediate, Advanced.");
+  });
+
+  it("rejects unsupported learner quiz difficulties", () => {
+    const draft = validDraft();
+
+    expect(() =>
+      normalizeInstructorCourseDraftInput({
+        ...draft,
+        quizzes: [{ ...draft.quizzes[0], difficulty: "Beginner" }],
+      }),
+    ).toThrow("Quiz 1 difficulty must be one of: Foundational, Applied, Challenge.");
   });
 
   it("rejects duplicate lesson identifiers", () => {
