@@ -1,10 +1,15 @@
-﻿import { makeFunctionReference } from "convex/server";
+import { makeFunctionReference } from "convex/server";
 
 export const convexApi = {
   courses: {
     listCourses: makeFunctionReference<"query">("courses:listCourses"),
     getCourseBySlug: makeFunctionReference<"query">("courses:getCourseBySlug"),
     getCourseByStableId: makeFunctionReference<"query">("courses:getCourseByStableId"),
+    listInstructorCourses: makeFunctionReference<"query">("courses:listInstructorCourses"),
+    getInstructorCourseDraft: makeFunctionReference<"query">("courses:getInstructorCourseDraft"),
+    createInstructorCourseDraft: makeFunctionReference<"mutation">("courses:createInstructorCourseDraft"),
+    saveInstructorCourseDraft: makeFunctionReference<"mutation">("courses:saveInstructorCourseDraft"),
+    submitCourseForReview: makeFunctionReference<"mutation">("courses:submitCourseForReview"),
   },
   courseSelections: {
     getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
@@ -52,8 +57,3 @@ export const convexApi = {
     getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
   },
 };
-
-
-
-
-
