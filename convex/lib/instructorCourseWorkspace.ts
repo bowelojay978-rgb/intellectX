@@ -93,7 +93,7 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
 
   const lessons = input.lessons.map((lesson, index) => ({
     stableId: normalizeIdentifier(lesson.stableId, `Lesson ${index + 1} stableId`),
-    title: requiredText(lesson.title, `Lesson ${index + 1} title`),
+    title: lesson.title.trim(),
     duration: lesson.duration.trim(),
     summary: lesson.summary.trim(),
     content: lesson.content.map((block) => block.trim()).filter(Boolean),
@@ -149,7 +149,7 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
     return {
       stableId: quizStableId,
       lessonStableId,
-      title: requiredText(quiz.title, `Quiz ${quizIndex + 1} title`),
+      title: quiz.title.trim(),
       difficulty: quiz.difficulty.trim() || "Beginner",
       estimatedTime: quiz.estimatedTime.trim() || "5 min",
       order: quizIndex,
@@ -160,6 +160,10 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
   assertUniqueIdentifiers(
     quizzes.map((quiz) => quiz.stableId),
     "quiz stableId",
+  );
+  assertUniqueIdentifiers(
+    quizzes.flatMap((quiz) => quiz.questions.map((question) => question.stableId)),
+    "question stableId",
   );
 
   return {
@@ -183,6 +187,15 @@ export function isInstructorCourseEditable(course: CourseWorkflowRecord) {
 export function assertInstructorCourseEditable(course: CourseWorkflowRecord) {
   if (!isInstructorCourseEditable(course)) {
     throw new Error("Course can only be edited while in draft or changes_requested state.");
+  }
+}
+
+export function assertInstructorCourseVersion(
+  course: { updatedAt?: number },
+  expectedUpdatedAt: number | undefined,
+) {
+  if (course.updatedAt !== undefined && expectedUpdatedAt !== course.updatedAt) {
+    throw new Error("Course draft changed since it was loaded. Reload before saving to avoid overwriting newer edits.");
   }
 }
 
@@ -223,20 +236,24 @@ export function getCourseSubmissionReadinessIssues(content: CourseSubmissionCont
   for (const quiz of content.quizzes) {
     const questions = content.questions.filter((question) => question.quizStableId === quiz.stableId);
 
+    if (!quiz.title.trim()) {
+      issues.push(`Add a title to quiz ${quiz.stableId}.`);
+    }
+
     if (questions.length === 0) {
       issues.push(`Add at least one question to quiz ${quiz.title || quiz.stableId}.`);
       continue;
     }
 
     for (const question of questions) {
-      const nonEmptyChoices = question.choices.filter((choice) => choice.trim());
+      const choicesComplete = question.choices.length >= 2 && question.choices.every((choice) => Boolean(choice.trim()));
       const answerInRange =
         Number.isInteger(question.answerIndex) && question.answerIndex >= 0 && question.answerIndex < question.choices.length;
 
       if (
         !question.prompt.trim() ||
         !question.explanation.trim() ||
-        nonEmptyChoices.length < 2 ||
+        !choicesComplete ||
         !answerInRange ||
         !question.choices[question.answerIndex]?.trim()
       ) {
