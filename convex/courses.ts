@@ -310,7 +310,13 @@ export const listInstructorCourses = queryGeneric({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     const actor = requireInstructorOrAdmin(identity);
-    const courses = await ctx.db.query("courses").collect();
+    const courses =
+      actor.role === "admin"
+        ? await ctx.db.query("courses").collect()
+        : await ctx.db
+            .query("courses")
+            .withIndex("by_instructor_id", (q) => q.eq("instructorId", actor.actorUserId))
+            .collect();
     const manageableCourses = courses.filter((course) =>
       canManageInstructorCourse(actor.role, course, actor.actorUserId),
     );
