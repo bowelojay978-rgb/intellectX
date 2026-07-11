@@ -200,7 +200,7 @@ describe("auth/data-flow safety guards", () => {
   });
 
   it("keeps new Clerk signup on mandatory Study Profile onboarding while login returns to courses", () => {
-    expect(CLERK_SIGNUP_REDIRECT_URL).toBe("/profile#study-profile");
+    expect(CLERK_SIGNUP_REDIRECT_URL).toBe("/onboarding");
     expect(CLERK_LOGIN_REDIRECT_URL).toBe("/courses");
   });
 });
