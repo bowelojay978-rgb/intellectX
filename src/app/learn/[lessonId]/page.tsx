@@ -3,13 +3,13 @@ import { AiLessonTutorPanel } from "@/components/education/ai-lesson-tutor-panel
 import { LessonBlockRenderer } from "@/components/education/lesson-block-renderer";
 import { LessonCompletionAction } from "@/components/education/lesson-completion-action";
 import { LessonProgressSync } from "@/components/education/lesson-progress-sync";
+import { LessonVideoLayout } from "@/components/education/lesson-video-layout";
 import { PageShell } from "@/components/education/page-shell";
 import { SubjectMark } from "@/components/education/subject-mark";
-import { VideoPlayer } from "@/components/education/video-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getLesson, lessons } from "@/data/lessons";
+import { getLesson, getLessonsByCourse, lessons } from "@/data/lessons";
 import { getLearnerLessonDetail } from "@/lib/learner-catalog";
 import { ArrowRightIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
@@ -45,6 +45,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound();
   }
 
+  const courseLessons = getLessonsByCourse(course.id);
+
   return (
     <PageShell>
       <LessonProgressSync lessonId={lesson.id} />
@@ -68,9 +70,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         </section>
         <section className="space-y-6">
           <div className="space-y-6">
-            <div className="hidden lg:block">
-              <VideoPlayer title={lesson.title} videoUrl={lesson.videoUrl} posterUrl={lesson.posterUrl} />
-            </div>
+            <LessonVideoLayout currentLesson={lesson} courseTitle={course.title} lessons={courseLessons} />
             <Card id="lesson-flashcards" className={`scroll-mt-28 rounded-lg ${elevatedGlassCardClassName}`}>
               <CardContent className="space-y-6 py-8 text-base leading-8 md:text-lg">
                 {lesson.content.map((paragraph) => (
