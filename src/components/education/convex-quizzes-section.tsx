@@ -44,7 +44,7 @@ function getStoredAttempt(quizId: string): QuizAttemptSummary {
   };
 }
 
-function useCourseSelection() {
+function useSelectedCoursePlan() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -54,25 +54,17 @@ function useCourseSelection() {
       setLoaded(true);
     }
 
-    function syncSelectionWhenVisible() {
-      if (!document.hidden) {
-        syncSelection();
-      }
-    }
-
     syncSelection();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
     window.addEventListener("storage", syncSelection);
-    window.addEventListener("focus", syncSelection);
     window.addEventListener("pageshow", syncSelection);
-    document.addEventListener("visibilitychange", syncSelectionWhenVisible);
+    window.addEventListener("focus", syncSelection);
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
       window.removeEventListener("storage", syncSelection);
-      window.removeEventListener("focus", syncSelection);
       window.removeEventListener("pageshow", syncSelection);
-      document.removeEventListener("visibilitychange", syncSelectionWhenVisible);
+      window.removeEventListener("focus", syncSelection);
     };
   }, []);
 
@@ -157,7 +149,7 @@ function QuizGrid({ quizzes, catalog }: { quizzes: Quiz[]; catalog: LearnerCatal
 }
 
 function PlannedQuizzes({ quizzes, catalog }: { quizzes: Quiz[]; catalog: LearnerCatalog }) {
-  const { selection, loaded } = useCourseSelection();
+  const { selection, loaded } = useSelectedCoursePlan();
 
   if (!loaded) {
     return null;
@@ -177,14 +169,13 @@ function PlannedQuizzes({ quizzes, catalog }: { quizzes: Quiz[]; catalog: Learne
     );
   }
 
-  const selectedCourseIdSet = new Set(selectedCourseIds);
-  const plannedQuizzes = quizzes.filter((quiz) => selectedCourseIdSet.has(quiz.courseId));
+  const plannedQuizzes = quizzes.filter((quiz) => selectedCourseIds.includes(quiz.courseId));
 
   if (plannedQuizzes.length === 0) {
     return (
       <EmptyState
         title="No quizzes for your selected courses yet"
-        description="Your current study plan has no available quizzes yet. You can adjust your selected courses during the grace period."
+        description="Your current study plan has no available quizzes yet. You can adjust selected courses during the grace period."
         actionHref="/courses"
         actionLabel="Review selected courses"
         icon={FileQuestionIcon}
@@ -204,15 +195,6 @@ function PlannedQuizzes({ quizzes, catalog }: { quizzes: Quiz[]; catalog: Learne
 
 function FallbackQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
   const catalog = useLearnerCatalog();
-
-  if (convexEnv.isConfigured && !catalog.isLive) {
-    return (
-      <div className="border-border/70 bg-background/70 rounded-lg border px-5 py-8 text-center text-sm text-muted-foreground backdrop-blur">
-        Loading quizzes from your current course catalog…
-      </div>
-    );
-  }
-
   const quizzes = convexEnv.isConfigured ? catalog.quizzes : fallbackQuizzes;
 
   return (
