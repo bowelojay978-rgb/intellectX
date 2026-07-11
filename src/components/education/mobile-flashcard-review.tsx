@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { type LessonBlock } from "@/data/lessons";
 import { ArrowLeftIcon, ArrowRightIcon, RotateCcwIcon } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
 type FlashcardBlock = Extract<LessonBlock, { type: "visualMemoryCard" | "tapReveal" }>;
@@ -67,9 +66,7 @@ export function MobileFlashcardReview({ cards }: MobileFlashcardReviewProps) {
         <span>
           Card {currentIndex + 1} of {cards.length}
         </span>
-        <Link href={`/learn/${currentCard.lessonId}#lesson-flashcards`} className="underline underline-offset-4">
-          Source lesson
-        </Link>
+        <span>{currentCard.lessonTitle}</span>
       </div>
 
       <article className="animate-widget min-h-80 rounded-lg border border-white/70 bg-white/60 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60">
