@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { courses } from "@/data/courses";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Courses - IntellectX",
@@ -25,7 +26,15 @@ export default function CoursesPage() {
           Premium course tracks with lesson flows, progress indicators, and quizzes built for focused study.
         </p>
       </section>
-      <ConvexCoursesSection fallbackCourses={courses} />
+      <Suspense
+        fallback={
+          <div className="border-border/70 bg-background/70 rounded-lg border px-5 py-8 text-center text-sm text-muted-foreground backdrop-blur">
+            Loading your course selection…
+          </div>
+        }
+      >
+        <ConvexCoursesSection fallbackCourses={courses} />
+      </Suspense>
       <section className="mt-10 flex flex-col items-center gap-4 rounded-lg border border-white/70 bg-white/60 p-6 text-center shadow-sm backdrop-blur dark:border-white/10 dark:bg-card/60">
         <p className="text-muted-foreground max-w-xl text-sm leading-6">
           Not sure where to begin? Start with AI Study Systems to set up prompts, memory routines, and weekly reviews.
