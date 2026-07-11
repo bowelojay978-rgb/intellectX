@@ -12,8 +12,10 @@ import {
   type InstructorQuizQuestionDraft,
   createBlankInstructorCourseDraft,
   createInstructorStableId,
+  instructorCourseLevels,
   instructorCourseStatusLabels,
   instructorCourseStatusTone,
+  instructorQuizDifficulties,
   isInstructorCourseEditable,
   resolveInstructorCourseStatus,
   slugifyInstructorCourseTitle,
@@ -84,7 +86,7 @@ function createQuiz(): InstructorQuizDraft {
   return {
     stableId: createInstructorStableId("quiz"),
     title: "",
-    difficulty: "Beginner",
+    difficulty: "Foundational",
     estimatedTime: "5 min",
     questions: [],
   };
@@ -480,13 +482,19 @@ function ConvexInstructorCourseBuilder({ editStableId }: { editStableId?: string
             />
           </FieldLabel>
           <FieldLabel label="Level">
-            <input
+            <select
               value={course.level}
               disabled={!editable}
               onChange={(event) => updateCourse("level", event.target.value)}
               className={fieldClassName}
-              placeholder="A-Level"
-            />
+            >
+              <option value="">Select level</option>
+              {instructorCourseLevels.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
           </FieldLabel>
           <FieldLabel label="Duration">
             <input
@@ -664,12 +672,18 @@ function ConvexInstructorCourseBuilder({ editStableId }: { editStableId?: string
                       </select>
                     </FieldLabel>
                     <FieldLabel label="Difficulty">
-                      <input
+                      <select
                         value={quiz.difficulty}
                         disabled={!editable}
                         onChange={(event) => updateQuiz(quiz.stableId, { difficulty: event.target.value })}
                         className={fieldClassName}
-                      />
+                      >
+                        {instructorQuizDifficulties.map((difficulty) => (
+                          <option key={difficulty} value={difficulty}>
+                            {difficulty}
+                          </option>
+                        ))}
+                      </select>
                     </FieldLabel>
                     <FieldLabel label="Estimated time">
                       <input
