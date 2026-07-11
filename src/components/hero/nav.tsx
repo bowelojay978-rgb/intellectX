@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
 import { isAuthenticatedAppPath } from "@/lib/learner-routes";
+import { resolveMobileNavigationSurface } from "@/lib/navigation-surface";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -78,6 +79,16 @@ function isNativeAppSurface() {
   return platform === "ios" || platform === "android";
 }
 
+function useNativeAppSurface() {
+  const [nativeAppSurface, setNativeAppSurface] = useState(false);
+
+  useEffect(() => {
+    setNativeAppSurface(isNativeAppSurface());
+  }, []);
+
+  return nativeAppSurface;
+}
+
 export function Nav() {
   if (isClerkAuthEnabled()) {
     return <ClerkNav />;
@@ -90,6 +101,7 @@ function ClerkNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
+  const nativeAppSurface = useNativeAppSurface();
 
   useEffect(() => {
     if (isLoaded && isSignedIn && pathname === "/" && isNativeAppSurface()) {
@@ -101,10 +113,22 @@ function ClerkNav() {
   const showAuthenticatedNav = isAppRoute || (isLoaded && isSignedIn);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
+  const mobileNavigation = resolveMobileNavigationSurface({
+    nativeAppSurface,
+    webItems: navItems,
+    webLogoHref: logoHref,
+    nativeItems: mobileFreeNavItems,
+    nativeLogoHref: "/mobile-quizzes",
+  });
 
   return (
     <>
-      <MobileNav className="flex md:hidden" items={mobileFreeNavItems} logoHref="/mobile-quizzes" session={null} />
+      <MobileNav
+        className="flex md:hidden"
+        items={mobileNavigation.items}
+        logoHref={mobileNavigation.logoHref}
+        session={null}
+      />
       <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={null} />
     </>
   );
@@ -114,6 +138,7 @@ function LocalSessionNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<SessionState>(undefined);
+  const nativeAppSurface = useNativeAppSurface();
 
   useEffect(() => {
     function syncSession() {
@@ -151,10 +176,22 @@ function LocalSessionNav() {
   const showAuthenticatedNav = isAppRoute || Boolean(session);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
+  const mobileNavigation = resolveMobileNavigationSurface({
+    nativeAppSurface,
+    webItems: navItems,
+    webLogoHref: logoHref,
+    nativeItems: mobileFreeNavItems,
+    nativeLogoHref: "/mobile-quizzes",
+  });
 
   return (
     <>
-      <MobileNav className="flex md:hidden" items={mobileFreeNavItems} logoHref="/mobile-quizzes" session={session} />
+      <MobileNav
+        className="flex md:hidden"
+        items={mobileNavigation.items}
+        logoHref={mobileNavigation.logoHref}
+        session={session}
+      />
       <DesktopNav className="hidden md:flex" items={navItems} logoHref={logoHref} session={session} />
     </>
   );
