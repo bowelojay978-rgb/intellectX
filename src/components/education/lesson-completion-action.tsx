@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { recordLessonCompleted } from "@/lib/lesson-progress";
 import {
   LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
   readLessonProgressHistory,
-  recordLessonProgress,
 } from "@/lib/lesson-progress-history";
 import { CheckCircle2Icon } from "lucide-react";
 import { useMutation } from "convex/react";
@@ -42,14 +42,6 @@ function useLessonCompleted(lessonId: string) {
   return completed;
 }
 
-function completeLessonLocally(lessonId: string) {
-  return recordLessonProgress({
-    lessonId,
-    status: "completed",
-    progress: 100,
-  });
-}
-
 export function LessonCompletionAction({ lessonId }: LessonCompletionActionProps) {
   if (!convexEnv.isConfigured) {
     return <LocalLessonCompletionAction lessonId={lessonId} />;
@@ -62,7 +54,7 @@ function LocalLessonCompletionAction({ lessonId }: LessonCompletionActionProps) 
   const completed = useLessonCompleted(lessonId);
 
   return (
-    <Button type="button" size="lg" disabled={completed} onClick={() => completeLessonLocally(lessonId)}>
+    <Button type="button" size="lg" disabled={completed} onClick={() => recordLessonCompleted(lessonId)}>
       <CheckCircle2Icon />
       {completed ? "Lesson completed" : "Mark lesson complete"}
     </Button>
@@ -77,7 +69,7 @@ function ConvexLessonCompletionAction({ lessonId }: LessonCompletionActionProps)
   function handleComplete() {
     if (completed) return;
 
-    const progress = completeLessonLocally(lessonId);
+    const progress = recordLessonCompleted(lessonId);
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
     const identityArgs = getCurrentConvexLearnerArgs(isAuthenticated);
 
