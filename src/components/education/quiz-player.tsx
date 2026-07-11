@@ -10,6 +10,12 @@ import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
 import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/quiz-attempt-history";
+import {
+  clearQuizSessionState,
+  getRestoredQuizTimeLeft,
+  readQuizSessionState,
+  writeQuizSessionState,
+} from "@/lib/quiz-session-state";
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { CheckCircle2Icon, CircleIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
@@ -101,9 +107,10 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
   const [answers, setAnswers] = useState<number[]>([]);
   const [results, setResults] = useState<QuizResults | null>(null);
   const [timeLeft, setTimeLeft] = useState(initialTimeInSeconds);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const question = quiz.questions[currentIndex];
-  const isCorrect = submitted && selectedIndex === question.answerIndex;
+  const isCorrect = submitted && selectedIndex === question?.answerIndex;
   const progress = ((currentIndex + (results ? 1 : 0)) / quiz.questions.length) * 100;
 
   const completeQuiz = useCallback(
@@ -122,6 +129,8 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
         score: finalScore,
         totalQuestions: quiz.questions.length,
       });
+
+      clearQuizSessionState(quiz.id);
       onComplete?.(finalAnswers, finalScore, attempt);
       setResults({ answers: finalAnswers, score: finalScore, timedOut });
     },
@@ -129,26 +138,59 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
   );
 
   useEffect(() => {
-    setCurrentIndex(0);
-    setSelectedIndex(null);
-    setSubmitted(false);
-    setAnswers([]);
+    setSessionReady(false);
     setResults(null);
-    setTimeLeft(initialTimeInSeconds);
-  }, [initialTimeInSeconds, quiz.id]);
+
+    const restored = readQuizSessionState(quiz.id);
+    const currentQuestion = restored ? quiz.questions[restored.currentIndex] : null;
+    const restoredSelectionValid =
+      restored?.selectedIndex === null ||
+      (Boolean(currentQuestion) && restored !== null && restored.selectedIndex < currentQuestion!.choices.length);
+
+    if (restored && currentQuestion && restoredSelectionValid) {
+      setCurrentIndex(restored.currentIndex);
+      setSelectedIndex(restored.selectedIndex);
+      setSubmitted(restored.submitted);
+      setAnswers(restored.answers);
+      setTimeLeft(Math.min(initialTimeInSeconds, getRestoredQuizTimeLeft(restored)));
+    } else {
+      clearQuizSessionState(quiz.id);
+      setCurrentIndex(0);
+      setSelectedIndex(null);
+      setSubmitted(false);
+      setAnswers([]);
+      setTimeLeft(initialTimeInSeconds);
+    }
+
+    setSessionReady(true);
+  }, [initialTimeInSeconds, quiz.id, quiz.questions]);
 
   useEffect(() => {
-    if (results) return;
+    if (!sessionReady || results) return;
+
+    writeQuizSessionState({
+      quizId: quiz.id,
+      currentIndex,
+      selectedIndex,
+      submitted,
+      answers,
+      timeLeft,
+      savedAt: Date.now(),
+    });
+  }, [answers, currentIndex, quiz.id, results, selectedIndex, sessionReady, submitted, timeLeft]);
+
+  useEffect(() => {
+    if (!sessionReady || results) return;
 
     const timer = window.setInterval(() => {
       setTimeLeft((value) => Math.max(value - 1, 0));
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [results]);
+  }, [results, sessionReady]);
 
   useEffect(() => {
-    if (timeLeft !== 0 || results) return;
+    if (!sessionReady || timeLeft !== 0 || results) return;
 
     const timedAnswers = [...answers];
 
@@ -157,7 +199,7 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
     }
 
     completeQuiz(timedAnswers, true);
-  }, [answers, completeQuiz, currentIndex, results, selectedIndex, submitted, timeLeft]);
+  }, [answers, completeQuiz, currentIndex, results, selectedIndex, sessionReady, submitted, timeLeft]);
 
   function submitAnswer() {
     if (selectedIndex === null) return;
@@ -182,12 +224,22 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
   }
 
   function restartQuiz() {
+    clearQuizSessionState(quiz.id);
     setCurrentIndex(0);
     setSelectedIndex(null);
     setSubmitted(false);
     setAnswers([]);
     setResults(null);
     setTimeLeft(initialTimeInSeconds);
+    setSessionReady(true);
+  }
+
+  if (!sessionReady || !question) {
+    return (
+      <Card className={`rounded-lg ${elevatedGlassCardClassName}`}>
+        <CardContent className="py-10 text-center text-sm text-muted-foreground">Restoring your quiz…</CardContent>
+      </Card>
+    );
   }
 
   if (results) {
@@ -313,5 +365,3 @@ function QuizPlayerCore({ quiz, onComplete }: QuizPlayerCoreProps) {
     </Card>
   );
 }
-
-
