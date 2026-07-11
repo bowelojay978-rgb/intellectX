@@ -23,6 +23,7 @@ import {
 import {
   assertCourseSubmissionReady,
   assertInstructorCourseEditable,
+  assertInstructorCourseVersion,
   normalizeInstructorCourseDraftInput,
 } from "./lib/instructorCourseWorkspace";
 import { canManageInstructorCourse, requireAdmin, requireInstructorOrAdmin } from "./lib/staffRbac";
@@ -196,6 +197,55 @@ async function getCourseContentForReview(ctx: any, stableId: string) {
   return { lessons, quizzes, questions };
 }
 
+async function ensureUniqueNestedContentIdentifiers(
+  ctx: any,
+  draft: ReturnType<typeof normalizeInstructorCourseDraftInput>,
+  existingCourseStableId?: string,
+) {
+  const existingLessons = existingCourseStableId ? await listCourseLessons(ctx, existingCourseStableId) : [];
+  const existingQuizzes = existingCourseStableId ? await listCourseQuizzes(ctx, existingCourseStableId) : [];
+  const existingQuestions = (
+    await Promise.all(existingQuizzes.map((quiz: any) => listQuizQuestions(ctx, quiz.stableId)))
+  ).flat();
+
+  const allowedLessonRecordIds = new Set(existingLessons.map((record: any) => String(record._id)));
+  const allowedQuizRecordIds = new Set(existingQuizzes.map((record: any) => String(record._id)));
+  const allowedQuestionRecordIds = new Set(existingQuestions.map((record: any) => String(record._id)));
+
+  for (const lesson of draft.lessons) {
+    const collisions = await ctx.db
+      .query("lessons")
+      .withIndex("by_stable_id", (q: any) => q.eq("stableId", lesson.stableId))
+      .collect();
+
+    if (collisions.some((record: any) => !allowedLessonRecordIds.has(String(record._id)))) {
+      throw new Error(`Lesson stableId already exists in another course: ${lesson.stableId}.`);
+    }
+  }
+
+  for (const quiz of draft.quizzes) {
+    const quizCollisions = await ctx.db
+      .query("quizzes")
+      .withIndex("by_stable_id", (q: any) => q.eq("stableId", quiz.stableId))
+      .collect();
+
+    if (quizCollisions.some((record: any) => !allowedQuizRecordIds.has(String(record._id)))) {
+      throw new Error(`Quiz stableId already exists in another course: ${quiz.stableId}.`);
+    }
+
+    for (const question of quiz.questions) {
+      const questionCollisions = await ctx.db
+        .query("questions")
+        .withIndex("by_stable_id", (q: any) => q.eq("stableId", question.stableId))
+        .collect();
+
+      if (questionCollisions.some((record: any) => !allowedQuestionRecordIds.has(String(record._id)))) {
+        throw new Error(`Question stableId already exists in another course: ${question.stableId}.`);
+      }
+    }
+  }
+}
+
 async function replaceInstructorCourseContent(ctx: any, stableId: string, draft: ReturnType<typeof normalizeInstructorCourseDraftInput>) {
   const existingLessons = await listCourseLessons(ctx, stableId);
   const existingQuizzes = await listCourseQuizzes(ctx, stableId);
@@ -355,6 +405,7 @@ export const createInstructorCourseDraft = mutationGeneric({
 export const saveInstructorCourseDraft = mutationGeneric({
   args: {
     existingStableId: v.optional(v.string()),
+    expectedUpdatedAt: v.optional(v.number()),
     ...courseDraftArgs,
     lessons: v.array(lessonDraftValidator),
     quizzes: v.array(quizDraftValidator),
@@ -368,12 +419,14 @@ export const saveInstructorCourseDraft = mutationGeneric({
     if (args.existingStableId) {
       const course = await getInstructorCourseForActorOrThrow(ctx, args.existingStableId, actor);
       assertInstructorCourseEditable(course);
+      assertInstructorCourseVersion(course, args.expectedUpdatedAt);
 
       if (normalized.stableId !== course.stableId) {
         throw new Error("Course stableId is immutable after creation.");
       }
 
       await ensureUniqueCourseIdentifiers(ctx, normalized.stableId, normalized.slug, course.stableId);
+      await ensureUniqueNestedContentIdentifiers(ctx, normalized, course.stableId);
 
       const patch = {
         slug: normalized.slug,
@@ -398,10 +451,11 @@ export const saveInstructorCourseDraft = mutationGeneric({
         after: { ...course, ...patch },
       });
 
-      return course._id;
+      return { courseId: course._id, updatedAt };
     }
 
     await ensureUniqueCourseIdentifiers(ctx, normalized.stableId, normalized.slug);
+    await ensureUniqueNestedContentIdentifiers(ctx, normalized);
 
     const course = {
       stableId: normalized.stableId,
@@ -430,7 +484,7 @@ export const saveInstructorCourseDraft = mutationGeneric({
       after: course,
     });
 
-    return courseId;
+    return { courseId, updatedAt };
   },
 });
 
