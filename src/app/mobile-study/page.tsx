@@ -2,7 +2,7 @@ import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { featureScope, isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
-import { BookOpenTextIcon, Layers3Icon, StickyNoteIcon } from "lucide-react";
+import { BookOpenTextIcon, Layers3Icon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -38,14 +38,6 @@ export default function MobileStudyPage() {
       cta: "Open flashcards",
       icon: Layers3Icon,
     },
-    {
-      feature: "notes" as const,
-      title: "Notes",
-      description: "Read compact lesson notes and key ideas from the existing lesson content.",
-      href: "/mobile-notes",
-      cta: "Open notes",
-      icon: StickyNoteIcon,
-    },
   ].filter((item) => isFeatureAllowedOnMobile(item.feature));
 
   return (
@@ -56,7 +48,7 @@ export default function MobileStudyPage() {
         </Badge>
         <h1 className="text-3xl leading-[1.08] font-medium tracking-tight">Free mobile study tools</h1>
         <p className="text-muted-foreground text-base leading-7">
-          A focused IntellectX mobile experience for quizzes, flashcards, and notes.
+          A focused IntellectX mobile experience for quizzes and flashcards.
         </p>
       </section>
 

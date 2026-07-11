@@ -46,7 +46,7 @@ export default function MobileQuizzesPage() {
                 {course ? `${course.subject} practice from ${course.title}.` : "Practice with an available quiz."}
               </p>
               <Button className="mt-6 min-h-12 w-full" asChild>
-                <Link href={`/quiz/${quiz.id}`}>
+                <Link href={`/quiz/${quiz.id}?from=mobile`}>
                   Start quiz
                   <ArrowRightIcon />
                 </Link>

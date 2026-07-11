@@ -1,12 +1,12 @@
+import { CourseContinueAction } from "@/components/education/course-continue-action";
+import { CourseProgressSummary } from "@/components/education/course-progress-summary";
 import { PageShell } from "@/components/education/page-shell";
-import { ProgressBar } from "@/components/education/progress-bar";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { courses } from "@/data/courses";
 import { getLearnerCourseDetail } from "@/lib/learner-catalog";
-import { ArrowRightIcon, BookOpenIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
+import { BookOpenIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -40,7 +40,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   }
 
   const { lessons, quizzes } = detail;
-  const firstLesson = lessons[0];
 
   return (
     <PageShell>
@@ -68,25 +67,8 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               {quizzes.length} {quizzes.length === 1 ? "quiz" : "quizzes"}
             </span>
           </div>
-          <div className="mt-6 max-w-md space-y-2">
-            <div className="flex justify-between text-sm font-medium">
-              <span>Course progress</span>
-              <span>{course.progress}%</span>
-            </div>
-            <ProgressBar value={course.progress} />
-          </div>
-          {firstLesson ? (
-            <Button className="mt-8" size="lg" asChild>
-              <Link href={`/learn/${firstLesson.id}`}>
-                Continue learning
-                <ArrowRightIcon />
-              </Link>
-            </Button>
-          ) : (
-            <Button className="mt-8" size="lg" disabled>
-              Lessons coming soon
-            </Button>
-          )}
+          <CourseProgressSummary lessonIds={lessons.map((lesson) => lesson.id)} />
+          <CourseContinueAction lessons={lessons} />
         </div>
       </section>
       <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">

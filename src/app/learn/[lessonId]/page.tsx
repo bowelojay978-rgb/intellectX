@@ -1,6 +1,7 @@
 import { elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { AiLessonTutorPanel } from "@/components/education/ai-lesson-tutor-panel";
 import { LessonBlockRenderer } from "@/components/education/lesson-block-renderer";
+import { LessonCompletionAction } from "@/components/education/lesson-completion-action";
 import { LessonProgressSync } from "@/components/education/lesson-progress-sync";
 import { PageShell } from "@/components/education/page-shell";
 import { SubjectMark } from "@/components/education/subject-mark";
@@ -82,6 +83,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </div>
         </section>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <LessonCompletionAction lessonId={lesson.id} />
           {lesson.nextLessonId && (
             <Button size="lg" asChild>
               <Link href={`/learn/${lesson.nextLessonId}`}>
