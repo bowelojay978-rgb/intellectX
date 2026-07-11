@@ -1,8 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { MaximizeIcon, PauseIcon, PlayIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import {
+  CaptionsIcon,
+  LoaderCircleIcon,
+  MaximizeIcon,
+  PauseIcon,
+  PictureInPictureIcon,
+  PlayIcon,
+  RepeatIcon,
+  RotateCcwIcon,
+  RotateCwIcon,
+  Volume1Icon,
+  Volume2Icon,
+  VolumeXIcon,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type VideoPlayerProps = {
   title: string;
@@ -10,132 +22,566 @@ type VideoPlayerProps = {
   posterUrl?: string;
 };
 
+const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
 function formatTime(value: number) {
   if (!Number.isFinite(value)) return "0:00";
-  const minutes = Math.floor(value / 60);
-  const seconds = Math.floor(value % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${minutes}:${seconds}`;
+  const totalSeconds = Math.max(0, Math.floor(value));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+
+  return hours > 0 ? `${hours}:${minutes.toString().padStart(2, "0")}:${seconds}` : `${minutes}:${seconds}`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
+  const playerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hideControlsTimerRef = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [bufferedPercent, setBufferedPercent] = useState(0);
   const [speed, setSpeed] = useState(1);
+  const [volume, setVolume] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [buffering, setBuffering] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [looping, setLooping] = useState(false);
+  const [captionsAvailable, setCaptionsAvailable] = useState(false);
+  const [captionsEnabled, setCaptionsEnabled] = useState(false);
+  const [pipActive, setPipActive] = useState(false);
 
-  function togglePlay() {
+  const playedPercent = duration > 0 ? clamp((currentTime / duration) * 100, 0, 100) : 0;
+
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimerRef.current !== null) {
+        window.clearTimeout(hideControlsTimerRef.current);
+      }
+    };
+  }, []);
+
+  function scheduleControlsHide() {
+    if (hideControlsTimerRef.current !== null) {
+      window.clearTimeout(hideControlsTimerRef.current);
+    }
+
+    if (!playing) return;
+
+    hideControlsTimerRef.current = window.setTimeout(() => {
+      setShowControls(false);
+    }, 2500);
+  }
+
+  function revealControls() {
+    setShowControls(true);
+    scheduleControlsHide();
+  }
+
+  async function togglePlay() {
     const video = videoRef.current;
     if (!video || !videoUrl) return;
-    if (video.paused) {
-      void video.play();
-      setPlaying(true);
-    } else {
-      video.pause();
-      setPlaying(false);
+
+    setHasError(false);
+
+    if (video.ended || ended) {
+      video.currentTime = 0;
+      setCurrentTime(0);
+      setEnded(false);
     }
+
+    if (video.paused) {
+      try {
+        await video.play();
+        setPlaying(true);
+        scheduleControlsHide();
+      } catch {
+        setHasError(true);
+      }
+      return;
+    }
+
+    video.pause();
+    setPlaying(false);
+    setShowControls(true);
+  }
+
+  function seekTo(nextTime: number) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(duration)) return;
+
+    const safeTime = clamp(nextTime, 0, duration || 0);
+    video.currentTime = safeTime;
+    setCurrentTime(safeTime);
+    setEnded(false);
+    revealControls();
+  }
+
+  function skipBy(seconds: number) {
+    seekTo((videoRef.current?.currentTime ?? currentTime) + seconds);
   }
 
   function updateProgress(value: string) {
-    const video = videoRef.current;
-    if (!video) return;
-    const nextTime = Number(value);
-    video.currentTime = nextTime;
-    setCurrentTime(nextTime);
+    seekTo(Number(value));
   }
 
-  function updateSpeed(value: string) {
+  function updateSpeed(value: number) {
     const video = videoRef.current;
-    const nextSpeed = Number(value);
+    const nextSpeed = clamp(value, playbackSpeeds[0], playbackSpeeds[playbackSpeeds.length - 1]);
     setSpeed(nextSpeed);
     if (video) video.playbackRate = nextSpeed;
+    revealControls();
+  }
+
+  function stepSpeed(direction: -1 | 1) {
+    const currentSpeedIndex = playbackSpeeds.findIndex((item) => item === speed);
+    const safeIndex = currentSpeedIndex >= 0 ? currentSpeedIndex : playbackSpeeds.indexOf(1);
+    const nextIndex = clamp(safeIndex + direction, 0, playbackSpeeds.length - 1);
+    updateSpeed(playbackSpeeds[nextIndex]);
+  }
+
+  function updateVolume(value: number) {
+    const video = videoRef.current;
+    const nextVolume = clamp(value, 0, 1);
+
+    setVolume(nextVolume);
+    setMuted(nextVolume === 0);
+
+    if (video) {
+      video.volume = nextVolume;
+      video.muted = nextVolume === 0;
+    }
+
+    revealControls();
   }
 
   function toggleMute() {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = !video.muted;
-    setMuted(video.muted);
+
+    if (video.muted || volume === 0) {
+      const restoredVolume = volume === 0 ? 0.5 : volume;
+      video.muted = false;
+      video.volume = restoredVolume;
+      setVolume(restoredVolume);
+      setMuted(false);
+    } else {
+      video.muted = true;
+      setMuted(true);
+    }
+
+    revealControls();
   }
 
-  function openFullscreen() {
+  function toggleLoop() {
     const video = videoRef.current;
-    if (video?.requestFullscreen) {
-      void video.requestFullscreen();
+    if (!video) return;
+    const nextLooping = !looping;
+    video.loop = nextLooping;
+    setLooping(nextLooping);
+    revealControls();
+  }
+
+  function toggleCaptions() {
+    const video = videoRef.current;
+    if (!video || video.textTracks.length === 0) return;
+
+    const nextEnabled = !captionsEnabled;
+    for (let index = 0; index < video.textTracks.length; index += 1) {
+      video.textTracks[index].mode = nextEnabled && index === 0 ? "showing" : "disabled";
+    }
+    setCaptionsEnabled(nextEnabled);
+    revealControls();
+  }
+
+  async function togglePictureInPicture() {
+    const video = videoRef.current;
+    if (!video || !document.pictureInPictureEnabled) return;
+
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setPipActive(false);
+      } else {
+        await video.requestPictureInPicture();
+        setPipActive(true);
+      }
+    } catch {
+      setPipActive(false);
     }
   }
 
+  async function toggleFullscreen() {
+    const player = playerRef.current;
+    if (!player) return;
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (player.requestFullscreen) {
+        await player.requestFullscreen();
+      }
+    } catch {
+      // The browser can reject fullscreen when it was not initiated by a direct user gesture.
+    }
+  }
+
+  function updateBufferedProgress(video: HTMLVideoElement) {
+    if (duration <= 0 || video.buffered.length === 0) {
+      setBufferedPercent(0);
+      return;
+    }
+
+    let furthestBufferedEnd = 0;
+    for (let index = 0; index < video.buffered.length; index += 1) {
+      furthestBufferedEnd = Math.max(furthestBufferedEnd, video.buffered.end(index));
+    }
+
+    setBufferedPercent(clamp((furthestBufferedEnd / duration) * 100, 0, 100));
+  }
+
+  function handleLoadedMetadata(video: HTMLVideoElement) {
+    setDuration(video.duration);
+    setCurrentTime(video.currentTime);
+    setVolume(video.volume);
+    setMuted(video.muted);
+    setSpeed(video.playbackRate);
+    setCaptionsAvailable(video.textTracks.length > 0);
+    setHasError(false);
+    updateBufferedProgress(video);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (!videoUrl) return;
+
+    const target = event.target as HTMLElement;
+    if (target.closest("input, select, textarea, button")) return;
+
+    const key = event.key;
+
+    if (key === " " || key.toLowerCase() === "k") {
+      event.preventDefault();
+      void togglePlay();
+      return;
+    }
+
+    if (key === "ArrowLeft") {
+      event.preventDefault();
+      skipBy(-5);
+      return;
+    }
+
+    if (key === "ArrowRight") {
+      event.preventDefault();
+      skipBy(5);
+      return;
+    }
+
+    if (key.toLowerCase() === "j") {
+      event.preventDefault();
+      skipBy(-10);
+      return;
+    }
+
+    if (key.toLowerCase() === "l") {
+      event.preventDefault();
+      skipBy(10);
+      return;
+    }
+
+    if (key.toLowerCase() === "m") {
+      event.preventDefault();
+      toggleMute();
+      return;
+    }
+
+    if (key.toLowerCase() === "f") {
+      event.preventDefault();
+      void toggleFullscreen();
+      return;
+    }
+
+    if (key.toLowerCase() === "c") {
+      event.preventDefault();
+      toggleCaptions();
+      return;
+    }
+
+    if (key === ">") {
+      event.preventDefault();
+      stepSpeed(1);
+      return;
+    }
+
+    if (key === "<") {
+      event.preventDefault();
+      stepSpeed(-1);
+      return;
+    }
+
+    if (/^[0-9]$/.test(key) && duration > 0) {
+      event.preventDefault();
+      seekTo((Number(key) / 10) * duration);
+    }
+  }
+
+  const volumeIcon = muted || volume === 0 ? <VolumeXIcon /> : volume < 0.5 ? <Volume1Icon /> : <Volume2Icon />;
+
   return (
-    <section className="overflow-hidden rounded-lg border border-white/10 bg-black shadow-3xl">
+    <section
+      ref={playerRef}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onMouseMove={revealControls}
+      onMouseEnter={revealControls}
+      onMouseLeave={() => {
+        if (playing) setShowControls(false);
+      }}
+      aria-label={`${title} video player`}
+      className="group relative overflow-hidden rounded-lg border border-white/10 bg-black text-white shadow-3xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <div className="relative aspect-video bg-black">
         {videoUrl ? (
           <video
             ref={videoRef}
             src={videoUrl}
             poster={posterUrl}
-            className="h-full w-full object-cover"
-            onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+            preload="metadata"
+            playsInline
+            className="h-full w-full cursor-pointer object-contain"
+            onClick={() => void togglePlay()}
+            onDoubleClick={() => void toggleFullscreen()}
+            onLoadedMetadata={(event) => handleLoadedMetadata(event.currentTarget)}
+            onDurationChange={(event) => setDuration(event.currentTarget.duration)}
             onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-            onEnded={() => setPlaying(false)}
+            onProgress={(event) => updateBufferedProgress(event.currentTarget)}
+            onPlay={() => {
+              setPlaying(true);
+              setEnded(false);
+              setBuffering(false);
+              scheduleControlsHide();
+            }}
+            onPause={() => {
+              setPlaying(false);
+              setShowControls(true);
+            }}
+            onWaiting={() => setBuffering(true)}
+            onCanPlay={() => setBuffering(false)}
+            onEnded={() => {
+              setPlaying(false);
+              setEnded(true);
+              setShowControls(true);
+            }}
+            onError={() => {
+              setHasError(true);
+              setBuffering(false);
+              setPlaying(false);
+              setShowControls(true);
+            }}
+            onEnterPictureInPicture={() => setPipActive(true)}
+            onLeavePictureInPicture={() => setPipActive(false)}
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_35%),linear-gradient(135deg,_#050505,_#1f2937)] p-8 text-center text-white">
             <p className="text-sm text-white/60">Video lesson preview</p>
             <h2 className="mt-3 max-w-lg text-3xl font-semibold tracking-tight">{title}</h2>
             <p className="mt-3 max-w-md text-sm leading-6 text-white/60">
-              Add a lesson video URL to replace this premium placeholder with playback.
+              Add a lesson video URL to replace this preview with playback.
             </p>
           </div>
         )}
-      </div>
-      <div className="space-y-3 bg-black/95 p-3 text-white sm:p-4">
-        <input
-          type="range"
-          min={0}
-          max={duration || 0}
-          value={Math.min(currentTime, duration || 0)}
-          onChange={(event) => updateProgress(event.target.value)}
-          disabled={!videoUrl}
-          className="accent-success h-1 w-full"
-          aria-label="Video progress"
-        />
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Button size="icon" variant="secondary" onClick={togglePlay} disabled={!videoUrl} aria-label="Play lesson">
-            {playing ? <PauseIcon /> : <PlayIcon />}
-          </Button>
-          <span className="min-w-20 text-xs text-white/70">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
-          <Button size="icon" variant="ghost" onClick={toggleMute} disabled={!videoUrl} aria-label="Mute lesson">
-            {muted ? <VolumeXIcon /> : <Volume2Icon />}
-          </Button>
-          <select
-            value={speed}
-            onChange={(event) => updateSpeed(event.target.value)}
-            className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs"
-            aria-label="Playback speed"
+
+        {videoUrl && hasError ? (
+          <div className="absolute inset-0 z-20 grid place-items-center bg-black/85 p-6 text-center">
+            <div className="max-w-md">
+              <p className="text-lg font-semibold">This video could not be played.</p>
+              <p className="mt-2 text-sm leading-6 text-white/65">Check the video source or try again later.</p>
+            </div>
+          </div>
+        ) : null}
+
+        {videoUrl && buffering && !hasError ? (
+          <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-black/20">
+            <LoaderCircleIcon className="size-10 animate-spin" aria-label="Buffering video" />
+          </div>
+        ) : null}
+
+        {videoUrl && !hasError && (!playing || ended) ? (
+          <button
+            type="button"
+            onClick={() => void togglePlay()}
+            className="absolute inset-0 z-[5] m-auto grid size-16 place-items-center rounded-full bg-black/70 text-white transition hover:scale-105 hover:bg-black/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label={ended ? "Replay lesson" : "Play lesson"}
+            title={ended ? "Replay" : "Play (K)"}
           >
-            {[0.75, 1, 1.25, 1.5, 2].map((item) => (
-              <option key={item} value={item} className="bg-black">
-                {item}x
-              </option>
-            ))}
-          </select>
-          <Button
-            className="ml-auto"
-            size="icon"
-            variant="ghost"
-            onClick={openFullscreen}
-            disabled={!videoUrl}
-            aria-label="Fullscreen"
+            {ended ? <RotateCcwIcon className="size-7" /> : <PlayIcon className="ml-1 size-7 fill-current" />}
+          </button>
+        ) : null}
+
+        {videoUrl ? (
+          <div
+            className={`absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black via-black/75 to-transparent px-3 pt-12 pb-3 transition-opacity duration-200 sm:px-4 ${
+              showControls || !playing ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
           >
-            <MaximizeIcon />
-          </Button>
-        </div>
+            <div className="relative mb-3 h-4">
+              <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-white/25">
+                <div className="absolute inset-y-0 left-0 bg-white/35" style={{ width: `${bufferedPercent}%` }} />
+                <div className="bg-success absolute inset-y-0 left-0" style={{ width: `${playedPercent}%` }} />
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={duration || 0}
+                step="0.1"
+                value={Math.min(currentTime, duration || 0)}
+                onChange={(event) => updateProgress(event.target.value)}
+                className="absolute inset-0 h-4 w-full cursor-pointer opacity-0"
+                aria-label="Video progress"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => void togglePlay()}
+                className="grid size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label={playing ? "Pause lesson" : ended ? "Replay lesson" : "Play lesson"}
+                title={playing ? "Pause (K)" : ended ? "Replay" : "Play (K)"}
+              >
+                {playing ? <PauseIcon /> : ended ? <RotateCcwIcon /> : <PlayIcon className="fill-current" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => skipBy(-10)}
+                className="hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:grid"
+                aria-label="Back 10 seconds"
+                title="Back 10 seconds (J)"
+              >
+                <RotateCcwIcon />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => skipBy(10)}
+                className="hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:grid"
+                aria-label="Forward 10 seconds"
+                title="Forward 10 seconds (L)"
+              >
+                <RotateCwIcon />
+              </button>
+
+              <div className="group/volume flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="grid size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  aria-label={muted ? "Unmute lesson" : "Mute lesson"}
+                  title={muted ? "Unmute (M)" : "Mute (M)"}
+                >
+                  {volumeIcon}
+                </button>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={muted ? 0 : volume}
+                  onChange={(event) => updateVolume(Number(event.target.value))}
+                  className="accent-success hidden h-1 w-20 cursor-pointer sm:block"
+                  aria-label="Video volume"
+                />
+              </div>
+
+              <span className="ml-1 whitespace-nowrap text-xs text-white/80">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+
+              <div className="ml-auto flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleCaptions}
+                  disabled={!captionsAvailable}
+                  className={`hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-35 sm:grid ${
+                    captionsEnabled ? "bg-white/20" : ""
+                  }`}
+                  aria-label={captionsEnabled ? "Turn captions off" : "Turn captions on"}
+                  aria-pressed={captionsEnabled}
+                  title={captionsAvailable ? "Captions (C)" : "No captions available"}
+                >
+                  <CaptionsIcon />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleLoop}
+                  className={`hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:grid ${
+                    looping ? "bg-white/20 text-success" : ""
+                  }`}
+                  aria-label={looping ? "Turn loop off" : "Loop video"}
+                  aria-pressed={looping}
+                  title="Loop video"
+                >
+                  <RepeatIcon />
+                </button>
+
+                <select
+                  value={speed}
+                  onChange={(event) => updateSpeed(Number(event.target.value))}
+                  className="h-9 rounded-full border border-white/10 bg-black/55 px-2 text-xs text-white outline-none focus:ring-2 focus:ring-white sm:px-3"
+                  aria-label="Playback speed"
+                  title="Playback speed (< / >)"
+                >
+                  {playbackSpeeds.map((item) => (
+                    <option key={item} value={item} className="bg-black">
+                      {item}x
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => void togglePictureInPicture()}
+                  disabled={!document.pictureInPictureEnabled}
+                  className={`hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-35 md:grid ${
+                    pipActive ? "bg-white/20" : ""
+                  }`}
+                  aria-label={pipActive ? "Exit picture in picture" : "Picture in picture"}
+                  title="Picture in picture"
+                >
+                  <PictureInPictureIcon />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void toggleFullscreen()}
+                  className="grid size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  aria-label="Fullscreen"
+                  title="Fullscreen (F)"
+                >
+                  <MaximizeIcon />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
+
+      {videoUrl ? (
+        <p className="sr-only">
+          Keyboard shortcuts: K or Space play and pause, J and L skip ten seconds, left and right arrows seek five seconds,
+          M mutes, F enters fullscreen, C toggles captions when available, number keys seek by percentage, and greater-than or
+          less-than changes playback speed.
+        </p>
+      ) : null}
     </section>
   );
 }
