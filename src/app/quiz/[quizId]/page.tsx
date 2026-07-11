@@ -34,11 +34,17 @@ export default async function QuizPage({ params, searchParams }: QuizPageProps) 
   const detail = await getLearnerQuizDetail(quizId);
   const quiz = detail?.quiz;
   const course = detail?.course;
-  const fromMobile = from === "mobile";
 
   if (!quiz || !course) {
     notFound();
   }
+
+  const backTarget =
+    from === "mobile"
+      ? { href: "/mobile-quizzes", label: "Back to mobile quizzes" }
+      : from === "quizzes"
+        ? { href: "/quizzes", label: "Back to quizzes" }
+        : { href: `/courses/${course.id}`, label: "Back to course" };
 
   return (
     <PageShell>
@@ -53,9 +59,7 @@ export default async function QuizPage({ params, searchParams }: QuizPageProps) 
         </p>
         <QuizPlayer quiz={quiz} />
         <Button className="mt-6" variant="ghost" asChild>
-          <Link href={fromMobile ? "/mobile-quizzes" : `/courses/${course.id}`}>
-            {fromMobile ? "Back to mobile quizzes" : "Back to course"}
-          </Link>
+          <Link href={backTarget.href}>{backTarget.label}</Link>
         </Button>
       </section>
     </PageShell>
