@@ -5,7 +5,7 @@ import {
   LoaderCircleIcon,
   MaximizeIcon,
   PauseIcon,
-  PictureInPictureIcon,
+  PictureInPicture,
   PlayIcon,
   RepeatIcon,
   RotateCcwIcon,
@@ -20,6 +20,16 @@ type VideoPlayerProps = {
   title: string;
   videoUrl?: string;
   posterUrl?: string;
+};
+
+type PictureInPictureDocument = Document & {
+  pictureInPictureEnabled?: boolean;
+  pictureInPictureElement?: Element | null;
+  exitPictureInPicture?: () => Promise<void>;
+};
+
+type PictureInPictureVideo = HTMLVideoElement & {
+  requestPictureInPicture?: () => Promise<unknown>;
 };
 
 const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -62,14 +72,32 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
   const playedPercent = duration > 0 ? clamp((currentTime / duration) * 100, 0, 100) : 0;
 
   useEffect(() => {
-    setPictureInPictureAvailable(document.pictureInPictureEnabled);
+    const pictureInPictureDocument = document as PictureInPictureDocument;
+    const video = videoRef.current as PictureInPictureVideo | null;
+
+    setPictureInPictureAvailable(
+      Boolean(pictureInPictureDocument.pictureInPictureEnabled && video?.requestPictureInPicture),
+    );
+
+    function handleEnterPictureInPicture() {
+      setPipActive(true);
+    }
+
+    function handleLeavePictureInPicture() {
+      setPipActive(false);
+    }
+
+    video?.addEventListener("enterpictureinpicture", handleEnterPictureInPicture);
+    video?.addEventListener("leavepictureinpicture", handleLeavePictureInPicture);
 
     return () => {
       if (hideControlsTimerRef.current !== null) {
         window.clearTimeout(hideControlsTimerRef.current);
       }
+      video?.removeEventListener("enterpictureinpicture", handleEnterPictureInPicture);
+      video?.removeEventListener("leavepictureinpicture", handleLeavePictureInPicture);
     };
-  }, []);
+  }, [videoUrl]);
 
   function scheduleControlsHide(force = false) {
     if (hideControlsTimerRef.current !== null) {
@@ -205,12 +233,14 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
   }
 
   async function togglePictureInPicture() {
-    const video = videoRef.current;
-    if (!video || !pictureInPictureAvailable) return;
+    const video = videoRef.current as PictureInPictureVideo | null;
+    const pictureInPictureDocument = document as PictureInPictureDocument;
+
+    if (!video?.requestPictureInPicture || !pictureInPictureAvailable) return;
 
     try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
+      if (pictureInPictureDocument.pictureInPictureElement && pictureInPictureDocument.exitPictureInPicture) {
+        await pictureInPictureDocument.exitPictureInPicture();
         setPipActive(false);
       } else {
         await video.requestPictureInPicture();
@@ -388,8 +418,6 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
               setPlaying(false);
               setShowControls(true);
             }}
-            onEnterPictureInPicture={() => setPipActive(true)}
-            onLeavePictureInPicture={() => setPipActive(false)}
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_35%),linear-gradient(135deg,_#050505,_#1f2937)] p-8 text-center text-white">
@@ -560,7 +588,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
                   aria-label={pipActive ? "Exit picture in picture" : "Picture in picture"}
                   title={pictureInPictureAvailable ? "Picture in picture" : "Picture in picture unavailable"}
                 >
-                  <PictureInPictureIcon />
+                  <PictureInPicture />
                 </button>
 
                 <button
