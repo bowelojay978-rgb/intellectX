@@ -44,6 +44,7 @@ export default defineSchema({
     reviewedAt: v.optional(v.number()),
     reviewedBy: v.optional(v.string()),
     reviewReason: v.optional(v.string()),
+    updatedAt: v.optional(v.number()),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_slug", ["slug"]),
@@ -83,6 +84,7 @@ export default defineSchema({
     difficulty: v.string(),
     estimatedTime: v.string(),
     accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    order: v.optional(v.number()),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_course_stable_id", ["courseStableId"]),
@@ -199,5 +201,3 @@ export default defineSchema({
     .index("by_user_product_provider_subscription", ["userKey", "productKey", "provider", "providerSubscriptionId"])
     .index("by_product_status", ["productKey", "status"]),
 });
-
-
