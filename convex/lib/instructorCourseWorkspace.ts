@@ -71,14 +71,14 @@ function normalizeIdentifier(value: string, label: string) {
   return normalized;
 }
 
-function normalizeAllowedValue<const T extends readonly string[]>(value: string, label: string, allowed: T): T[number] {
+function normalizeAllowedValue(value: string, label: string, allowed: readonly string[]) {
   const normalized = requiredText(value, label);
 
   if (!allowed.includes(normalized)) {
     throw new Error(`${label} must be one of: ${allowed.join(", ")}.`);
   }
 
-  return normalized as T[number];
+  return normalized;
 }
 
 function assertUniqueIdentifiers(values: string[], label: string) {
@@ -162,7 +162,11 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
       stableId: quizStableId,
       lessonStableId,
       title: quiz.title.trim(),
-      difficulty: normalizeAllowedValue(quiz.difficulty.trim() || "Foundational", `Quiz ${quizIndex + 1} difficulty`, quizDifficulties),
+      difficulty: normalizeAllowedValue(
+        quiz.difficulty.trim() || "Foundational",
+        `Quiz ${quizIndex + 1} difficulty`,
+        quizDifficulties,
+      ),
       estimatedTime: quiz.estimatedTime.trim() || "5 min",
       order: quizIndex,
       questions,
