@@ -2,16 +2,24 @@
 
 import { convexApi } from "@/lib/convex-api";
 import type { InstructorCourseSummary } from "@/lib/instructor-course-workspace";
-import { useConvex } from "convex/react";
+import { useConvex, useConvexAuth } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
 
 export function useInstructorCourses() {
   const convex = useConvex();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const [courses, setCourses] = useState<InstructorCourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCourses([]);
+      setError("Authenticated Convex staff identity is required");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -25,11 +33,16 @@ export function useInstructorCourses() {
     } finally {
       setLoading(false);
     }
-  }, [convex]);
+  }, [convex, isAuthenticated]);
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     void reload();
-  }, [reload]);
+  }, [authLoading, reload]);
 
   return { courses, loading, error, reload };
 }
