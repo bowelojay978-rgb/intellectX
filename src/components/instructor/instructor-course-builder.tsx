@@ -31,8 +31,8 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 const fieldClassName =
   "border-input bg-background/80 h-11 w-full rounded-lg border px-3 text-sm outline-none transition focus:border-primary/50 focus:ring-ring/30 focus:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60";
@@ -43,6 +43,11 @@ type RemoteInstructorCourseDraft = {
   course: Omit<InstructorCourseDraft, "lessons" | "quizzes">;
   lessons: InstructorLessonDraft[];
   quizzes: InstructorQuizDraft[];
+};
+
+type SaveInstructorCourseDraftResult = {
+  courseId: unknown;
+  updatedAt: number;
 };
 
 function FieldLabel({ label, children }: { label: string; children: React.ReactNode }) {
@@ -112,15 +117,10 @@ function getDraftReadinessIssues(course: InstructorCourseDraft) {
     }
 
     quiz.questions.forEach((question, questionIndex) => {
-      const nonEmptyChoices = question.choices.filter((choice) => choice.trim());
+      const choicesComplete = question.choices.length >= 2 && question.choices.every((choice) => Boolean(choice.trim()));
       const correctChoice = question.choices[question.answerIndex];
 
-      if (
-        !question.prompt.trim() ||
-        !question.explanation.trim() ||
-        nonEmptyChoices.length < 2 ||
-        !correctChoice?.trim()
-      ) {
+      if (!question.prompt.trim() || !question.explanation.trim() || !choicesComplete || !correctChoice?.trim()) {
         issues.push(`Complete question ${questionIndex + 1} in quiz ${quizIndex + 1}.`);
       }
     });
@@ -280,6 +280,7 @@ function ConvexInstructorCourseBuilder({ editStableId }: { editStableId?: string
 
     return {
       existingStableId: persistedStableId,
+      expectedUpdatedAt: persistedStableId ? course.updatedAt : undefined,
       stableId: course.stableId,
       slug,
       title: course.title,
@@ -328,9 +329,9 @@ function ConvexInstructorCourseBuilder({ editStableId }: { editStableId?: string
 
     try {
       payload = buildPayload();
-      await saveInstructorCourseDraft(payload);
+      const result = (await saveInstructorCourseDraft(payload)) as SaveInstructorCourseDraftResult;
       setPersistedStableId(payload.stableId);
-      setCourse((current) => ({ ...current, slug: payload.slug, updatedAt: Date.now() }));
+      setCourse((current) => ({ ...current, slug: payload.slug, updatedAt: result.updatedAt }));
 
       if (!persistedStableId) {
         router.replace(`/instructor/courses/new?edit=${encodeURIComponent(payload.stableId)}`);
