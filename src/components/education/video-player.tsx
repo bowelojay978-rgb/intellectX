@@ -57,10 +57,13 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
   const [captionsAvailable, setCaptionsAvailable] = useState(false);
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [pipActive, setPipActive] = useState(false);
+  const [pictureInPictureAvailable, setPictureInPictureAvailable] = useState(false);
 
   const playedPercent = duration > 0 ? clamp((currentTime / duration) * 100, 0, 100) : 0;
 
   useEffect(() => {
+    setPictureInPictureAvailable(document.pictureInPictureEnabled);
+
     return () => {
       if (hideControlsTimerRef.current !== null) {
         window.clearTimeout(hideControlsTimerRef.current);
@@ -68,12 +71,12 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
     };
   }, []);
 
-  function scheduleControlsHide() {
+  function scheduleControlsHide(force = false) {
     if (hideControlsTimerRef.current !== null) {
       window.clearTimeout(hideControlsTimerRef.current);
     }
 
-    if (!playing) return;
+    if (!playing && !force) return;
 
     hideControlsTimerRef.current = window.setTimeout(() => {
       setShowControls(false);
@@ -101,7 +104,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
       try {
         await video.play();
         setPlaying(true);
-        scheduleControlsHide();
+        scheduleControlsHide(true);
       } catch {
         setHasError(true);
       }
@@ -203,7 +206,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
 
   async function togglePictureInPicture() {
     const video = videoRef.current;
-    if (!video || !document.pictureInPictureEnabled) return;
+    if (!video || !pictureInPictureAvailable) return;
 
     try {
       if (document.pictureInPictureElement) {
@@ -233,8 +236,8 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
     }
   }
 
-  function updateBufferedProgress(video: HTMLVideoElement) {
-    if (duration <= 0 || video.buffered.length === 0) {
+  function updateBufferedProgress(video: HTMLVideoElement, knownDuration = duration) {
+    if (knownDuration <= 0 || video.buffered.length === 0) {
       setBufferedPercent(0);
       return;
     }
@@ -244,7 +247,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
       furthestBufferedEnd = Math.max(furthestBufferedEnd, video.buffered.end(index));
     }
 
-    setBufferedPercent(clamp((furthestBufferedEnd / duration) * 100, 0, 100));
+    setBufferedPercent(clamp((furthestBufferedEnd / knownDuration) * 100, 0, 100));
   }
 
   function handleLoadedMetadata(video: HTMLVideoElement) {
@@ -255,7 +258,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
     setSpeed(video.playbackRate);
     setCaptionsAvailable(video.textTracks.length > 0);
     setHasError(false);
-    updateBufferedProgress(video);
+    updateBufferedProgress(video, video.duration);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -366,7 +369,7 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
               setPlaying(true);
               setEnded(false);
               setBuffering(false);
-              scheduleControlsHide();
+              scheduleControlsHide(true);
             }}
             onPause={() => {
               setPlaying(false);
@@ -550,12 +553,12 @@ export function VideoPlayer({ title, videoUrl, posterUrl }: VideoPlayerProps) {
                 <button
                   type="button"
                   onClick={() => void togglePictureInPicture()}
-                  disabled={!document.pictureInPictureEnabled}
+                  disabled={!pictureInPictureAvailable}
                   className={`hidden size-9 place-items-center rounded-full transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-35 md:grid ${
                     pipActive ? "bg-white/20" : ""
                   }`}
                   aria-label={pipActive ? "Exit picture in picture" : "Picture in picture"}
-                  title="Picture in picture"
+                  title={pictureInPictureAvailable ? "Picture in picture" : "Picture in picture unavailable"}
                 >
                   <PictureInPictureIcon />
                 </button>
