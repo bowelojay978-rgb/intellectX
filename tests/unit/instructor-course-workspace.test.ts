@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertCourseSubmissionReady,
   assertInstructorCourseEditable,
+  assertInstructorCourseVersion,
   getCourseSubmissionReadinessIssues,
   normalizeInstructorCourseDraftInput,
 } from "../../convex/lib/instructorCourseWorkspace";
@@ -117,6 +118,18 @@ describe("instructor course draft validation", () => {
     });
   });
 
+  it("allows incomplete nested lesson and quiz fields to persist as a draft", () => {
+    const draft = validDraft();
+    const normalized = normalizeInstructorCourseDraftInput({
+      ...draft,
+      lessons: [{ ...draft.lessons[0], title: "", duration: "", summary: "", content: [] }],
+      quizzes: [{ ...draft.quizzes[0], title: "", questions: [] }],
+    });
+
+    expect(normalized.lessons[0]).toMatchObject({ title: "", duration: "", summary: "", content: [] });
+    expect(normalized.quizzes[0]).toMatchObject({ title: "", questions: [] });
+  });
+
   it("rejects malformed course identifiers", () => {
     expect(() =>
       normalizeInstructorCourseDraftInput({
@@ -135,6 +148,22 @@ describe("instructor course draft validation", () => {
         lessons: [...draft.lessons, { ...draft.lessons[0] }],
       }),
     ).toThrow("Duplicate lesson stableId: cell-structure.");
+  });
+
+  it("rejects duplicate question identifiers even across different quizzes", () => {
+    const draft = validDraft();
+    const secondQuiz = {
+      ...draft.quizzes[0],
+      stableId: "second-check",
+      questions: [{ ...draft.quizzes[0].questions[0] }],
+    };
+
+    expect(() =>
+      normalizeInstructorCourseDraftInput({
+        ...draft,
+        quizzes: [...draft.quizzes, secondQuiz],
+      }),
+    ).toThrow("Duplicate question stableId: cell-q1.");
   });
 
   it("rejects quizzes linked to lessons outside the course", () => {
@@ -167,25 +196,32 @@ describe("instructor course review readiness", () => {
     expect(getCourseSubmissionReadinessIssues(content)[0]).toContain("Complete the title, duration, summary, and content");
   });
 
-  it("blocks quizzes without questions", () => {
+  it("blocks untitled quizzes and quizzes without questions", () => {
     const content = readyContent();
+    content.quizzes[0].title = "";
     content.questions = [];
 
-    expect(getCourseSubmissionReadinessIssues(content)[0]).toContain("Add at least one question to quiz");
+    const issues = getCourseSubmissionReadinessIssues(content);
+    expect(issues.some((issue) => issue.includes("Add a title to quiz"))).toBe(true);
+    expect(issues.some((issue) => issue.includes("Add at least one question to quiz"))).toBe(true);
   });
 
-  it("blocks incomplete questions and accepts complete review content", () => {
+  it("blocks incomplete questions including any blank answer option", () => {
     const content = readyContent();
-    content.questions[0].choices = ["Nucleus", ""];
+    content.questions[0].choices = ["Nucleus", "Ribosome", ""];
 
-    expect(getCourseSubmissionReadinessIssues(content)[0]).toContain("Complete every prompt, answer option, correct answer, and explanation");
+    expect(getCourseSubmissionReadinessIssues(content)[0]).toContain(
+      "Complete every prompt, answer option, correct answer, and explanation",
+    );
+  });
 
+  it("accepts complete review content", () => {
     expect(getCourseSubmissionReadinessIssues(readyContent())).toEqual([]);
     expect(() => assertCourseSubmissionReady(readyContent())).not.toThrow();
   });
 });
 
-describe("instructor workflow editability", () => {
+describe("instructor workflow editability and concurrency", () => {
   it("allows edits only for draft and changes-requested courses", () => {
     expect(() => assertInstructorCourseEditable({ reviewStatus: DRAFT })).not.toThrow();
     expect(() => assertInstructorCourseEditable({ reviewStatus: CHANGES_REQUESTED })).not.toThrow();
@@ -196,6 +232,15 @@ describe("instructor workflow editability", () => {
     expect(isInstructorCourseEditable({ reviewStatus: DRAFT })).toBe(true);
     expect(isInstructorCourseEditable({ reviewStatus: CHANGES_REQUESTED })).toBe(true);
     expect(isInstructorCourseEditable({ reviewStatus: APPROVED })).toBe(false);
+  });
+
+  it("rejects stale saves when a newer course version exists", () => {
+    expect(() => assertInstructorCourseVersion({ updatedAt: 200 }, 200)).not.toThrow();
+    expect(() => assertInstructorCourseVersion({ updatedAt: 200 }, 100)).toThrow(
+      "Course draft changed since it was loaded. Reload before saving to avoid overwriting newer edits.",
+    );
+    expect(() => assertInstructorCourseVersion({ updatedAt: 200 }, undefined)).toThrow();
+    expect(() => assertInstructorCourseVersion({}, undefined)).not.toThrow();
   });
 
   it("treats only approved and published courses as learner-previewable", () => {
