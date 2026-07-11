@@ -1,5 +1,6 @@
 export function isLearnerAppPath(pathname: string) {
   return (
+    pathname === "/onboarding" ||
     pathname === "/dashboard" ||
     pathname === "/profile" ||
     pathname === "/courses" ||
