@@ -69,6 +69,11 @@ export function writeQuizAttemptHistory(attempts: QuizAttemptHistoryItem[], stor
   return history;
 }
 
+export function clearQuizAttemptHistory(storage: Storage = window.localStorage) {
+  storage.removeItem(QUIZ_ATTEMPT_HISTORY_KEY);
+  window.dispatchEvent(new Event(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT));
+}
+
 export function mergeQuizAttemptHistory(attempts: QuizAttemptHistoryItem[], storage: Storage = window.localStorage) {
   const existing = readQuizAttemptHistory(storage);
   const merged = [...existing];

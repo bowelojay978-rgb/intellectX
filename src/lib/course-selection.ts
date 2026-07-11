@@ -84,6 +84,11 @@ export function saveCourseSelection(selection: CourseSelection) {
   return normalizedSelection;
 }
 
+export function clearCourseSelection() {
+  window.localStorage.removeItem(COURSE_SELECTION_KEY);
+  window.dispatchEvent(new Event(COURSE_SELECTION_CHANGE_EVENT));
+}
+
 export function hasSelectedCourses(selection = loadCourseSelection()) {
   return selection.selectedCourseIds.length > 0;
 }

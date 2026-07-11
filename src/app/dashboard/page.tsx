@@ -22,8 +22,7 @@ export default function DashboardPage() {
           Welcome back, <LearnerSessionName firstNameOnly />
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
-          Your learning cockpit for selected courses and activity recorded in this browser. Account-level persistence is
-          still a later milestone.
+          Your learning cockpit for selected courses and activity loaded from your account when available.
         </p>
       </section>
       <LocalDashboardContent />

@@ -10,8 +10,15 @@ import {
   saveAcademicProfile,
 } from "@/lib/academic-profile";
 import { convexApi } from "@/lib/convex-api";
-import { getCurrentConvexLearnerArgs, type ConvexLearnerArgs } from "@/lib/convex-learner-identity";
+import {
+  getCurrentConvexLearnerIdentity,
+  type ConvexLearnerArgs,
+  type ConvexLearnerIdentity,
+} from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
+import { hasPendingLocalLearnerMigrationSource } from "@/lib/authenticated-learner-local-data";
+import { hydrateAuthenticatedAcademicProfile } from "@/lib/authenticated-learner-hydration";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -41,6 +48,10 @@ function persistAcademicProfileArgs(identityArgs: ConvexLearnerArgs, profile: Ac
   };
 }
 
+function getIdentityArgs(identity: ConvexLearnerIdentity): ConvexLearnerArgs {
+  return identity.userKey ? { userKey: identity.userKey } : {};
+}
+
 export function AcademicProfileSync() {
   if (!convexEnv.isConfigured) {
     return null;
@@ -51,17 +62,21 @@ export function AcademicProfileSync() {
 
 function ConvexAcademicProfileSync() {
   const convex = useConvex();
-  const [identityArgs, setIdentityArgs] = useState<ConvexLearnerArgs | null>(null);
+  const [identity, setIdentity] = useState<ConvexLearnerIdentity | null>(null);
   const upsertAcademicProfile = useMutation(convexApi.academicProfiles.upsertAcademicProfile);
   const clearRemoteAcademicProfile = useMutation(convexApi.academicProfiles.clearAcademicProfile);
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
 
+  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+
   useEffect(() => {
-    setIdentityArgs(getCurrentConvexLearnerArgs());
+    const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+    setIdentity(getCurrentConvexLearnerIdentity(isAuthenticated));
 
     function syncIdentity() {
-      setIdentityArgs(getCurrentConvexLearnerArgs());
+      const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
+      setIdentity(getCurrentConvexLearnerIdentity(isAuthenticated));
       remoteHydrated.current = false;
     }
 
@@ -72,14 +87,15 @@ function ConvexAcademicProfileSync() {
       window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncIdentity);
       window.removeEventListener("storage", syncIdentity);
     };
-  }, []);
+  }, [isLoaded, isSignedIn, userId]);
 
   useEffect(() => {
-    if (!identityArgs) {
+    if (!identity) {
       return;
     }
 
     let cancelled = false;
+    const identityArgs = getIdentityArgs(identity);
 
     convex
       .query(convexApi.academicProfiles.getAcademicProfile, identityArgs)
@@ -88,10 +104,22 @@ function ConvexAcademicProfileSync() {
 
         if (remoteProfile && isAcademicProfile(remoteProfile)) {
           const normalizedRemoteProfile = normalizeAcademicProfileForLevel(remoteProfile);
-          const localProfile = loadAcademicProfile();
 
           remoteHydrated.current = true;
 
+          if (identity.source === "authenticated-convex") {
+            syncingRemoteToLocal.current = true;
+            hydrateAuthenticatedAcademicProfile(
+              normalizedRemoteProfile,
+              hasPendingLocalLearnerMigrationSource(),
+            );
+            window.setTimeout(() => {
+              syncingRemoteToLocal.current = false;
+            }, 0);
+            return;
+          }
+
+          const localProfile = loadAcademicProfile();
           if (!localProfile || !academicProfilesMatch(normalizedRemoteProfile, localProfile)) {
             syncingRemoteToLocal.current = true;
             saveAcademicProfile(normalizedRemoteProfile);
@@ -104,6 +132,15 @@ function ConvexAcademicProfileSync() {
         }
 
         remoteHydrated.current = true;
+
+        if (identity.source === "authenticated-convex") {
+          syncingRemoteToLocal.current = true;
+          hydrateAuthenticatedAcademicProfile(null, hasPendingLocalLearnerMigrationSource());
+          window.setTimeout(() => {
+            syncingRemoteToLocal.current = false;
+          }, 0);
+          return;
+        }
 
         const localProfile = loadAcademicProfile();
         if (localProfile && isAcademicProfileComplete(localProfile)) {
@@ -122,14 +159,19 @@ function ConvexAcademicProfileSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identityArgs, upsertAcademicProfile]);
+  }, [convex, identity, upsertAcademicProfile]);
 
   useEffect(() => {
     function syncLocalProfileToConvex() {
-      if (!identityArgs || !remoteHydrated.current || syncingRemoteToLocal.current) {
+      if (!identity || !remoteHydrated.current || syncingRemoteToLocal.current) {
         return;
       }
 
+      if (identity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
+        return;
+      }
+
+      const identityArgs = getIdentityArgs(identity);
       const localProfile = loadAcademicProfile();
 
       if (localProfile && isAcademicProfileComplete(localProfile)) {
@@ -149,7 +191,7 @@ function ConvexAcademicProfileSync() {
     return () => {
       window.removeEventListener(ACADEMIC_PROFILE_CHANGE_EVENT, syncLocalProfileToConvex);
     };
-  }, [clearRemoteAcademicProfile, identityArgs, upsertAcademicProfile]);
+  }, [clearRemoteAcademicProfile, identity, upsertAcademicProfile]);
 
   return null;
 }

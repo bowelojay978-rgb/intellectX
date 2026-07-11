@@ -2,7 +2,7 @@
 
 import { convexApi } from "@/lib/convex-api";
 import { getAuthEnvironmentStatus } from "@/lib/auth-env";
-import { getCurrentLearnerIdentity } from "@/lib/learner-session";
+import { clearLearnerSession, getCurrentLearnerIdentity } from "@/lib/learner-session";
 import {
   hasCompletedLocalLearnerMigration,
   resolveLocalLearnerMigrationSource,
@@ -14,16 +14,21 @@ import { useEffect, useRef } from "react";
 type LocalLearnerDataMigrationSyncProps = {
   isAuthLoaded: boolean;
   isSignedIn: boolean | undefined;
+  authenticatedUserId: string | null;
 };
 
-export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: LocalLearnerDataMigrationSyncProps) {
+export function LocalLearnerDataMigrationSync({
+  isAuthLoaded,
+  isSignedIn,
+  authenticatedUserId,
+}: LocalLearnerDataMigrationSyncProps) {
   const attemptedMarkerKey = useRef<string | null>(null);
   const migrateLocalLearnerData = useMutation(
     convexApi.learnerMigration.migrateLocalLearnerDataToAuthenticatedAccount,
   );
 
   useEffect(() => {
-    if (!isAuthLoaded || !isSignedIn) {
+    if (!isAuthLoaded || !isSignedIn || !authenticatedUserId) {
       return;
     }
 
@@ -37,7 +42,9 @@ export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: Loca
       return;
     }
 
-    if (attemptedMarkerKey.current === migrationSource.markerKey) {
+    const attemptKey = `${authenticatedUserId}:${migrationSource.markerKey}`;
+
+    if (attemptedMarkerKey.current === attemptKey) {
       return;
     }
 
@@ -45,18 +52,19 @@ export function LocalLearnerDataMigrationSync({ isAuthLoaded, isSignedIn }: Loca
       return;
     }
 
-    attemptedMarkerKey.current = migrationSource.markerKey;
+    attemptedMarkerKey.current = attemptKey;
     writeLocalLearnerMigrationMarker(migrationSource.markerKey, "attempted");
 
     migrateLocalLearnerData({ sourceUserKey: migrationSource.sourceUserKey })
       .then(() => {
         writeLocalLearnerMigrationMarker(migrationSource.markerKey, "succeeded");
+        clearLearnerSession();
       })
       .catch((error) => {
         console.warn("Unable to migrate local learner data to authenticated account", error);
         writeLocalLearnerMigrationMarker(migrationSource.markerKey, "failed");
       });
-  }, [isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
+  }, [authenticatedUserId, isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
 
   return null;
 }
