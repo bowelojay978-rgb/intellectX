@@ -1,8 +1,8 @@
 "use client";
 
-import { LearnerOnboarding } from "@/components/auth/learner-onboarding";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { isAcademicProfileComplete, loadAcademicProfile } from "@/lib/academic-profile";
 import { createLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,8 @@ const contentByMode = {
   signup: {
     eyebrow: "Learner profile",
     title: "Create your learner session",
-    description: "Add your learner details, then complete your study profile and course selection before entering IntellectX.",
-    submitLabel: "Continue to onboarding",
+    description: "Add your learner details, complete your Study Profile, then choose at least one course before entering IntellectX.",
+    submitLabel: "Continue to study profile",
   },
   "forgot-password": {
     eyebrow: "Account recovery",
@@ -85,7 +85,7 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
     if (!pendingSession) return;
 
     createLearnerSession(pendingSession);
-    window.location.assign("/courses");
+    window.location.assign("/courses?setup=1");
   }
 
   return (
@@ -106,12 +106,13 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
         {isProfileSetup ? (
           <div className="grid gap-5">
             <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Complete your study profile and choose your courses before entering IntellectX.
+              Complete your Study Profile first. You will then choose at least one course to finish setup.
             </div>
-            <LearnerOnboarding
+            <StudyProfileCard
               loadSavedProfile={false}
-              completeLabel="Complete signup"
-              onComplete={completeSignup}
+              showReset={false}
+              submitLabel="Continue to course selection"
+              onSaved={completeSignup}
             />
           </div>
         ) : (
@@ -207,7 +208,7 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
   if (mode === "signup") {
     return (
       <div className="text-muted-foreground mt-6 grid gap-2 text-center text-sm">
-        <p>After signup, complete your study profile and choose your courses before entering IntellectX.</p>
+        <p>After signup, complete your Study Profile and choose at least one course before entering IntellectX.</p>
         <p>
           Already have a learner session?{" "}
           <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
