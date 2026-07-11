@@ -1,10 +1,10 @@
 "use client";
 
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { convexApi } from "@/lib/convex-api";
 import { getCurrentConvexLearnerArgs } from "@/lib/convex-learner-identity";
 import { convexEnv } from "@/lib/education-data";
-import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
-import { recordLessonProgress } from "@/lib/lesson-progress-history";
+import { recordLessonOpened } from "@/lib/lesson-progress";
 import { useMutation } from "convex/react";
 import { useEffect } from "react";
 
@@ -22,11 +22,7 @@ export function LessonProgressSync({ lessonId }: LessonProgressSyncProps) {
 
 function LocalLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
   useEffect(() => {
-    recordLessonProgress({
-      lessonId,
-      status: "in_progress",
-      progress: 25,
-    });
+    recordLessonOpened(lessonId);
   }, [lessonId]);
 
   return null;
@@ -34,15 +30,10 @@ function LocalLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
 
 function ConvexLessonProgressSync({ lessonId }: LessonProgressSyncProps) {
   const updateProgress = useMutation(convexApi.lessons.updateLessonProgress);
-
   const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
   useEffect(() => {
-    const localProgress = recordLessonProgress({
-      lessonId,
-      status: "in_progress",
-      progress: 25,
-    });
+    const localProgress = recordLessonOpened(lessonId);
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
     const identityArgs = getCurrentConvexLearnerArgs(isAuthenticated);
 
