@@ -47,7 +47,8 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index("by_stable_id", ["stableId"])
-    .index("by_slug", ["slug"]),
+    .index("by_slug", ["slug"])
+    .index("by_instructor_id", ["instructorId"]),
   auditLogs: defineTable({
     eventType: v.string(),
     actorUserId: v.string(),
