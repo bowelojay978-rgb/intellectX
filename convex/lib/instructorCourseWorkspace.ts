@@ -43,6 +43,8 @@ export type InstructorCourseDraftInput = {
 export type NormalizedInstructorCourseDraft = ReturnType<typeof normalizeInstructorCourseDraftInput>;
 
 const identifierPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const courseLevels = ["Beginner", "Intermediate", "Advanced"] as const;
+const quizDifficulties = ["Foundational", "Applied", "Challenge"] as const;
 
 function requiredText(value: string, label: string) {
   const normalized = value.trim();
@@ -69,6 +71,16 @@ function normalizeIdentifier(value: string, label: string) {
   return normalized;
 }
 
+function normalizeAllowedValue<const T extends readonly string[]>(value: string, label: string, allowed: T): T[number] {
+  const normalized = requiredText(value, label);
+
+  if (!allowed.includes(normalized)) {
+    throw new Error(`${label} must be one of: ${allowed.join(", ")}.`);
+  }
+
+  return normalized as T[number];
+}
+
 function assertUniqueIdentifiers(values: string[], label: string) {
   const seen = new Set<string>();
 
@@ -87,7 +99,7 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
   const title = requiredText(input.title, "Course title");
   const description = requiredText(input.description, "Course description");
   const subject = requiredText(input.subject, "Course subject");
-  const level = requiredText(input.level, "Course level");
+  const level = normalizeAllowedValue(input.level, "Course level", courseLevels);
   const duration = requiredText(input.duration, "Course duration");
   const accent = requiredText(input.accent, "Course accent");
 
@@ -150,7 +162,7 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
       stableId: quizStableId,
       lessonStableId,
       title: quiz.title.trim(),
-      difficulty: quiz.difficulty.trim() || "Beginner",
+      difficulty: normalizeAllowedValue(quiz.difficulty.trim() || "Foundational", `Quiz ${quizIndex + 1} difficulty`, quizDifficulties),
       estimatedTime: quiz.estimatedTime.trim() || "5 min",
       order: quizIndex,
       questions,
