@@ -6,6 +6,9 @@ export const PUBLISHED = "published" as const;
 export const UNPUBLISHED = "unpublished" as const;
 export const ARCHIVED = "archived" as const;
 
+export const instructorCourseLevels = ["Beginner", "Intermediate", "Advanced"] as const;
+export const instructorQuizDifficulties = ["Foundational", "Applied", "Challenge"] as const;
+
 export type InstructorCourseStatus =
   | typeof DRAFT
   | typeof SUBMITTED_FOR_REVIEW
