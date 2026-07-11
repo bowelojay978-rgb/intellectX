@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { recordLessonCompleted, recordLessonOpened } from "@/lib/lesson-progress";
 import { readLessonProgressHistory, recordLessonProgress } from "@/lib/lesson-progress-history";
 
 beforeEach(() => {
@@ -10,17 +11,44 @@ beforeEach(() => {
 
 describe("lesson completion", () => {
   it("records a completed lesson at 100 percent locally", () => {
-    recordLessonProgress({
-      lessonId: "lesson-1",
-      status: "completed",
-      progress: 100,
-    });
+    recordLessonCompleted("lesson-1");
 
     expect(readLessonProgressHistory()).toEqual([
       expect.objectContaining({
         lessonId: "lesson-1",
         status: "completed",
         progress: 100,
+      }),
+    ]);
+  });
+
+  it("does not downgrade a completed lesson when it is reopened", () => {
+    recordLessonCompleted("lesson-1");
+    recordLessonOpened("lesson-1");
+
+    expect(readLessonProgressHistory()).toEqual([
+      expect.objectContaining({
+        lessonId: "lesson-1",
+        status: "completed",
+        progress: 100,
+      }),
+    ]);
+  });
+
+  it("does not downgrade existing in-progress activity when a lesson is reopened", () => {
+    recordLessonProgress({
+      lessonId: "lesson-1",
+      status: "in_progress",
+      progress: 50,
+    });
+
+    recordLessonOpened("lesson-1");
+
+    expect(readLessonProgressHistory()).toEqual([
+      expect.objectContaining({
+        lessonId: "lesson-1",
+        status: "in_progress",
+        progress: 50,
       }),
     ]);
   });
