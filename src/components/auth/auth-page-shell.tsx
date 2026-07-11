@@ -10,16 +10,24 @@ type AuthPageShellProps = {
 };
 
 export function AuthPageShell({ mode }: AuthPageShellProps) {
-  const clerkEnabled = isClerkAuthEnabled();
-  const authPanel = clerkEnabled ? (
-    <ClerkAuthPanel mode={mode === "signup" ? "signup" : "login"} />
-  ) : (
-    <LearnerSessionForm mode={mode} />
-  );
-  const heading = clerkEnabled ? "Your IntellectX account." : "Learner access for this browser.";
-  const description = clerkEnabled
-    ? "Sign in, create an account, or recover access through the secure account flow."
-    : "These pages create a learner session stored on this device. Session details can be cleared from the profile page.";
+  const clerkAuthEnabled = isClerkAuthEnabled();
+  const authPanel =
+    clerkAuthEnabled && mode !== "forgot-password" ? (
+      <ClerkAuthPanel mode={mode} />
+    ) : (
+      <LearnerSessionForm mode={mode} />
+    );
+  const shellCopy = clerkAuthEnabled
+    ? {
+        title: "Learner access for your account.",
+        description:
+          "Sign in to load your IntellectX courses, progress, quizzes, and study profile through your account-backed learner session.",
+      }
+    : {
+        title: "Learner access for this browser.",
+        description:
+          "These pages create a learner session stored on this device while account-level persistence is being completed. Session details can be cleared from the profile page.",
+      };
 
   return (
     <>
@@ -31,8 +39,12 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
             <p className="text-muted-foreground mb-4 text-xs font-semibold tracking-[0.18em] uppercase">
               IntellectX learner access
             </p>
-            <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">{heading}</h1>
-            <p className="text-muted-foreground mt-5 max-w-xl leading-7">{description}</p>
+            <h1 className="text-4xl leading-[1.08] font-medium tracking-tight md:text-6xl">
+              {shellCopy.title}
+            </h1>
+            <p className="text-muted-foreground mt-5 max-w-xl leading-7">
+              {shellCopy.description}
+            </p>
           </section>
           {authPanel}
         </main>
