@@ -9,6 +9,8 @@ import { StudyActivitySync } from "@/components/education/study-activity-sync";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
+import { Button } from "@/components/ui/button";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import {
   clearAuthenticatedLearnerLocalData,
   hasPendingLocalLearnerMigrationSource,
@@ -18,9 +20,14 @@ import {
 } from "@/lib/authenticated-learner-local-data";
 import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
+import {
+  resolveAuthenticatedAppUiState,
+  type AuthenticatedAppUiState,
+} from "@/lib/auth-ui-state";
 import { getLearnerSession } from "@/lib/learner-session";
 import { isAuthenticatedAppPath, isLearnerAppPath } from "@/lib/learner-routes";
-import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
+import { LoaderCircleIcon } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -28,8 +35,11 @@ type PageShellProps = {
   children: React.ReactNode;
 };
 
+type PageShellPendingState = Exclude<AuthenticatedAppUiState, "ready">;
+
 type PageShellFrameProps = PageShellProps & {
   canShowApp: boolean;
+  pendingState?: PageShellPendingState | null;
 };
 
 export function PageShell({ children }: PageShellProps) {
@@ -46,8 +56,14 @@ function ClerkPageShell({ children }: PageShellProps) {
   const authenticatedAppPath = isAuthenticatedAppPath(pathname);
   const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
   const [preparedUserId, setPreparedUserId] = useState<string | null>(null);
-  const canShowApp =
-    !authenticatedAppPath || Boolean(isLoaded && isSignedIn && userId && preparedUserId === userId);
+  const authUiState = resolveAuthenticatedAppUiState({
+    authenticatedAppPath,
+    isLoaded,
+    isSignedIn,
+    userId,
+    preparedUserId,
+  });
+  const canShowApp = authUiState === "ready";
   const authEnvironment = getAuthEnvironmentStatus();
 
   useEffect(() => {
@@ -95,7 +111,12 @@ function ClerkPageShell({ children }: PageShellProps) {
           authenticatedUserId={userId}
         />
       ) : null}
-      <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
+      <PageShellFrame
+        canShowApp={canShowApp}
+        pendingState={authUiState === "ready" ? null : authUiState}
+      >
+        {children}
+      </PageShellFrame>
     </>
   );
 }
@@ -140,10 +161,14 @@ function LocalPageShell({ children }: PageShellProps) {
     };
   }, [guarded, pathname]);
 
-  return <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>;
+  return (
+    <PageShellFrame canShowApp={canShowApp} pendingState={canShowApp ? null : "loading-auth"}>
+      {children}
+    </PageShellFrame>
+  );
 }
 
-function PageShellFrame({ canShowApp, children }: PageShellFrameProps) {
+function PageShellFrame({ canShowApp, pendingState = null, children }: PageShellFrameProps) {
   return (
     <>
       {canShowApp ? (
@@ -158,9 +183,49 @@ function PageShellFrame({ canShowApp, children }: PageShellFrameProps) {
       <div className="relative isolate z-10 min-h-screen overflow-hidden px-6 pt-32 pb-8 md:px-10 md:pt-36">
         <BackgroundBlur className="-top-40 md:-top-0" />
         <Nav />
-        <main className="relative z-10 mx-auto w-full max-w-6xl">{canShowApp ? children : null}</main>
+        <main className="relative z-10 mx-auto w-full max-w-6xl">
+          {canShowApp ? children : pendingState ? <AuthPendingState state={pendingState} /> : null}
+        </main>
       </div>
       <Footer />
     </>
+  );
+}
+
+function AuthPendingState({ state }: { state: PageShellPendingState }) {
+  const copy = {
+    "loading-auth": {
+      title: "Checking your session",
+      description: "IntellectX is confirming your account before opening your learning space.",
+    },
+    "redirecting-login": {
+      title: "Taking you to login",
+      description: "Sign in to continue to your courses and saved learning activity.",
+    },
+    "preparing-account": {
+      title: "Preparing your learning space",
+      description: "Your account is ready. IntellectX is loading your courses and learner data.",
+    },
+  } satisfies Record<PageShellPendingState, { title: string; description: string }>;
+  const content = copy[state];
+
+  return (
+    <section className="mx-auto flex min-h-[52vh] max-w-xl flex-col items-center justify-center text-center">
+      <span className="bg-primary text-primary-foreground grid size-12 place-items-center rounded-full shadow-sm">
+        <LoaderCircleIcon className="size-5 animate-spin" aria-hidden="true" />
+      </span>
+      <h1 className="mt-5 text-3xl font-medium tracking-tight md:text-4xl">{content.title}</h1>
+      <p className="text-muted-foreground mt-3 max-w-md leading-7">{content.description}</p>
+      {state === "loading-auth" ? (
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/">Back home</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/login">Go to login</Link>
+          </Button>
+        </div>
+      ) : null}
+    </section>
   );
 }
