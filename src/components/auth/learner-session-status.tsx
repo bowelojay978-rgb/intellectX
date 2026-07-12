@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { getClerkDisplayName } from "@/lib/auth-identity";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
+import { resolveClerkSessionUiState } from "@/lib/auth-ui-state";
 import { clearLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
@@ -23,38 +24,40 @@ export function LearnerSessionStatus({ compact = false, session }: LearnerSessio
 
 function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatusProps, "compact">) {
   const { isLoaded, isSignedIn, user } = useUser();
+  const sessionUiState = resolveClerkSessionUiState({
+    isLoaded: Boolean(isLoaded),
+    isSignedIn: Boolean(isSignedIn),
+  });
 
-  if (!isLoaded) {
-    return null;
+  // Auth navigation must never disappear while Clerk is still resolving.
+  // These links do not grant access; route guards remain authoritative.
+  if (sessionUiState !== "signed-in" || !user) {
+    return <SignedOutLinks compact={compact} />;
   }
 
-  if (isSignedIn && user) {
-    const displayName = getClerkDisplayName(user);
-    const email = user.primaryEmailAddress?.emailAddress;
+  const displayName = getClerkDisplayName(user);
+  const email = user.primaryEmailAddress?.emailAddress;
 
-    if (compact) {
-      return (
-        <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-sm">
-            <UserButton />
-            <span className="truncate font-medium">{displayName}</span>
-          </div>
-          {email ? <p className="text-muted-foreground truncate text-xs">{email}</p> : null}
-        </div>
-      );
-    }
-
+  if (compact) {
     return (
-      <div className="justify-self-end flex items-center gap-3">
-        <Link href="/profile" className="text-muted-foreground hidden max-w-36 truncate text-sm lg:block">
-          {displayName}
-        </Link>
-        <UserButton />
+      <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2 text-sm">
+          <UserButton />
+          <span className="truncate font-medium">{displayName}</span>
+        </div>
+        {email ? <p className="text-muted-foreground truncate text-xs">{email}</p> : null}
       </div>
     );
   }
 
-  return <SignedOutLinks compact={compact} />;
+  return (
+    <div className="justify-self-end flex items-center gap-3">
+      <Link href="/profile" className="text-muted-foreground hidden max-w-36 truncate text-sm lg:block">
+        {displayName}
+      </Link>
+      <UserButton />
+    </div>
+  );
 }
 
 function LocalLearnerSessionStatus({ compact = false, session }: LearnerSessionStatusProps) {
