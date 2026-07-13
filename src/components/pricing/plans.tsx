@@ -1,6 +1,7 @@
 ﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckIcon } from "lucide-react";
+import { LearnerEntryLink } from "@/components/auth/learner-entry-link";
 import Link from "next/link";
 
 const plans = [
@@ -66,7 +67,13 @@ export function Plans() {
             <CardFooter>
               {plan.href ? (
                 <Button className="w-full" size="lg" asChild>
-                  <Link href={plan.href}>{plan.cta}</Link>
+                  {plan.href === "/signup" ? (
+                    <LearnerEntryLink signedInHref="/dashboard" signedInLabel="Open IntellectX">
+                      {plan.cta}
+                    </LearnerEntryLink>
+                  ) : (
+                    <Link href={plan.href}>{plan.cta}</Link>
+                  )}
                 </Button>
               ) : (
                 <Button className="w-full" size="lg" disabled>
