@@ -1,7 +1,8 @@
 "use client";
+
 import { cn } from "@/lib/utils";
-import { useMotionValue, animate, motion } from "motion/react";
-import { useState, useEffect } from "react";
+import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 import useMeasure from "react-use-measure";
 
 export type InfiniteSliderProps = {
@@ -26,10 +27,17 @@ export function InfiniteSlider({
   const [currentSpeed, setCurrentSpeed] = useState(speed);
   const [ref, { width, height }] = useMeasure();
   const translation = useMotionValue(0);
+  const shouldReduceMotion = useReducedMotion();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [key, setKey] = useState(0);
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      translation.set(0);
+      setIsTransitioning(false);
+      return;
+    }
+
     let controls;
     const size = direction === "horizontal" ? width : height;
     const contentSize = size + gap;
@@ -54,7 +62,7 @@ export function InfiniteSlider({
     } else {
       controls = animate(translation, [from, to], {
         ease: "linear",
-        duration: duration,
+        duration,
         repeat: Infinity,
         repeatType: "loop",
         repeatDelay: 0,
@@ -65,24 +73,27 @@ export function InfiniteSlider({
     }
 
     return controls?.stop;
-  }, [key, translation, currentSpeed, width, height, gap, isTransitioning, direction, reverse]);
+  }, [key, translation, currentSpeed, width, height, gap, isTransitioning, direction, reverse, shouldReduceMotion]);
 
-  const hoverProps = speedOnHover
-    ? {
-        onHoverStart: () => {
-          setIsTransitioning(true);
-          setCurrentSpeed(speedOnHover);
-        },
-        onHoverEnd: () => {
-          setIsTransitioning(true);
-          setCurrentSpeed(speed);
-        },
-      }
-    : {};
+  const hoverProps =
+    speedOnHover && !shouldReduceMotion
+      ? {
+          onHoverStart: () => {
+            setIsTransitioning(true);
+            setCurrentSpeed(speedOnHover);
+          },
+          onHoverEnd: () => {
+            setIsTransitioning(true);
+            setCurrentSpeed(speed);
+          },
+        }
+      : {};
 
   return (
     <div className={cn("overflow-visible", className)}>
       <motion.div
+        data-testid="infinite-slider-track"
+        data-reduced-motion={shouldReduceMotion ? "true" : "false"}
         className="flex w-max"
         style={{
           ...(direction === "horizontal" ? { x: translation } : { y: translation }),
@@ -93,7 +104,9 @@ export function InfiniteSlider({
         {...hoverProps}
       >
         {children}
-        {children}
+        <div aria-hidden="true" className="contents motion-reduce:hidden">
+          {children}
+        </div>
       </motion.div>
     </div>
   );
