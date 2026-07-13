@@ -21,6 +21,11 @@ type LessonMediaItem = {
   poster: { url: string | null; contentType: string; size: number } | null;
 };
 
+type LessonMediaResult = {
+  editable: boolean;
+  lessons: LessonMediaItem[];
+};
+
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -46,6 +51,7 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
   const attachMedia = useMutation(convexApi.staffMedia.attachLessonMedia);
   const removeMedia = useMutation(convexApi.staffMedia.removeLessonMedia);
   const [lessons, setLessons] = useState<LessonMediaItem[]>([]);
+  const [editable, setEditable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +61,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const result = await convex.query(convexApi.staffMedia.listInstructorLessonMedia, { courseStableId });
-      setLessons((result as LessonMediaItem[]) ?? []);
+      const result = (await convex.query(convexApi.staffMedia.listInstructorLessonMedia, {
+        courseStableId,
+      })) as LessonMediaResult;
+      setEditable(Boolean(result?.editable));
+      setLessons(result?.lessons ?? []);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to load lesson media.");
     } finally {
@@ -71,6 +80,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
   }, [isAuthenticated, isLoading, loadLessons]);
 
   async function uploadFile(lessonStableId: string, kind: MediaKind, file: File) {
+    if (!editable) {
+      setError("Lesson media is read-only in the current course workflow state.");
+      return;
+    }
+
     const key = `${lessonStableId}:${kind}`;
     setBusyKey(key);
     setError(null);
@@ -111,6 +125,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
   }
 
   async function remove(lessonStableId: string, kind: MediaKind) {
+    if (!editable) {
+      setError("Lesson media is read-only in the current course workflow state.");
+      return;
+    }
+
     const key = `${lessonStableId}:${kind}`;
     setBusyKey(key);
     setError(null);
@@ -145,6 +164,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
         <p className="text-muted-foreground text-sm leading-6">
           Upload MP4, WebM, or MOV videos up to 500 MB and optional JPEG, PNG, or WebP posters up to 10 MB. Uploads are authorized and validated server-side before attachment.
         </p>
+        {!editable ? (
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+            Media is read-only while this course is under review, approved, published, or archived.
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? (
@@ -174,6 +198,7 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
                   label="Lesson video"
                   kind="video"
                   lesson={lesson}
+                  disabled={!editable}
                   busy={busyKey === `${lesson.stableId}:video`}
                   onUpload={(file) => uploadFile(lesson.stableId, "video", file)}
                   onRemove={() => remove(lesson.stableId, "video")}
@@ -183,6 +208,7 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
                   label="Poster image"
                   kind="poster"
                   lesson={lesson}
+                  disabled={!editable}
                   busy={busyKey === `${lesson.stableId}:poster`}
                   onUpload={(file) => uploadFile(lesson.stableId, "poster", file)}
                   onRemove={() => remove(lesson.stableId, "poster")}
@@ -205,6 +231,7 @@ function MediaControl({
   label,
   kind,
   lesson,
+  disabled,
   busy,
   onUpload,
   onRemove,
@@ -213,6 +240,7 @@ function MediaControl({
   label: string;
   kind: MediaKind;
   lesson: LessonMediaItem;
+  disabled: boolean;
   busy: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
@@ -242,13 +270,13 @@ function MediaControl({
         <p className="text-muted-foreground mt-3 text-sm">No media attached.</p>
       )}
       <div className="mt-4 flex flex-wrap gap-2">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-secondary/60">
+        <label className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-secondary/60"}`}>
           <UploadIcon className="size-4" />
           {busy ? "Uploading…" : media ? "Replace upload" : "Upload file"}
           <input
             type="file"
             accept={acceptedTypes(kind)}
-            disabled={busy}
+            disabled={busy || disabled}
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -258,7 +286,7 @@ function MediaControl({
           />
         </label>
         {media ? (
-          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={onRemove}>
+          <Button type="button" variant="outline" size="sm" disabled={busy || disabled} onClick={onRemove}>
             <Trash2Icon className="size-4" />
             Remove upload
           </Button>
