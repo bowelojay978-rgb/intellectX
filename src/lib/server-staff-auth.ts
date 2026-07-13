@@ -10,13 +10,17 @@ export type AdminManagedUser = {
   lastSignInAt: number | null;
 };
 
+type ClerkMetadataUser = {
+  publicMetadata?: Record<string, unknown>;
+};
+
 function normalizeRole(value: unknown): AdminManagedUser["role"] {
   if (typeof value !== "string") return "learner";
   const role = value.trim().toLowerCase();
   return role === "instructor" || role === "admin" ? role : "learner";
 }
 
-function readUserRole(user: { publicMetadata?: Record<string, unknown> }) {
+export function readUserRole(user: ClerkMetadataUser) {
   const publicMetadata = user.publicMetadata ?? {};
   const nestedStaff = publicMetadata.staff;
 
@@ -26,6 +30,26 @@ function readUserRole(user: { publicMetadata?: Record<string, unknown> }) {
   }
 
   return normalizeRole(publicMetadata.role);
+}
+
+export function buildPublicMetadataWithStaffRole(
+  publicMetadata: Record<string, unknown> | undefined,
+  nextRole: "learner" | "instructor",
+) {
+  const currentMetadata = publicMetadata ?? {};
+  const currentStaff = currentMetadata.staff;
+  const staffMetadata = currentStaff && typeof currentStaff === "object" && !Array.isArray(currentStaff)
+    ? { ...(currentStaff as Record<string, unknown>) }
+    : {};
+
+  return {
+    ...currentMetadata,
+    role: nextRole,
+    staff: {
+      ...staffMetadata,
+      role: nextRole,
+    },
+  };
 }
 
 export async function getAdminClerkSession() {
@@ -50,12 +74,27 @@ export async function listAdminManagedUsers(): Promise<AdminManagedUser[]> {
   if (!session) return [];
 
   const client = await clerkClient();
-  const response = await client.users.getUserList({
-    limit: 100,
-    orderBy: "-created_at",
-  });
+  const users = [];
+  const pageSize = 100;
+  let offset = 0;
 
-  return response.data.map((user) => ({
+  for (;;) {
+    const response = await client.users.getUserList({
+      limit: pageSize,
+      offset,
+      orderBy: "-created_at",
+    });
+
+    users.push(...response.data);
+
+    if (response.data.length < pageSize) {
+      break;
+    }
+
+    offset += response.data.length;
+  }
+
+  return users.map((user) => ({
     id: user.id,
     name:
       [user.firstName, user.lastName].filter(Boolean).join(" ") ||
