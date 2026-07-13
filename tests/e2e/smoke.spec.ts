@@ -192,10 +192,10 @@ test("mobile study entry route exposes the limited mobile scope", async ({ page 
   await expect(page.getByRole("heading", { name: "Free mobile study tools" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Quizzes" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Flashcards" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Notes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Notes" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
   await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
-  await expect(page.getByRole("link", { name: "Open notes" })).toHaveAttribute("href", "/mobile-notes");
+  await expect(page.getByRole("link", { name: "Open notes" })).toHaveCount(0);
 });
 
 test("signed-out homepage shows only public nav links", async ({ page }) => {
@@ -313,8 +313,11 @@ test("mobile quiz hub loads and exposes quiz links", async ({ page }) => {
 
 test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await page.goto("/mobile-notes");
-  await expect(page.getByRole("heading", { name: "Lesson notes for review" })).toBeVisible();
-  await expect(page.getByText("Compact notes from the existing lesson material")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Lesson notes stay with the full lesson experience" }),
+  ).toBeVisible();
+  await expect(page.getByText("The free mobile app focuses on quizzes and flashcards.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open flashcards" })).toHaveAttribute("href", "/mobile-flashcards");
   await expect(page.getByRole("link", { name: "Browse lessons" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open lesson notes" })).toHaveCount(0);
 
@@ -323,7 +326,7 @@ test("mobile notes and flashcards entry routes load", async ({ page }) => {
   await expect(page.getByRole("region", { name: "AI lesson tutor" })).toHaveCount(0);
   await expect(page.getByText("Tutor, not answer machine")).toBeVisible();
   await expect(page.getByText("Card 1 of")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Source lesson" })).toHaveAttribute("href", /\/learn\/.+#lesson-flashcards/);
+  await expect(page.getByRole("link", { name: "Source lesson" })).toHaveCount(0);
   await page.getByRole("button", { name: "Reveal answer" }).click();
   await expect(page.getByRole("button", { name: "Hide answer" })).toBeVisible();
 });
@@ -592,7 +595,7 @@ test("dashboard exposes study shortcuts without hiding web dashboard content", a
   await expect(page.getByRole("heading", { name: /Welcome back/i })).toBeVisible();
   await expect(page.getByRole("region", { name: "AI lesson tutor" })).toHaveCount(0);
   await expect(page.getByText("Study shortcuts")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open mobile quizzes" })).toHaveAttribute("href", "/mobile-quizzes");
+  await expect(page.getByRole("link", { name: "Open quizzes" })).toHaveAttribute("href", "/quizzes");
   await expect(page.locator('a[href="/mobile-notes"]')).toHaveCount(0);
   await expect(page.locator('a[href="/mobile-flashcards"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: "Selected courses", exact: true })).toBeVisible();
@@ -624,7 +627,7 @@ test.describe("mobile smoke", () => {
     { route: "/", text: "IntellectX" },
     { route: "/mobile-quizzes", text: "Practice with focused quizzes" },
     { route: "/mobile-flashcards", text: "Flashcards from lesson cards" },
-    { route: "/mobile-notes", text: "Lesson notes for review" },
+    { route: "/mobile-notes", text: "Lesson notes stay with the full lesson experience" },
     { route: "/courses", text: "Choose your next intelligent learning path" },
     { route: "/quizzes", text: "Practice where learning becomes visible" },
     { route: "/privacy-policy", text: "Privacy Policy" },
@@ -644,13 +647,13 @@ test.describe("mobile smoke", () => {
     });
   }
 
-  test("mobile free navigation only exposes quizzes flashcards and notes", async ({ page }) => {
+  test("mobile free navigation only exposes quizzes and flashcards", async ({ page }) => {
     await page.goto("/mobile-quizzes");
 
     const bottomNav = page.locator("nav").filter({ has: page.getByRole("link", { name: "Flashcards" }) });
     await expect(bottomNav.getByRole("link", { name: "Quizzes" })).toBeVisible();
     await expect(bottomNav.getByRole("link", { name: "Flashcards" })).toBeVisible();
-    await expect(bottomNav.getByRole("link", { name: "Notes" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "Notes" })).toHaveCount(0);
     await expect(bottomNav.getByRole("link", { name: "Courses" })).toHaveCount(0);
     await expect(bottomNav.getByRole("link", { name: "Pricing" })).toHaveCount(0);
     await expect(bottomNav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);

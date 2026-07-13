@@ -18,7 +18,9 @@ import { COURSE_SELECTION_KEY, saveCourseSelection } from "@/lib/course-selectio
 import { resolveConvexLearnerIdentity } from "@/lib/convex-learner-identity";
 import { createLearnerSession, getLearnerSession, LEARNER_SESSION_KEY } from "@/lib/learner-session";
 import { LESSON_PROGRESS_HISTORY_KEY, writeLessonProgressHistory } from "@/lib/lesson-progress-history";
+import { hasNewerLocalEdit } from "@/lib/learner-hydration-version";
 import { getLocalLearnerMigrationMarkerKey } from "@/lib/local-learner-migration";
+import { resolvePostLoginRouteFromClaims } from "@/lib/post-login-route";
 import { QUIZ_ATTEMPT_HISTORY_KEY, writeQuizAttemptHistory } from "@/lib/quiz-attempt-history";
 
 const profile: AcademicProfile = {
@@ -69,6 +71,18 @@ describe("auth/data-flow safety guards", () => {
     for (const relativePath of identitySensitiveSyncFiles) {
       const source = readFileSync(path.resolve(process.cwd(), relativePath), "utf8");
       expect(source, `${relativePath} must consume actual userId changes`).toContain("userId");
+    }
+  });
+
+  it("preserves local profile and course edits made during initial remote hydration", () => {
+    for (const relativePath of [
+      "src/components/education/academic-profile-sync.tsx",
+      "src/components/education/course-selection-sync.tsx",
+    ]) {
+      const source = readFileSync(path.resolve(process.cwd(), relativePath), "utf8");
+      expect(source).toContain("localEditVersion.current += 1");
+      expect(source).toContain("hasNewerLocalEdit(hydrationStartedAtVersion, localEditVersion.current)");
+      expect(source).toContain("persistCurrentLocal");
     }
   });
 
@@ -199,8 +213,18 @@ describe("auth/data-flow safety guards", () => {
     ).toBe(true);
   });
 
-  it("keeps new Clerk signup on mandatory Study Profile onboarding while login returns to courses", () => {
+  it("keeps signup on onboarding and routes login through trusted-role resolution", () => {
     expect(CLERK_SIGNUP_REDIRECT_URL).toBe("/onboarding");
-    expect(CLERK_LOGIN_REDIRECT_URL).toBe("/courses");
+    expect(CLERK_LOGIN_REDIRECT_URL).toBe("/auth/continue");
+    expect(resolvePostLoginRouteFromClaims({ metadata: { role: "admin" } })).toBe("/admin");
+    expect(resolvePostLoginRouteFromClaims({ publicMetadata: { role: "instructor" } })).toBe("/instructor");
+    expect(resolvePostLoginRouteFromClaims({ appMetadata: { role: "learner" } })).toBe("/courses");
+    expect(resolvePostLoginRouteFromClaims({ unsafeMetadata: { role: "admin" } })).toBe("/courses");
+  });
+
+  it("detects a local edit that happened after initial remote hydration began", () => {
+    expect(hasNewerLocalEdit(3, 4)).toBe(true);
+    expect(hasNewerLocalEdit(3, 3)).toBe(false);
+    expect(hasNewerLocalEdit(3, 2)).toBe(false);
   });
 });

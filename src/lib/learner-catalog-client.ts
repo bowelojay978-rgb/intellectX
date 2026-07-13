@@ -24,6 +24,7 @@ export type LearnerCatalog = {
   lessonById: Map<string, Lesson>;
   quizById: Map<string, Quiz>;
   isLive: boolean;
+  isLoading: boolean;
 };
 
 export function buildLearnerCatalog(input?: {
@@ -94,7 +95,11 @@ export function buildLearnerCatalog(input?: {
     courseById: new Map(coursesWithRelationships.map((course) => [course.id, course])),
     lessonById: new Map(lessons.map((lesson) => [lesson.id, lesson])),
     quizById: new Map(quizzes.map((quiz) => [quiz.id, quiz])),
-    isLive: Boolean(input?.convexCourses || input?.convexLessons || input?.convexQuizzes),
+    isLive: Boolean(
+      input &&
+        (input.convexCourses !== undefined || input.convexLessons !== undefined || input.convexQuizzes !== undefined),
+    ),
+    isLoading: false,
   };
 }
 
@@ -104,8 +109,15 @@ export function useLearnerCatalog() {
   const convexQuizzes = useQuery(convexApi.quizzes.listQuizzes, convexEnv.isConfigured ? {} : "skip");
 
   return useMemo(() => {
-    if (!convexEnv.isConfigured || !convexCourses || !convexLessons || !convexQuizzes) {
+    if (!convexEnv.isConfigured) {
       return buildLearnerCatalog();
+    }
+
+    if (convexCourses === undefined || convexLessons === undefined || convexQuizzes === undefined) {
+      return {
+        ...buildLearnerCatalog({ convexCourses: [], convexLessons: [], convexQuizzes: [] }),
+        isLoading: true,
+      };
     }
 
     return buildLearnerCatalog({

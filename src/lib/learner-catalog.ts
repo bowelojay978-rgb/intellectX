@@ -77,7 +77,19 @@ function accessAllowed(value: { accessLevel?: ContentAccessLevel }) {
 }
 
 export function normalizeLearnerCourse(course: ConvexCourseRecord, fallback?: Course): Course | null {
-  if (!isLearnerVisibleCourse(course)) {
+  // The server explicitly allows the three bundled legacy courses when their
+  // older Convex records predate workflow fields. Only apply that compatibility
+  // rule when the record matches a bundled, learner-visible fallback course.
+  const workflowState =
+    !course.reviewStatus && !course.publicationStatus && fallback
+      ? {
+          ...course,
+          reviewStatus: fallback.reviewStatus,
+          publicationStatus: fallback.publicationStatus,
+        }
+      : course;
+
+  if (!isLearnerVisibleCourse(workflowState)) {
     return null;
   }
 
@@ -98,8 +110,8 @@ export function normalizeLearnerCourse(course: ConvexCourseRecord, fallback?: Co
     quizIds: fallback?.quizIds ?? [],
     accent: course.accent,
     accessLevel: course.accessLevel ?? fallback?.accessLevel,
-    reviewStatus: course.reviewStatus,
-    publicationStatus: course.publicationStatus,
+    reviewStatus: workflowState.reviewStatus,
+    publicationStatus: workflowState.publicationStatus,
   };
 }
 
@@ -278,7 +290,9 @@ export async function getLearnerLessonDetail(lessonId: string) {
     const lesson = getLesson(lessonId);
     const course = lesson ? getCourse(lesson.courseId) : null;
 
-    return lesson && course && accessAllowed(course) && accessAllowed(lesson) ? { lesson, course } : null;
+    return lesson && course && accessAllowed(course) && accessAllowed(lesson)
+      ? { lesson, course, lessons: getLessonsByCourse(course.id).filter(accessAllowed) }
+      : null;
   }
 
   const convexLesson = (await client.query(convexApi.lessons.getLessonById, { lessonId })) as ConvexLessonRecord | null;
@@ -287,13 +301,15 @@ export async function getLearnerLessonDetail(lessonId: string) {
     const lesson = getLesson(lessonId);
     const course = lesson ? getCourse(lesson.courseId) : null;
 
-    return lesson && course && accessAllowed(course) && accessAllowed(lesson) ? { lesson, course } : null;
+    return lesson && course && accessAllowed(course) && accessAllowed(lesson)
+      ? { lesson, course, lessons: getLessonsByCourse(course.id).filter(accessAllowed) }
+      : null;
   }
 
   const courseDetail = await getLearnerCourseDetail(convexLesson.courseStableId);
   const lesson = courseDetail?.lessons.find((item) => item.id === lessonId) ?? null;
 
-  return lesson && courseDetail ? { lesson, course: courseDetail.course } : null;
+  return lesson && courseDetail ? { lesson, course: courseDetail.course, lessons: courseDetail.lessons } : null;
 }
 
 export async function getLearnerQuizDetail(quizId: string) {

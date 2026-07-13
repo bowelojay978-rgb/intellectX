@@ -27,6 +27,10 @@ const publicNavItems = [
 
 const appNavItems = [
   {
+    label: "Search",
+    href: "/search",
+  },
+  {
     label: "Courses",
     href: "/courses",
   },

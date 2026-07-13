@@ -6,9 +6,9 @@ import { CLERK_LOGIN_REDIRECT_URL, CLERK_SIGNUP_REDIRECT_URL } from "@/lib/auth-
 import { isLearnerAppPath } from "@/lib/learner-routes";
 
 describe("learner onboarding flow", () => {
-  it("routes new Clerk signups through protected onboarding while returning logins go to courses", () => {
+  it("routes new Clerk signups through protected onboarding while returning logins resolve trusted roles", () => {
     expect(CLERK_SIGNUP_REDIRECT_URL).toBe("/onboarding");
-    expect(CLERK_LOGIN_REDIRECT_URL).toBe("/courses");
+    expect(CLERK_LOGIN_REDIRECT_URL).toBe("/auth/continue");
     expect(isLearnerAppPath("/onboarding")).toBe(true);
   });
 

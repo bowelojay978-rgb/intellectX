@@ -3,8 +3,10 @@ export function isLearnerAppPath(pathname: string) {
     pathname === "/onboarding" ||
     pathname === "/dashboard" ||
     pathname === "/profile" ||
+    pathname === "/search" ||
     pathname === "/courses" ||
     pathname.startsWith("/courses/") ||
+    pathname === "/flashcards" ||
     pathname === "/quizzes" ||
     pathname === "/progress" ||
     pathname.startsWith("/learn/") ||

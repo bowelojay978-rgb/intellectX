@@ -33,6 +33,30 @@ describe("learner catalog normalization", () => {
     });
   });
 
+  it("keeps trusted bundled legacy records visible without weakening unknown records", () => {
+    const bundledFallback: Course = {
+      ...visibleCourse,
+      id: "legacy-course",
+      slug: "legacy-course",
+      reviewStatus: "approved",
+      publicationStatus: "published",
+    };
+    const legacyRecord = {
+      ...visibleCourseRecord,
+      stableId: "legacy-course",
+      slug: "legacy-course",
+      reviewStatus: undefined,
+      publicationStatus: undefined,
+    };
+
+    expect(normalizeLearnerCourse(legacyRecord, bundledFallback)).toMatchObject({
+      id: "legacy-course",
+      reviewStatus: "approved",
+      publicationStatus: "published",
+    });
+    expect(normalizeLearnerCourse(legacyRecord)).toBeNull();
+  });
+
   it("fails closed for hidden course workflow states", () => {
     expect(
       normalizeLearnerCourse({

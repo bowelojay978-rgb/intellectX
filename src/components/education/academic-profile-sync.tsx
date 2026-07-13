@@ -20,6 +20,7 @@ import { hasPendingLocalLearnerMigrationSource } from "@/lib/authenticated-learn
 import { hydrateAuthenticatedAcademicProfile } from "@/lib/authenticated-learner-hydration";
 import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
+import { hasNewerLocalEdit } from "@/lib/learner-hydration-version";
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -67,6 +68,7 @@ function ConvexAcademicProfileSync() {
   const clearRemoteAcademicProfile = useMutation(convexApi.academicProfiles.clearAcademicProfile);
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
+  const localEditVersion = useRef(0);
 
   const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
@@ -94,20 +96,46 @@ function ConvexAcademicProfileSync() {
       return;
     }
 
+    const currentIdentity = identity;
     let cancelled = false;
-    const identityArgs = getIdentityArgs(identity);
+    const identityArgs = getIdentityArgs(currentIdentity);
+    const hydrationStartedAtVersion = localEditVersion.current;
+
+    function persistCurrentLocalProfile() {
+      if (currentIdentity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
+        return;
+      }
+
+      const localProfile = loadAcademicProfile();
+
+      if (localProfile && isAcademicProfileComplete(localProfile)) {
+        upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
+          console.warn("Unable to sync academic profile to Convex", error);
+        });
+        return;
+      }
+
+      clearRemoteAcademicProfile(identityArgs).catch((error) => {
+        console.warn("Unable to clear academic profile from Convex", error);
+      });
+    }
 
     convex
       .query(convexApi.academicProfiles.getAcademicProfile, identityArgs)
       .then((remoteProfile) => {
         if (cancelled) return;
 
+        remoteHydrated.current = true;
+
+        if (hasNewerLocalEdit(hydrationStartedAtVersion, localEditVersion.current)) {
+          persistCurrentLocalProfile();
+          return;
+        }
+
         if (remoteProfile && isAcademicProfile(remoteProfile)) {
           const normalizedRemoteProfile = normalizeAcademicProfileForLevel(remoteProfile);
 
-          remoteHydrated.current = true;
-
-          if (identity.source === "authenticated-convex") {
+          if (currentIdentity.source === "authenticated-convex") {
             syncingRemoteToLocal.current = true;
             hydrateAuthenticatedAcademicProfile(
               normalizedRemoteProfile,
@@ -131,9 +159,7 @@ function ConvexAcademicProfileSync() {
           return;
         }
 
-        remoteHydrated.current = true;
-
-        if (identity.source === "authenticated-convex") {
+        if (currentIdentity.source === "authenticated-convex") {
           syncingRemoteToLocal.current = true;
           hydrateAuthenticatedAcademicProfile(null, hasPendingLocalLearnerMigrationSource());
           window.setTimeout(() => {
@@ -159,13 +185,17 @@ function ConvexAcademicProfileSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identity, upsertAcademicProfile]);
+  }, [clearRemoteAcademicProfile, convex, identity, upsertAcademicProfile]);
 
   useEffect(() => {
     function syncLocalProfileToConvex() {
-      if (!identity || !remoteHydrated.current || syncingRemoteToLocal.current) {
+      if (syncingRemoteToLocal.current) {
         return;
       }
+
+      localEditVersion.current += 1;
+
+      if (!identity || !remoteHydrated.current) return;
 
       if (identity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
         return;
