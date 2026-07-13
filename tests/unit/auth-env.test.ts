@@ -42,7 +42,7 @@ describe("auth environment mode detection", () => {
     });
   });
 
-  it("detects Clerk and Convex as ready for auth activation while awaiting Convex auth config", () => {
+  it("detects Clerk and Convex as frontend-ready without falsely awaiting source auth config", () => {
     expect(
       getAuthEnvironmentStatus({
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
@@ -56,7 +56,7 @@ describe("auth environment mode detection", () => {
       usesClerkGuard: true,
       canRunConvexSync: true,
       canRunLocalToAuthMigration: true,
-      awaitingConvexAuthConfig: true,
+      awaitingConvexAuthConfig: false,
     });
   });
 });
