@@ -95,4 +95,13 @@ describe("Android native security configuration", () => {
     expect(appBuildGradle).toContain("shrinkResources true");
     expect(appBuildGradle).toContain("getDefaultProguardFile('proguard-android-optimize.txt')");
   });
+
+  it("supports explicit store version overrides without hardcoding release increments", () => {
+    const appBuildGradle = readRepositoryFile("android/app/build.gradle");
+
+    expect(appBuildGradle).toContain("project.findProperty('APP_VERSION_CODE')");
+    expect(appBuildGradle).toContain("project.findProperty('APP_VERSION_NAME')");
+    expect(appBuildGradle).toContain("versionCode appVersionCode");
+    expect(appBuildGradle).toContain("versionName appVersionName");
+  });
 });
