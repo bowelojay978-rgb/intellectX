@@ -1,7 +1,8 @@
 import { MobileFlashcardReview } from "@/components/education/mobile-flashcard-review";
 import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { Badge } from "@/components/ui/badge";
-import { lessons, type LessonBlock } from "@/data/lessons";
+import { lessons } from "@/data/lessons";
+import { buildFlashcardReviewCards } from "@/lib/flashcard-review";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,20 +10,7 @@ export const metadata: Metadata = {
   description: "Review IntellectX lesson cards from a focused mobile flashcard hub.",
 };
 
-type FlashcardBlock = Extract<LessonBlock, { type: "visualMemoryCard" | "tapReveal" }>;
-
-const reviewCards = lessons.flatMap((lesson) => {
-  const blocks =
-    lesson.blocks?.filter(
-      (block): block is FlashcardBlock => block.type === "visualMemoryCard" || block.type === "tapReveal",
-    ) ?? [];
-
-  return blocks.map((block) => ({
-    lessonId: lesson.id,
-    lessonTitle: lesson.title,
-    block,
-  }));
-});
+const reviewCards = buildFlashcardReviewCards(lessons);
 
 export default function MobileFlashcardsPage() {
   return (
