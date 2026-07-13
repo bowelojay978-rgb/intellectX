@@ -45,7 +45,7 @@ export function FAQs() {
           Get answers about the IntellectX learning experience.
         </p>
         <Button className="w-fit" size="lg" asChild>
-          <Link href="/courses">Browse Courses</Link>
+          <Link href="/signup">Start Free</Link>
         </Button>
       </div>
       <Accordion type="single" collapsible defaultValue="accounts" className="grid w-full gap-4">
@@ -58,7 +58,7 @@ export function FAQs() {
         <AccordionItemFAQs value="courses">
           <AccordionTriggerFAQs>Can I browse courses without signing in?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Yes. The current release is designed as an open learning experience with locally stored progress where supported.</p>
+            <p>No. Create or sign in to your learner account before opening courses, lessons, quizzes, and progress.</p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="scores">
@@ -77,6 +77,5 @@ export function FAQs() {
     </div>
   );
 }
-
 
 
