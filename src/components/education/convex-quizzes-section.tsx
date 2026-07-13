@@ -4,6 +4,7 @@ import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
 import { clickableGlassCardClassName, glassCardClassName } from "@/components/education/glass-card";
 import { Badge } from "@/components/ui/badge";
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
@@ -184,6 +185,14 @@ function FallbackQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) 
   const catalog = useLearnerCatalog();
   const quizzes = convexEnv.isConfigured ? catalog.quizzes : fallbackQuizzes;
 
+  if (catalog.isLoading) {
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <AppLoadingSpinner label="Loading quiz catalog" showLabel />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="mb-4 flex justify-center">
@@ -197,5 +206,4 @@ function FallbackQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) 
 export function ConvexQuizzesSection({ fallbackQuizzes }: ConvexQuizzesSectionProps) {
   return <FallbackQuizzesSection fallbackQuizzes={fallbackQuizzes} />;
 }
-
 

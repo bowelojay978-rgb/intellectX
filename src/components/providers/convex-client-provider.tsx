@@ -26,7 +26,7 @@ export function ConvexClientProvider({ children }: ConvexClientProviderProps) {
     }
 
     return (
-      <ClerkProvider publishableKey={clerkPublishableKey}>
+      <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/">
         <ClerkLearnerAuthRuntimeProvider>{children}</ClerkLearnerAuthRuntimeProvider>
       </ClerkProvider>
     );
@@ -41,7 +41,7 @@ export function ConvexClientProvider({ children }: ConvexClientProviderProps) {
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/">
       <ClerkLearnerAuthRuntimeProvider>
         <ConvexProviderWithClerk client={client} useAuth={useAuth}>
           {children}

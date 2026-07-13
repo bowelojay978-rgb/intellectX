@@ -18,6 +18,7 @@ import { hasPendingLocalLearnerMigrationSource } from "@/lib/authenticated-learn
 import { hydrateAuthenticatedCourseSelection } from "@/lib/authenticated-learner-hydration";
 import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { LEARNER_SESSION_CHANGE_EVENT } from "@/lib/learner-session";
+import { hasNewerLocalEdit } from "@/lib/learner-hydration-version";
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -67,6 +68,7 @@ function ConvexCourseSelectionSync() {
   const upsertCourseSelection = useMutation(convexApi.courseSelections.upsertCourseSelection);
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
+  const localEditVersion = useRef(0);
 
   const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
 
@@ -94,20 +96,37 @@ function ConvexCourseSelectionSync() {
       return;
     }
 
+    const currentIdentity = identity;
     let cancelled = false;
-    const identityArgs = getIdentityArgs(identity);
+    const identityArgs = getIdentityArgs(currentIdentity);
+    const hydrationStartedAtVersion = localEditVersion.current;
+
+    function persistCurrentLocalSelection() {
+      if (currentIdentity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
+        return;
+      }
+
+      upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())).catch((error) => {
+        console.warn("Unable to sync course selection to Convex", error);
+      });
+    }
 
     convex
       .query(convexApi.courseSelections.getCourseSelection, identityArgs)
       .then((remoteSelection) => {
         if (cancelled) return;
 
+        remoteHydrated.current = true;
+
+        if (hasNewerLocalEdit(hydrationStartedAtVersion, localEditVersion.current)) {
+          persistCurrentLocalSelection();
+          return;
+        }
+
         if (remoteSelection) {
           const normalizedRemoteSelection = normalizeCourseSelection(remoteSelection as StoredCourseSelection);
 
-          remoteHydrated.current = true;
-
-          if (identity.source === "authenticated-convex") {
+          if (currentIdentity.source === "authenticated-convex") {
             syncingRemoteToLocal.current = true;
             hydrateAuthenticatedCourseSelection(
               normalizedRemoteSelection,
@@ -131,9 +150,7 @@ function ConvexCourseSelectionSync() {
           return;
         }
 
-        remoteHydrated.current = true;
-
-        if (identity.source === "authenticated-convex") {
+        if (currentIdentity.source === "authenticated-convex") {
           syncingRemoteToLocal.current = true;
           hydrateAuthenticatedCourseSelection(null, hasPendingLocalLearnerMigrationSource());
           window.setTimeout(() => {
@@ -163,9 +180,13 @@ function ConvexCourseSelectionSync() {
 
   useEffect(() => {
     function syncLocalSelectionToConvex() {
-      if (!identity || !remoteHydrated.current || syncingRemoteToLocal.current) {
+      if (syncingRemoteToLocal.current) {
         return;
       }
+
+      localEditVersion.current += 1;
+
+      if (!identity || !remoteHydrated.current) return;
 
       if (identity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
         return;

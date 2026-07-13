@@ -18,10 +18,12 @@ export function AuthPageShell({ mode }: AuthPageShellProps) {
       <LearnerSessionForm mode={mode} />
     );
   const shellCopy = clerkAuthEnabled
-    ? {
-        title: "Learner access for your account.",
+      ? {
+        title: mode === "login" ? "Secure access for every IntellectX role." : "Learner access for your account.",
         description:
-          "Sign in to load your IntellectX courses, progress, quizzes, and study profile through your account-backed learner session.",
+          mode === "login"
+            ? "Sign in once. Trusted Clerk claims route learners, instructors, and admins without exposing a client-side role switch."
+            : "Sign in to load your IntellectX courses, progress, quizzes, and study profile through your account-backed learner session.",
       }
     : {
         title: "Learner access for this browser.",

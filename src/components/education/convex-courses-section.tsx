@@ -1,18 +1,17 @@
 "use client";
 
 import { CourseCard } from "@/components/education/course-card";
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/data/courses";
-import type { CourseStatus } from "@/lib/course-workflow-policy";
 import {
   type AcademicProfile,
   courseMatchesAcademicProfile,
   formatAcademicProfile,
   loadAcademicProfile,
 } from "@/lib/academic-profile";
-import { convexApi } from "@/lib/convex-api";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   COURSE_SELECTION_GRACE_PERIOD_DAYS,
@@ -22,51 +21,14 @@ import {
   toggleSelectedCourse,
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
-import type { ContentAccessLevel } from "@/lib/entitlements";
-import { normalizeLearnerCourse } from "@/lib/learner-catalog";
+import { useLearnerCatalog } from "@/lib/learner-catalog-client";
 import { BookOpenIcon, GraduationCapIcon, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useQuery } from "convex/react";
-
-type ConvexCourse = {
-  stableId: string;
-  slug: string;
-  title: string;
-  description: string;
-  subject: string;
-  level: Course["level"];
-  duration: string;
-  accent: string;
-  accessLevel?: ContentAccessLevel;
-  reviewStatus?: CourseStatus;
-  publicationStatus?: CourseStatus;
-  instructorId?: string;
-  submittedAt?: number;
-  reviewedAt?: number;
-  reviewedBy?: string;
-  reviewReason?: string;
-};
 
 type ConvexCoursesSectionProps = {
   fallbackCourses: Course[];
 };
-
-function normalizeCourse(course: ConvexCourse, fallbackCourses: Course[]): Course | null {
-  const fallback = fallbackCourses.find((item) => item.id === course.stableId);
-  const normalizedCourse = normalizeLearnerCourse(course, fallback);
-
-  return normalizedCourse
-    ? {
-        ...normalizedCourse,
-        instructorId: course.instructorId ?? fallback?.instructorId,
-        submittedAt: course.submittedAt ?? fallback?.submittedAt,
-        reviewedAt: course.reviewedAt ?? fallback?.reviewedAt,
-        reviewedBy: course.reviewedBy ?? fallback?.reviewedBy,
-        reviewReason: course.reviewReason ?? fallback?.reviewReason,
-      }
-    : null;
-}
 
 function useCourseSelection() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
@@ -280,18 +242,18 @@ function FallbackCoursesSection({ fallbackCourses }: ConvexCoursesSectionProps) 
   );
 }
 
-function LiveCoursesSection({ fallbackCourses }: ConvexCoursesSectionProps) {
-  const courses = useQuery(convexApi.courses.listCourses, {});
+function LiveCoursesSection() {
+  const catalog = useLearnerCatalog();
 
-  if (!courses) {
-    return <FallbackCoursesSection fallbackCourses={fallbackCourses} />;
+  if (catalog.isLoading) {
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <AppLoadingSpinner label="Loading course catalog" showLabel />
+      </div>
+    );
   }
 
-  const normalizedCourses = (courses as ConvexCourse[])
-    .map((course) => normalizeCourse(course, fallbackCourses))
-    .filter((course): course is Course => Boolean(course));
-
-  return <FallbackCoursesSection fallbackCourses={normalizedCourses} />;
+  return <FallbackCoursesSection fallbackCourses={catalog.courses} />;
 }
 
 export function ConvexCoursesSection({ fallbackCourses }: ConvexCoursesSectionProps) {
@@ -299,5 +261,5 @@ export function ConvexCoursesSection({ fallbackCourses }: ConvexCoursesSectionPr
     return <FallbackCoursesSection fallbackCourses={fallbackCourses} />;
   }
 
-  return <LiveCoursesSection fallbackCourses={fallbackCourses} />;
+  return <LiveCoursesSection />;
 }

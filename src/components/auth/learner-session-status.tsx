@@ -36,7 +36,7 @@ function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatu
       return (
         <div className="border-border/60 bg-background/70 mt-3 grid gap-3 rounded-lg border p-4">
           <div className="flex items-center gap-2 text-sm">
-            <UserButton />
+            <UserButton signInUrl="/login" afterSwitchSessionUrl="/auth/continue" />
             <span className="truncate font-medium">{displayName}</span>
           </div>
           {email ? <p className="text-muted-foreground truncate text-xs">{email}</p> : null}
@@ -49,7 +49,7 @@ function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatu
         <Link href="/profile" className="text-muted-foreground hidden max-w-36 truncate text-sm lg:block">
           {displayName}
         </Link>
-        <UserButton />
+        <UserButton signInUrl="/login" afterSwitchSessionUrl="/auth/continue" />
       </div>
     );
   }
