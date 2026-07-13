@@ -95,5 +95,35 @@ describe("production environment preflight", () => {
       ),
     ).toThrow();
   });
-});
 
+  it("fails strict mode for mixed-case or padded true values so preflight matches runtime policy", () => {
+    const baseEnv = {
+      NEXT_PUBLIC_CONVEX_URL: "https://example.convex.cloud",
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
+      CLERK_SECRET_KEY: "sk_test_example",
+      CLERK_JWT_ISSUER_DOMAIN: "https://example.clerk.accounts.dev",
+      ALLOW_LOCAL_USERKEY_FALLBACK: "false",
+      NEXT_PUBLIC_PAYMENTS_ENABLED: "false",
+    };
+
+    expect(() =>
+      runPreflight(
+        {
+          ...baseEnv,
+          ALLOW_LOCAL_USERKEY_FALLBACK: " TRUE ",
+        },
+        true,
+      ),
+    ).toThrow();
+
+    expect(() =>
+      runPreflight(
+        {
+          ...baseEnv,
+          NEXT_PUBLIC_PAYMENTS_ENABLED: "TrUe",
+        },
+        true,
+      ),
+    ).toThrow();
+  });
+});
