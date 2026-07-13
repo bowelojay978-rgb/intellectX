@@ -42,4 +42,23 @@ describe("staff workspace safety regressions", () => {
     expect(source).toContain("instructorCourseStableIds");
     expect(source).toContain("instructorQuizStableIds");
   });
+
+  it("clears stale review feedback when a changes-requested course is resubmitted", () => {
+    const source = read("convex/courses.ts");
+    const submitMutation = source.slice(
+      source.indexOf("export const submitCourseForReview"),
+      source.indexOf("export const requestCourseChanges"),
+    );
+
+    expect(submitMutation).toContain("reviewReason: undefined");
+    expect(submitMutation).toContain("reviewedAt: undefined");
+    expect(submitMutation).toContain("reviewedBy: undefined");
+  });
+
+  it("paginates beyond the first Clerk user-management page", () => {
+    const source = read("src/lib/server-staff-auth.ts");
+    expect(source).toContain("offset");
+    expect(source).toContain("response.totalCount");
+    expect(source).toContain("users.push(...response.data)");
+  });
 });
