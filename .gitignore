@@ -18,6 +18,8 @@
 # next.js
 /.next/
 /out/
+/mobile-client/.next/
+/mobile-client/out/
 
 # production
 /build
