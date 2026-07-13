@@ -77,6 +77,8 @@ type AdminCourseReviewDetail = {
 };
 
 type QueueFilter = "all" | "submitted" | "changes" | "approved" | "published";
+type CourseAction = "approve" | "changes" | "publish" | "unpublish" | "archive";
+type DestructiveCourseAction = Extract<CourseAction, "unpublish" | "archive">;
 
 function formatDate(value?: number) {
   if (!value) return "Not recorded";
@@ -222,7 +224,7 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
     await Promise.all([loadCourses(), loadDetail(stableId)]);
   }
 
-  async function runAction(action: "approve" | "changes" | "publish" | "unpublish" | "archive") {
+  async function runAction(action: CourseAction) {
     if (!detail) return;
     const stableId = detail.course.stableId;
     setBusyAction(action);
@@ -262,7 +264,9 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
   if (authLoading || loading) {
     return (
       <Card className={`rounded-lg ${glassCardClassName}`}>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">Loading authenticated review queue…</CardContent>
+        <CardContent role="status" aria-live="polite" className="py-12 text-center text-sm text-muted-foreground">
+          Loading authenticated review queue…
+        </CardContent>
       </Card>
     );
   }
@@ -270,7 +274,7 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
   if (!isAuthenticated) {
     return (
       <Card className="rounded-lg border-rose-500/20 bg-rose-500/5">
-        <CardContent className="flex items-start gap-3 py-8 text-sm">
+        <CardContent role="alert" className="flex items-start gap-3 py-8 text-sm">
           <AlertCircleIcon className="mt-0.5 size-5 shrink-0 text-rose-600" />
           <p>Convex did not authenticate this admin session. Verify Clerk JWT role claim propagation.</p>
         </CardContent>
@@ -281,13 +285,17 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
   return (
     <div className="space-y-5">
       {error ? (
-        <div className="flex items-start gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-sm">
+        <div role="alert" className="flex items-start gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-sm">
           <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-rose-600" />
           <p>{error}</p>
         </div>
       ) : null}
       {notice ? (
-        <div className="flex items-start gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-start gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm"
+        >
           <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-emerald-600" />
           <p>{notice}</p>
         </div>
@@ -301,15 +309,17 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
               <p className="text-muted-foreground mt-2 text-sm">Live Convex data. No preview-only decisions.</p>
             </div>
             <label className="relative block">
+              <span className="sr-only">Search course, subject, or instructor</span>
               <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search course, subject, or instructor"
+                aria-label="Search course, subject, or instructor"
                 className="border-input bg-background/80 h-10 w-full rounded-lg border pr-3 pl-10 text-sm outline-none transition focus:border-primary/50 focus:ring-3 focus:ring-ring/30"
               />
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" aria-label="Course queue filters">
               {([
                 ["submitted", "Submitted"],
                 ["changes", "Changes"],
@@ -317,7 +327,14 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
                 ["published", "Published"],
                 ["all", "All"],
               ] as const).map(([value, label]) => (
-                <Button key={value} type="button" size="sm" variant={filter === value ? "default" : "outline"} onClick={() => setFilter(value)}>
+                <Button
+                  key={value}
+                  type="button"
+                  size="sm"
+                  variant={filter === value ? "default" : "outline"}
+                  aria-pressed={filter === value}
+                  onClick={() => setFilter(value)}
+                >
                   {label}
                 </Button>
               ))}
@@ -330,6 +347,7 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
                   key={course.stableId}
                   type="button"
                   onClick={() => setSelectedStableId(course.stableId)}
+                  aria-pressed={selectedStableId === course.stableId}
                   className={cn(
                     "flex w-full items-start justify-between gap-3 rounded-lg border p-4 text-left transition",
                     selectedStableId === course.stableId
@@ -340,7 +358,9 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
                   <div className="min-w-0">
                     <p className="truncate font-medium">{course.title}</p>
                     <p className="text-muted-foreground mt-1 text-sm">{course.subject}</p>
-                    <Badge className="mt-2" variant="outline">{resolveStatus(course).replaceAll("_", " ")}</Badge>
+                    <Badge className="mt-2" variant="outline">
+                      {resolveStatus(course).replaceAll("_", " ")}
+                    </Badge>
                   </div>
                   <ChevronRightIcon className="text-muted-foreground mt-1 size-4 shrink-0" />
                 </button>
@@ -355,7 +375,9 @@ function ConvexAdminCourseReviewWorkspace({ initialCourseStableId }: { initialCo
 
         {detailLoading ? (
           <Card className={`rounded-lg ${glassCardClassName}`}>
-            <CardContent className="py-16 text-center text-sm text-muted-foreground">Loading review details…</CardContent>
+            <CardContent role="status" aria-live="polite" className="py-16 text-center text-sm text-muted-foreground">
+              Loading review details…
+            </CardContent>
           </Card>
         ) : detail ? (
           <CourseReviewDetail
@@ -386,13 +408,31 @@ function CourseReviewDetail({
   reason: string;
   onReasonChange: (value: string) => void;
   busyAction: string | null;
-  onAction: (action: "approve" | "changes" | "publish" | "unpublish" | "archive") => void;
+  onAction: (action: CourseAction) => void;
 }) {
   const { course, lessons, quizzes, auditLogs } = detail;
+  const [confirmingAction, setConfirmingAction] = useState<DestructiveCourseAction | null>(null);
   const submitted = course.reviewStatus === "submitted_for_review";
   const approved = course.reviewStatus === "approved";
   const published = course.publicationStatus === "published";
   const archived = course.publicationStatus === "archived" || course.reviewStatus === "archived";
+
+  useEffect(() => {
+    setConfirmingAction(null);
+  }, [course.stableId]);
+
+  function confirmDestructiveAction() {
+    if (!confirmingAction) return;
+    const action = confirmingAction;
+    setConfirmingAction(null);
+    onAction(action);
+  }
+
+  const confirmationTitle = confirmingAction === "archive" ? "Archive this course?" : "Unpublish this course?";
+  const confirmationDescription =
+    confirmingAction === "archive"
+      ? "This changes the course workflow state to archived. Confirm only when the course should no longer remain active in the workflow."
+      : "This removes the course from learner visibility under the existing publication policy. You can publish it again later if the workflow allows it.";
 
   return (
     <div className="space-y-5">
@@ -424,63 +464,97 @@ function CourseReviewDetail({
 
       <section className="grid gap-5 lg:grid-cols-2">
         <Card className={`rounded-lg ${glassCardClassName}`}>
-          <CardHeader><CardTitle>Lessons and videos</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Lessons and videos</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {lessons.length > 0 ? lessons.map((lesson, index) => (
-              <div key={lesson.stableId} className="rounded-lg border border-border/70 bg-background/60 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">{index + 1}. {lesson.title}</p>
-                    <p className="text-muted-foreground mt-1 text-sm leading-6">{lesson.summary}</p>
+            {lessons.length > 0 ? (
+              lessons.map((lesson, index) => (
+                <div key={lesson.stableId} className="rounded-lg border border-border/70 bg-background/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">
+                        {index + 1}. {lesson.title}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-sm leading-6">{lesson.summary}</p>
+                    </div>
+                    <Badge variant="outline">{lesson.duration}</Badge>
                   </div>
-                  <Badge variant="outline">{lesson.duration}</Badge>
+                  <p className="text-muted-foreground mt-3 text-sm">
+                    {lesson.content.filter(Boolean).length} content blocks
+                  </p>
+                  {lesson.videoUrl ? (
+                    <a
+                      href={lesson.videoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-2 text-sm font-medium underline underline-offset-4"
+                    >
+                      <ExternalLinkIcon className="size-4" />
+                      Open lesson video
+                    </a>
+                  ) : null}
                 </div>
-                <p className="text-muted-foreground mt-3 text-sm">{lesson.content.filter(Boolean).length} content blocks</p>
-                {lesson.videoUrl ? (
-                  <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium underline underline-offset-4">
-                    <ExternalLinkIcon className="size-4" />
-                    Open lesson video
-                  </a>
-                ) : null}
-              </div>
-            )) : (
+              ))
+            ) : (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No lessons submitted.</p>
             )}
           </CardContent>
         </Card>
 
         <Card className={`rounded-lg ${glassCardClassName}`}>
-          <CardHeader><CardTitle>Quizzes and questions</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Quizzes and questions</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {quizzes.length > 0 ? quizzes.map((quiz) => (
-              <div key={quiz.stableId} className="rounded-lg border border-border/70 bg-background/60 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">{quiz.title}</p>
-                    <p className="text-muted-foreground mt-1 text-sm">{quiz.difficulty} · {quiz.estimatedTime}</p>
-                  </div>
-                  <FileQuestionIcon className="text-muted-foreground size-5" />
-                </div>
-                <p className="text-muted-foreground mt-3 text-sm">{quiz.questions.length} questions</p>
-                <div className="mt-4 space-y-3">
-                  {quiz.questions.length > 0 ? quiz.questions.map((question, questionIndex) => (
-                    <div key={question.stableId} className="rounded-lg border border-border/60 bg-secondary/30 p-3 text-sm">
-                      <p className="font-medium">{questionIndex + 1}. {question.prompt}</p>
-                      <ol className="mt-3 list-decimal space-y-1 pl-5 text-muted-foreground">
-                        {question.choices.map((choice, choiceIndex) => (
-                          <li key={`${question.stableId}-${choiceIndex}`} className={choiceIndex === question.answerIndex ? "font-medium text-foreground" : undefined}>
-                            {choice || "Empty choice"}{choiceIndex === question.answerIndex ? " (correct)" : ""}
-                          </li>
-                        ))}
-                      </ol>
-                      <p className="mt-3 text-muted-foreground"><span className="font-medium text-foreground">Explanation:</span> {question.explanation}</p>
+            {quizzes.length > 0 ? (
+              quizzes.map((quiz) => (
+                <div key={quiz.stableId} className="rounded-lg border border-border/70 bg-background/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{quiz.title}</p>
+                      <p className="text-muted-foreground mt-1 text-sm">
+                        {quiz.difficulty} · {quiz.estimatedTime}
+                      </p>
                     </div>
-                  )) : (
-                    <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">No questions submitted for this quiz.</p>
-                  )}
+                    <FileQuestionIcon className="text-muted-foreground size-5" />
+                  </div>
+                  <p className="text-muted-foreground mt-3 text-sm">{quiz.questions.length} questions</p>
+                  <div className="mt-4 space-y-3">
+                    {quiz.questions.length > 0 ? (
+                      quiz.questions.map((question, questionIndex) => (
+                        <div
+                          key={question.stableId}
+                          className="rounded-lg border border-border/60 bg-secondary/30 p-3 text-sm"
+                        >
+                          <p className="font-medium">
+                            {questionIndex + 1}. {question.prompt}
+                          </p>
+                          <ol className="mt-3 list-decimal space-y-1 pl-5 text-muted-foreground">
+                            {question.choices.map((choice, choiceIndex) => (
+                              <li
+                                key={`${question.stableId}-${choiceIndex}`}
+                                className={choiceIndex === question.answerIndex ? "font-medium text-foreground" : undefined}
+                              >
+                                {choice || "Empty choice"}
+                                {choiceIndex === question.answerIndex ? " (correct)" : ""}
+                              </li>
+                            ))}
+                          </ol>
+                          <p className="mt-3 text-muted-foreground">
+                            <span className="font-medium text-foreground">Explanation:</span> {question.explanation}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                        No questions submitted for this quiz.
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )) : (
+              ))
+            ) : (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No quizzes submitted.</p>
             )}
           </CardContent>
@@ -488,8 +562,10 @@ function CourseReviewDetail({
       </section>
 
       <Card className={`rounded-lg ${glassCardClassName}`}>
-        <CardHeader><CardTitle>Admin decision</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardHeader>
+          <CardTitle>Admin decision</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4" aria-busy={busyAction !== null}>
           <label className="grid gap-2 text-sm font-medium">
             Review reason or archive note
             <textarea
@@ -504,40 +580,95 @@ function CourseReviewDetail({
               <CheckCircle2Icon className="size-4" />
               {busyAction === "approve" ? "Approving…" : "Approve"}
             </Button>
-            <Button type="button" variant="outline" disabled={!submitted || busyAction !== null} onClick={() => onAction("changes")}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!submitted || busyAction !== null}
+              onClick={() => onAction("changes")}
+            >
               <XCircleIcon className="size-4" />
               {busyAction === "changes" ? "Requesting…" : "Request changes"}
             </Button>
-            <Button type="button" variant="outline" disabled={!approved || published || busyAction !== null} onClick={() => onAction("publish")}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!approved || published || busyAction !== null}
+              onClick={() => onAction("publish")}
+            >
               <SendIcon className="size-4" />
               {busyAction === "publish" ? "Publishing…" : "Publish"}
             </Button>
-            <Button type="button" variant="outline" disabled={!published || busyAction !== null} onClick={() => onAction("unpublish")}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!published || busyAction !== null}
+              onClick={() => setConfirmingAction("unpublish")}
+            >
               <Undo2Icon className="size-4" />
               {busyAction === "unpublish" ? "Unpublishing…" : "Unpublish"}
             </Button>
-            <Button type="button" variant="outline" disabled={archived || busyAction !== null} onClick={() => onAction("archive")}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={archived || busyAction !== null}
+              onClick={() => setConfirmingAction("archive")}
+            >
               <ArchiveIcon className="size-4" />
               {busyAction === "archive" ? "Archiving…" : "Archive"}
             </Button>
           </div>
+
+          {confirmingAction ? (
+            <div
+              role="alertdialog"
+              aria-labelledby="admin-destructive-confirmation-title"
+              aria-describedby="admin-destructive-confirmation-description"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+            >
+              <p id="admin-destructive-confirmation-title" className="font-semibold">
+                {confirmationTitle}
+              </p>
+              <p id="admin-destructive-confirmation-description" className="text-muted-foreground mt-2 text-sm leading-6">
+                {confirmationDescription}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button type="button" variant="destructive" autoFocus onClick={confirmDestructiveAction}>
+                  Confirm {confirmingAction}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setConfirmingAction(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
       <Card className={`rounded-lg ${glassCardClassName}`}>
-        <CardHeader><CardTitle>Workflow audit history</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Workflow audit history</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-3">
-          {auditLogs.length > 0 ? auditLogs.map((log, index) => (
-            <div key={`${String(log._id)}-${index}`} className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/60 p-4">
-              <Clock3Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-              <div>
-                <p className="font-medium">{log.eventType.replaceAll("_", " ")}</p>
-                <p className="text-muted-foreground mt-1 text-sm">{log.actorRole} · {formatDate(log.createdAt)}</p>
-                {log.reason ? <p className="text-muted-foreground mt-2 text-sm leading-6">{log.reason}</p> : null}
+          {auditLogs.length > 0 ? (
+            auditLogs.map((log, index) => (
+              <div
+                key={`${String(log._id)}-${index}`}
+                className="flex items-start gap-3 rounded-lg border border-border/70 bg-background/60 p-4"
+              >
+                <Clock3Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+                <div>
+                  <p className="font-medium">{log.eventType.replaceAll("_", " ")}</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {log.actorRole} · {formatDate(log.createdAt)}
+                  </p>
+                  {log.reason ? <p className="text-muted-foreground mt-2 text-sm leading-6">{log.reason}</p> : null}
+                </div>
               </div>
-            </div>
-          )) : (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No audit events recorded yet.</p>
+            ))
+          ) : (
+            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              No audit events recorded yet.
+            </p>
           )}
         </CardContent>
       </Card>
