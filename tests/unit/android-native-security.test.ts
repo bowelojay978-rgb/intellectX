@@ -55,4 +55,16 @@ describe("Android native security configuration", () => {
     expect(extractionRules).toContain("<cloud-backup>");
     expect(extractionRules).toContain("<device-transfer>");
   });
+
+  it("uses WebView history for Android back navigation before exiting", () => {
+    const mainActivity = readRepositoryFile(
+      "android/app/src/main/java/com/intellectx/app/MainActivity.java",
+    );
+
+    expect(mainActivity).toContain("getOnBackPressedDispatcher().addCallback");
+    expect(mainActivity).toContain("bridge.getWebView().canGoBack()");
+    expect(mainActivity).toContain("bridge.getWebView().goBack()");
+    expect(mainActivity).toContain("setEnabled(false)");
+    expect(mainActivity).toContain("getOnBackPressedDispatcher().onBackPressed()");
+  });
 });
