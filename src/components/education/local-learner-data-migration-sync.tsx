@@ -15,12 +15,14 @@ type LocalLearnerDataMigrationSyncProps = {
   isAuthLoaded: boolean;
   isSignedIn: boolean | undefined;
   authenticatedUserId: string | null;
+  authenticatedEmail: string | null;
 };
 
 export function LocalLearnerDataMigrationSync({
   isAuthLoaded,
   isSignedIn,
   authenticatedUserId,
+  authenticatedEmail,
 }: LocalLearnerDataMigrationSyncProps) {
   const attemptedMarkerKey = useRef<string | null>(null);
   const migrateLocalLearnerData = useMutation(
@@ -36,6 +38,7 @@ export function LocalLearnerDataMigrationSync({
     const migrationSource = resolveLocalLearnerMigrationSource({
       localIdentity: getCurrentLearnerIdentity(),
       authMode: authEnvironment.mode,
+      authenticatedEmail,
     });
 
     if (!migrationSource) {
@@ -64,7 +67,7 @@ export function LocalLearnerDataMigrationSync({
         console.warn("Unable to migrate local learner data to authenticated account", error);
         writeLocalLearnerMigrationMarker(migrationSource.markerKey, "failed");
       });
-  }, [authenticatedUserId, isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
+  }, [authenticatedEmail, authenticatedUserId, isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
 
   return null;
 }
