@@ -462,6 +462,23 @@ function CourseReviewDetail({
                   <FileQuestionIcon className="text-muted-foreground size-5" />
                 </div>
                 <p className="text-muted-foreground mt-3 text-sm">{quiz.questions.length} questions</p>
+                <div className="mt-4 space-y-3">
+                  {quiz.questions.length > 0 ? quiz.questions.map((question, questionIndex) => (
+                    <div key={question.stableId} className="rounded-lg border border-border/60 bg-secondary/30 p-3 text-sm">
+                      <p className="font-medium">{questionIndex + 1}. {question.prompt}</p>
+                      <ol className="mt-3 list-decimal space-y-1 pl-5 text-muted-foreground">
+                        {question.choices.map((choice, choiceIndex) => (
+                          <li key={`${question.stableId}-${choiceIndex}`} className={choiceIndex === question.answerIndex ? "font-medium text-foreground" : undefined}>
+                            {choice || "Empty choice"}{choiceIndex === question.answerIndex ? " (correct)" : ""}
+                          </li>
+                        ))}
+                      </ol>
+                      <p className="mt-3 text-muted-foreground"><span className="font-medium text-foreground">Explanation:</span> {question.explanation}</p>
+                    </div>
+                  )) : (
+                    <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">No questions submitted for this quiz.</p>
+                  )}
+                </div>
               </div>
             )) : (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No quizzes submitted.</p>
