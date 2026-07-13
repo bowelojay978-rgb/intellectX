@@ -20,14 +20,21 @@ export function MobileShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const updateConnectivity = () => setIsOnline(window.navigator.onLine);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        updateConnectivity();
+      }
+    };
 
     updateConnectivity();
     window.addEventListener("online", updateConnectivity);
     window.addEventListener("offline", updateConnectivity);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("online", updateConnectivity);
       window.removeEventListener("offline", updateConnectivity);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
