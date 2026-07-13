@@ -13,7 +13,7 @@
     "typecheck:mobile": "tsc -p mobile-client/tsconfig.json --noEmit",
     "test:e2e": "playwright test",
     "verify": "npm run typecheck && npm run lint && npm run test:unit && npm run build && npm run test:e2e",
-    "verify:mobile-foundation": "npm run typecheck:mobile && npm run test:unit -- tests/unit/feature-scope.test.ts tests/unit/bundled-mobile-foundation.test.ts tests/unit/mobile-bundle-gates.test.ts tests/unit/mobile-flashcard-session.test.ts tests/unit/mobile-release-gates.test.ts tests/unit/android-native-security.test.ts && npm run build:mobile && npm run check:mobile-bundle && npm run check:mobile-release",
+    "verify:mobile-foundation": "npm run typecheck:mobile && npm run test:unit -- tests/unit/feature-scope.test.ts tests/unit/bundled-mobile-foundation.test.ts tests/unit/mobile-bundle-gates.test.ts tests/unit/mobile-flashcard-session.test.ts tests/unit/mobile-release-gates.test.ts tests/unit/android-store-release-gates.test.ts tests/unit/android-native-security.test.ts && npm run build:mobile && npm run check:mobile-bundle && npm run check:mobile-release",
     "format": "prettier --write .",
     "convex:dev": "convex dev",
     "convex:codegen": "convex codegen",
@@ -22,7 +22,8 @@
     "check:prod-env:strict": "node scripts/check-production-env.mjs --strict",
     "check:mobile-bundle": "node scripts/check-mobile-bundle.mjs",
     "check:mobile-release": "node scripts/check-mobile-release.mjs",
-    "check:mobile-release:strict": "node scripts/check-mobile-release.mjs --strict"
+    "check:mobile-release:strict": "node scripts/check-mobile-release.mjs --strict",
+    "check:android-store-release": "node scripts/check-android-store-release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
