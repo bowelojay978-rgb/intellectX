@@ -9,9 +9,10 @@ type ClerkAuthPanelProps = {
 
 const contentByMode = {
   login: {
-    eyebrow: "Learner access",
+    eyebrow: "Account access",
     title: "Welcome back",
-    description: "Use your IntellectX account to continue with account-backed courses, progress, and quizzes.",
+    description:
+      "Use your IntellectX account to continue. Trusted learner, instructor, and admin roles are routed to the correct workspace after login.",
   },
   signup: {
     eyebrow: "Learner account",

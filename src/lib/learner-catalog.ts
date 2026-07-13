@@ -77,7 +77,19 @@ function accessAllowed(value: { accessLevel?: ContentAccessLevel }) {
 }
 
 export function normalizeLearnerCourse(course: ConvexCourseRecord, fallback?: Course): Course | null {
-  if (!isLearnerVisibleCourse(course)) {
+  // The server explicitly allows the three bundled legacy courses when their
+  // older Convex records predate workflow fields. Only apply that compatibility
+  // rule when the record matches a bundled, learner-visible fallback course.
+  const workflowState =
+    !course.reviewStatus && !course.publicationStatus && fallback
+      ? {
+          ...course,
+          reviewStatus: fallback.reviewStatus,
+          publicationStatus: fallback.publicationStatus,
+        }
+      : course;
+
+  if (!isLearnerVisibleCourse(workflowState)) {
     return null;
   }
 
@@ -98,8 +110,8 @@ export function normalizeLearnerCourse(course: ConvexCourseRecord, fallback?: Co
     quizIds: fallback?.quizIds ?? [],
     accent: course.accent,
     accessLevel: course.accessLevel ?? fallback?.accessLevel,
-    reviewStatus: course.reviewStatus,
-    publicationStatus: course.publicationStatus,
+    reviewStatus: workflowState.reviewStatus,
+    publicationStatus: workflowState.publicationStatus,
   };
 }
 
