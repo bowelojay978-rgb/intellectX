@@ -104,4 +104,14 @@ describe("Android native security configuration", () => {
     expect(appBuildGradle).toContain("versionCode appVersionCode");
     expect(appBuildGradle).toContain("versionName appVersionName");
   });
+
+  it("defines every custom Android theme color referenced by app styles", () => {
+    const styles = readRepositoryFile("android/app/src/main/res/values/styles.xml");
+    const colors = readRepositoryFile("android/app/src/main/res/values/colors.xml");
+
+    for (const colorName of ["colorPrimary", "colorPrimaryDark", "colorAccent"]) {
+      expect(styles).toContain(`@color/${colorName}`);
+      expect(colors).toContain(`<color name="${colorName}">`);
+    }
+  });
 });
