@@ -74,6 +74,10 @@ export function assertCanPublishCourse(course: CourseWorkflowRecord) {
   if (course.reviewStatus !== APPROVED) {
     throw new Error("Course can only be published after approval.");
   }
+
+  if (course.publicationStatus === PUBLISHED) {
+    throw new Error("Course is already published.");
+  }
 }
 
 export function assertCanUnpublishCourse(course: CourseWorkflowRecord) {
