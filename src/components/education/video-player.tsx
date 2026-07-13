@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 type VideoPlaylistItem = {
   id: string;
@@ -31,13 +31,31 @@ type VideoPlayerProps = {
   playlist?: VideoPlaylistItem[];
 };
 
+type MediaNotice = {
+  message: string;
+  retryable?: boolean;
+};
+
 const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+const defaultPosterUrl =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900'%3E%3Crect width='1600' height='900' fill='%232563eb'/%3E%3C/svg%3E";
 
 function formatTime(value: number) {
   if (!Number.isFinite(value)) return "0:00";
   const minutes = Math.floor(value / 60);
   const seconds = Math.floor(value % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function isInteractiveKeyboardTarget(target: EventTarget | null) {
+  return (
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        "button, a, input, select, textarea, [role='button'], [role='menuitem'], [role='menuitemradio'], [contenteditable='true']",
+      ),
+    )
+  );
 }
 
 export function VideoPlayer({
@@ -49,6 +67,10 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const playerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const settingsContainerRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const speedOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const settingsMenuId = useId();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -56,15 +78,53 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [canUsePictureInPicture, setCanUsePictureInPicture] = useState(false);
+  const [canUseFullscreen, setCanUseFullscreen] = useState(false);
+  const [mediaNotice, setMediaNotice] = useState<MediaNotice | null>(null);
 
-  function togglePlay() {
+  useEffect(() => {
+    const video = videoRef.current;
+    setCanUseFullscreen(Boolean(videoUrl && playerRef.current?.requestFullscreen));
+    setCanUsePictureInPicture(
+      Boolean(videoUrl && video && document.pictureInPictureEnabled && "requestPictureInPicture" in video),
+    );
+  }, [videoUrl]);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+
+    const selectedSpeedIndex = playbackSpeeds.indexOf(speed);
+    const frame = window.requestAnimationFrame(() => speedOptionRefs.current[selectedSpeedIndex]?.focus());
+
+    function handlePointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !settingsContainerRef.current?.contains(event.target)) {
+        setSettingsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [settingsOpen, speed]);
+
+  async function togglePlay() {
     const video = videoRef.current;
     if (!video || !videoUrl) return;
 
-    if (video.paused) {
-      void video.play();
-    } else {
+    setMediaNotice(null);
+
+    if (!video.paused) {
       video.pause();
+      return;
+    }
+
+    try {
+      await video.play();
+    } catch {
+      setMediaNotice({ message: "This video could not start. Check your connection or try again." });
     }
   }
 
@@ -80,6 +140,7 @@ export function VideoPlayer({
     setSpeed(nextSpeed);
     setSettingsOpen(false);
     if (videoRef.current) videoRef.current.playbackRate = nextSpeed;
+    window.requestAnimationFrame(() => settingsButtonRef.current?.focus());
   }
 
   function updateVolume(nextVolume: number) {
@@ -99,31 +160,66 @@ export function VideoPlayer({
     setMuted(video.muted);
   }
 
-  function openFullscreen() {
-    if (playerRef.current?.requestFullscreen) void playerRef.current.requestFullscreen();
+  async function openFullscreen() {
+    const player = playerRef.current;
+    if (!player || !canUseFullscreen) return;
+
+    setMediaNotice(null);
+
+    try {
+      await player.requestFullscreen();
+    } catch {
+      setMediaNotice({ message: "Fullscreen is not available right now. Continue watching in the current view." });
+    }
   }
 
-  function openPictureInPicture() {
+  async function openPictureInPicture() {
     const video = videoRef.current;
-    if (video && "requestPictureInPicture" in video) void video.requestPictureInPicture();
+    if (!video || !canUsePictureInPicture || !("requestPictureInPicture" in video)) return;
+
+    setMediaNotice(null);
+
+    try {
+      await video.requestPictureInPicture();
+    } catch {
+      setMediaNotice({ message: "Picture in picture is not available right now. Continue watching in the player." });
+    }
+  }
+
+  function retryVideo() {
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+
+    setMediaNotice(null);
+    setPlaying(false);
+    video.load();
   }
 
   function handleKeyboard(event: React.KeyboardEvent<HTMLElement>) {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+    if (isInteractiveKeyboardTarget(event.target)) return;
 
     const key = event.key.toLowerCase();
     if (key === " " || key === "k") {
       event.preventDefault();
-      togglePlay();
+      void togglePlay();
     } else if (key === "arrowright") {
+      event.preventDefault();
       seekTo(currentTime + 5);
     } else if (key === "arrowleft") {
+      event.preventDefault();
       seekTo(currentTime - 5);
     } else if (key === "m") {
       toggleMute();
     } else if (key === "f") {
-      openFullscreen();
+      void openFullscreen();
     }
+  }
+
+  function handleSettingsKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    setSettingsOpen(false);
+    window.requestAnimationFrame(() => settingsButtonRef.current?.focus());
   }
 
   return (
@@ -132,36 +228,63 @@ export function VideoPlayer({
         ref={playerRef}
         tabIndex={0}
         onKeyDown={handleKeyboard}
-        className="group relative overflow-hidden rounded-xl border border-white/10 bg-black shadow-3xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="group relative overflow-hidden rounded-xl border border-white/10 bg-blue-600 shadow-3xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label={`${title} video player`}
       >
-        <div className="relative aspect-video bg-black" onDoubleClick={openFullscreen}>
+        <div className="relative aspect-video bg-blue-600" onDoubleClick={() => void openFullscreen()}>
           {videoUrl ? (
             <video
               ref={videoRef}
               src={videoUrl}
-              poster={posterUrl}
-              className="h-full w-full cursor-pointer object-contain"
-              onClick={togglePlay}
-              onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+              poster={posterUrl ?? defaultPosterUrl}
+              className="h-full w-full cursor-pointer bg-blue-600 object-contain"
+              onClick={() => void togglePlay()}
+              onLoadedMetadata={(event) => {
+                setDuration(event.currentTarget.duration);
+                setMediaNotice(null);
+              }}
               onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onEnded={() => setPlaying(false)}
+              onError={() =>
+                setMediaNotice({
+                  message: "This video could not be loaded. Check your connection or try again.",
+                  retryable: true,
+                })
+              }
               playsInline
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_35%),linear-gradient(135deg,_#050505,_#1f2937)] p-8 text-center text-white">
+            <div className="flex h-full w-full flex-col items-center justify-center bg-blue-600 p-8 text-center text-white">
               <span className="grid size-16 place-items-center rounded-full bg-white/10">
                 <PlayIcon className="size-7" />
               </span>
-              <p className="mt-5 text-sm text-white/60">Video lesson preview</p>
+              <p className="mt-5 text-sm text-white/70">Video lesson preview</p>
               <h2 className="mt-2 max-w-lg text-3xl font-semibold tracking-tight">{title}</h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white/60">
+              <p className="mt-3 max-w-md text-sm leading-6 text-white/70">
                 This lesson is ready for an instructor video. Notes and learning activities remain available below.
               </p>
             </div>
           )}
+
+          {mediaNotice ? (
+            <div
+              role="alert"
+              className="absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-3 rounded-lg border border-white/15 bg-black/85 p-3 text-sm text-white shadow-xl backdrop-blur sm:inset-x-4"
+            >
+              <p className="leading-5">{mediaNotice.message}</p>
+              {mediaNotice.retryable ? (
+                <button
+                  type="button"
+                  onClick={retryVideo}
+                  className="shrink-0 rounded-md border border-white/20 px-2 py-1 text-xs font-medium hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                >
+                  Retry
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/75 to-transparent px-3 pt-12 pb-3 text-white sm:px-4">
             <input
@@ -175,7 +298,7 @@ export function VideoPlayer({
               aria-label="Video progress"
             />
             <div className="mt-2 flex items-center gap-1 sm:gap-2">
-              <PlayerButton onClick={togglePlay} disabled={!videoUrl} label={playing ? "Pause" : "Play"}>
+              <PlayerButton onClick={() => void togglePlay()} disabled={!videoUrl} label={playing ? "Pause" : "Play"}>
                 {playing ? <PauseIcon /> : <PlayIcon />}
               </PlayerButton>
               <PlayerButton onClick={toggleMute} disabled={!videoUrl} label={muted ? "Unmute" : "Mute"}>
@@ -199,26 +322,53 @@ export function VideoPlayer({
                 <PlayerButton disabled label="Captions unavailable">
                   <CaptionsIcon />
                 </PlayerButton>
-                <PlayerButton onClick={openPictureInPicture} disabled={!videoUrl} label="Picture in picture">
+                <PlayerButton
+                  onClick={() => void openPictureInPicture()}
+                  disabled={!videoUrl || !canUsePictureInPicture}
+                  label={canUsePictureInPicture ? "Picture in picture" : "Picture in picture unavailable"}
+                >
                   <PictureInPictureIcon />
                 </PlayerButton>
-                <div className="relative">
+                <div
+                  ref={settingsContainerRef}
+                  className="relative"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setSettingsOpen(false);
+                    }
+                  }}
+                >
                   <PlayerButton
+                    ref={settingsButtonRef}
                     onClick={() => setSettingsOpen((open) => !open)}
                     disabled={!videoUrl}
                     label="Playback settings"
+                    aria-haspopup="menu"
+                    aria-expanded={settingsOpen}
+                    aria-controls={settingsOpen ? settingsMenuId : undefined}
                   >
                     <SettingsIcon />
                   </PlayerButton>
                   {settingsOpen ? (
-                    <div className="absolute right-0 bottom-11 w-44 rounded-lg border border-white/10 bg-black/95 p-2 shadow-2xl">
+                    <div
+                      id={settingsMenuId}
+                      role="menu"
+                      aria-label="Playback speed"
+                      onKeyDown={handleSettingsKeyDown}
+                      className="absolute right-0 bottom-11 w-44 rounded-lg border border-white/10 bg-black/95 p-2 shadow-2xl"
+                    >
                       <p className="px-2 py-1 text-xs font-medium text-white/60">Playback speed</p>
-                      {playbackSpeeds.map((item) => (
+                      {playbackSpeeds.map((item, index) => (
                         <button
                           key={item}
+                          ref={(element) => {
+                            speedOptionRefs.current[index] = element;
+                          }}
                           type="button"
+                          role="menuitemradio"
+                          aria-checked={speed === item}
                           onClick={() => updateSpeed(item)}
-                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-white/10"
+                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                         >
                           <span>{item === 1 ? "Normal" : `${item}x`}</span>
                           {speed === item ? <span aria-hidden="true">✓</span> : null}
@@ -227,7 +377,11 @@ export function VideoPlayer({
                     </div>
                   ) : null}
                 </div>
-                <PlayerButton onClick={openFullscreen} disabled={!videoUrl} label="Fullscreen">
+                <PlayerButton
+                  onClick={() => void openFullscreen()}
+                  disabled={!videoUrl || !canUseFullscreen}
+                  label={canUseFullscreen ? "Fullscreen" : "Fullscreen unavailable"}
+                >
                   <MaximizeIcon />
                 </PlayerButton>
               </div>
@@ -236,7 +390,10 @@ export function VideoPlayer({
         </div>
       </section>
 
-      <aside className="overflow-hidden rounded-xl border border-border/70 bg-background/70" aria-label="Course video playlist">
+      <aside
+        className="overflow-hidden rounded-xl border border-border/70 bg-background/70"
+        aria-label="Course video playlist"
+      >
         <div className="border-b border-border/70 px-4 py-3">
           <p className="font-semibold">Course playlist</p>
           <p className="text-muted-foreground mt-1 text-xs">{playlist.length} lessons</p>
@@ -253,11 +410,13 @@ export function VideoPlayer({
                   active ? "bg-primary/10" : "hover:bg-secondary/70"
                 }`}
               >
-                <div className="relative aspect-video overflow-hidden rounded-md bg-black">
+                <div className="relative aspect-video overflow-hidden rounded-md bg-blue-600">
                   {item.posterUrl ? (
                     <Image src={item.posterUrl} alt="" fill sizes="128px" className="object-cover" />
                   ) : (
-                    <div className="grid h-full place-items-center text-white/60"><PlayIcon className="size-5" /></div>
+                    <div className="grid h-full place-items-center text-white/80">
+                      <PlayIcon className="size-5" />
+                    </div>
                   )}
                   <span className="absolute right-1 bottom-1 rounded bg-black/80 px-1 py-0.5 text-[10px] text-white">
                     {item.duration}
