@@ -16,6 +16,15 @@ release {
 }
 `;
 
+const dualModeCapacitorConfig = `
+const bundledMobileRelease = process.env.INTELLECTX_MOBILE_BUNDLED === "true";
+const remoteServerConfig = { url: "https://example.com" };
+const config = {
+  webDir: bundledMobileRelease ? "mobile-client/out" : "public",
+  ...(bundledMobileRelease ? {} : { server: remoteServerConfig }),
+};
+`;
+
 describe("mobile release configuration gate", () => {
   it("passes a bundled hardened mobile release configuration", () => {
     const report = evaluateMobileReleaseConfig({
@@ -29,7 +38,29 @@ describe("mobile release configuration gate", () => {
     expect(report.errors).toEqual([]);
   });
 
-  it("reports remote WebView delivery and missing bundled assets as release blockers", () => {
+  it("distinguishes default remote delivery from explicit bundled mode", () => {
+    const defaultReport = evaluateMobileReleaseConfig({
+      capacitorConfig: dualModeCapacitorConfig,
+      androidManifest: hardenedManifest,
+      androidBuildGradle: hardenedReleaseBuild,
+      bundledIndexExists: false,
+      bundledMode: false,
+    });
+    const bundledReport = evaluateMobileReleaseConfig({
+      capacitorConfig: dualModeCapacitorConfig,
+      androidManifest: hardenedManifest,
+      androidBuildGradle: hardenedReleaseBuild,
+      bundledIndexExists: true,
+      bundledMode: true,
+    });
+
+    expect(defaultReport.webDir).toBe("public");
+    expect(defaultReport.errors).toContain("production Capacitor config must not contain an active remote server.url");
+    expect(bundledReport.webDir).toBe("mobile-client/out");
+    expect(bundledReport.errors).toEqual([]);
+  });
+
+  it("reports direct remote WebView delivery and missing bundled assets as release blockers", () => {
     const report = evaluateMobileReleaseConfig({
       capacitorConfig: `
         const config = {
@@ -42,7 +73,7 @@ describe("mobile release configuration gate", () => {
       bundledIndexExists: false,
     });
 
-    expect(report.errors).toContain("production Capacitor config must not contain a remote server.url");
+    expect(report.errors).toContain("production Capacitor config must not contain an active remote server.url");
     expect(report.errors).toContain("bundled mobile entry point is missing at public/index.html");
   });
 
