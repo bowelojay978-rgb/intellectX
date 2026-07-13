@@ -19,7 +19,7 @@ describe("learner onboarding flow", () => {
     );
 
     expect(source).toContain("<StudyProfileCard");
-    expect(source).toContain('router.replace("/courses")');
+    expect(source).toContain("router.replace(getLearnerHomeRouteForCurrentRuntime())");
   });
 
   it("does not duplicate course-selection persistence inside onboarding", () => {
