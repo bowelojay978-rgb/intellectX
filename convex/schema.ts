@@ -17,6 +17,7 @@ export default defineSchema({
     duration: v.string(),
     accent: v.string(),
     accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    seedManaged: v.optional(v.boolean()),
     reviewStatus: v.optional(
       v.union(
         v.literal("draft"),
@@ -88,6 +89,7 @@ export default defineSchema({
     videoUrl: v.optional(v.string()),
     posterUrl: v.optional(v.string()),
     accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    seedManaged: v.optional(v.boolean()),
     order: v.number(),
   })
     .index("by_stable_id", ["stableId"])
@@ -100,6 +102,7 @@ export default defineSchema({
     difficulty: v.string(),
     estimatedTime: v.string(),
     accessLevel: v.optional(v.union(v.literal("free"), v.literal("paid"))),
+    seedManaged: v.optional(v.boolean()),
     order: v.optional(v.number()),
   })
     .index("by_stable_id", ["stableId"])
@@ -112,6 +115,7 @@ export default defineSchema({
     answerIndex: v.number(),
     explanation: v.string(),
     order: v.number(),
+    seedManaged: v.optional(v.boolean()),
   })
     .index("by_stable_id", ["stableId"])
     .index("by_quiz_stable_id", ["quizStableId"]),
