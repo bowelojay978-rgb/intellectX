@@ -9,7 +9,6 @@ import type { Course } from "@/data/courses";
 import {
   type AcademicProfile,
   courseMatchesAcademicProfile,
-  formatAcademicProfile,
   loadAcademicProfile,
 } from "@/lib/academic-profile";
 import {
@@ -23,7 +22,6 @@ import {
 import { convexEnv } from "@/lib/education-data";
 import { useLearnerCatalog } from "@/lib/learner-catalog-client";
 import { BookOpenIcon, GraduationCapIcon, InfoIcon } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type ConvexCoursesSectionProps = {
@@ -172,9 +170,6 @@ function useAcademicProfile() {
 
 function PersonalizedCourses({ courses }: { courses: Course[] }) {
   const { profile, loaded } = useAcademicProfile();
-  const { selection } = useCourseSelection();
-  const selectedCount = selection?.selectedCourseIds.length ?? 0;
-  const selectionComplete = selectedCount >= Math.min(COURSE_SELECTION_LIMIT, courses.length);
 
   if (!loaded) {
     return null;
@@ -196,16 +191,6 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground text-sm">
-          Filtered for {formatAcademicProfile(profile)} / {profile.subjectsOrModules.join(", ")}
-        </p>
-        {!selectionComplete ? (
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/profile#study-profile">Edit profile</Link>
-          </Button>
-        ) : null}
-      </div>
       {matchedCourses.length > 0 ? (
         <CourseGrid courses={matchedCourses} />
       ) : (
