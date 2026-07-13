@@ -69,6 +69,12 @@ describe("Android native security configuration", () => {
     expect(capacitorConfig).not.toContain("webContentsDebuggingEnabled: true");
   });
 
+  it("resizes the activity when the soft keyboard opens", () => {
+    const manifest = readRepositoryFile("android/app/src/main/AndroidManifest.xml");
+
+    expect(manifest).toContain('android:windowSoftInputMode="adjustResize"');
+  });
+
   it("uses WebView history for Android back navigation before exiting", () => {
     const mainActivity = readRepositoryFile(
       "android/app/src/main/java/com/intellectx/app/MainActivity.java",
