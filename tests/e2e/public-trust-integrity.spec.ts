@@ -5,6 +5,8 @@ test("public homepage uses product capabilities instead of unsupported social pr
 
   await expect(page.getByText("Built for focused study habits and clearer next steps")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Built for clearer next moves" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Learn\. Test\. Review\./ })).toBeVisible();
+  await expect(page.locator("#how-it-works")).toBeVisible();
 
   for (const unsupportedClaim of [
     "42,000",
@@ -15,6 +17,8 @@ test("public homepage uses product capabilities instead of unsupported social pr
     "Hanna Gouse",
     "Kaiya Donin",
     "Alex Bergwijn",
+    "Ari Ndlovu",
+    "Computer Science Student",
   ]) {
     await expect(page.getByText(unsupportedClaim, { exact: true })).toHaveCount(0);
   }
