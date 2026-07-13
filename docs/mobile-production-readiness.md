@@ -2,7 +2,7 @@
 
 Status date: 2026-07-13
 
-Branch: `fix/mobile-production-readiness`
+Development branch: `fix/mobile-production-readiness`
 
 ## Product contract
 
@@ -13,7 +13,7 @@ The dedicated IntellectX native mobile study surface is intentionally limited to
 
 Notes, courses, dashboard, progress, profile, search, pricing, checkout, instructor, and admin surfaces are not part of the native free-study experience. Authentication continuation, mandatory learner onboarding, quiz detail routes, and legal routes remain allowed because they are required to support the mobile flow.
 
-## Hardened in this branch
+## Hardened in this work
 
 - Enforces the native route boundary globally and redirects web-only native navigation back to `/mobile-quizzes`.
 - Starts the Capacitor wrapper at `/mobile-quizzes`.
@@ -22,26 +22,26 @@ Notes, courses, dashboard, progress, profile, search, pricing, checkout, instruc
 - Preserves the existing learner auth guard, migration bridge, and learner-data sync components for mobile quiz detail.
 - Preserves mandatory Study Profile onboarding for native Clerk signup.
 - Routes local fallback login/signup and onboarding to the correct runtime destination instead of detouring through web-only `/courses`.
-- Uses the shared learner catalog for mobile quizzes and flashcards so mobile does not maintain a separate catalog truth.
+- Uses the shared learner catalog for mobile quizzes and flashcards while preserving the static fallback when Convex is not configured.
 - Adds explicit loading and empty states.
 - Adds `viewport-fit=cover`, safe-area-aware navigation/header spacing, larger touch targets, and mobile overflow hardening.
 - Excludes legacy `/mobile-notes` from native scope while preserving its informational web compatibility route.
-- Adds a packaged `public/mobile-error.html` retry screen for WebView load errors.
-- Adds unit and Playwright regression coverage for feature scope, ordering, native redirects, mobile quiz-shell continuity, and native quiz deep links.
+- Adds a packaged `public/mobile-error.html` retry screen that returns to the configured mobile start route after connectivity recovers.
+- Adds unit and Playwright regression coverage for feature scope, ordering, native redirects, mobile quiz-shell continuity, native quiz deep links, and runtime-aware onboarding behavior.
 
-## Remaining release risks
+## Validation state
 
-### 1. Remote WebView production architecture
+The mobile branch was rebuilt on the latest authoritative `main` baseline before merge review so newer auth, search, lesson-progress, quiz-history, and study-stats integrity work remained preserved.
 
-`capacitor.config.ts` still sets `server.url` to the deployed Vercel web app. Capacitor documents `server.url` as a live-reload/development option and explicitly states it is not intended for production. A production native release should move to bundled web assets or another explicitly approved native hosting architecture before store release.
+Confirmed on the rebased branch:
 
-The local `errorPath` added in this branch improves failure behavior but does not remove that architectural dependency.
+- GitHub reports the pull request as mergeable.
+- The complete rebased mobile branch receives a successful Vercel deployment after restoring the no-Convex static catalog path.
+- All Codex P2 findings identified during review were fixed or shown to be stale against current `main`, and their review threads were resolved.
+- A documentation-only control deployment and the mobile runtime/shell layer also deployed successfully during fault isolation.
+- GitHub Actions still fails before executing any job steps or exposing job logs, so that runner result is non-actionable and does not provide code-level validation evidence.
 
-### 2. Preview validation is unresolved
-
-The PR preview currently reports a Vercel deployment failure. The failure appeared immediately after a successful deployment during a rapid sequence of branch commits, and GitHub Actions jobs are also failing before exposing runnable steps or logs. This is not sufficient evidence to declare the code broken or healthy.
-
-Do not merge or release based only on static review. Final release validation requires:
+A successful merge does not by itself make the native app store-release-ready. Final native release validation still requires:
 
 - `npm ci`
 - `npm run typecheck`
@@ -54,6 +54,14 @@ Do not merge or release based only on static review. Final release validation re
 - Android debug/release build validation
 - real-device checks for safe areas, keyboard behavior, back navigation, authentication, onboarding, quizzes, flashcards, offline/error behavior, and app resume
 
+## Remaining release risk
+
+### Remote WebView production architecture
+
+`capacitor.config.ts` still sets `server.url` to the deployed Vercel web app. Capacitor documents `server.url` as a live-reload/development option and explicitly states it is not intended for production. A production native release should move to bundled web assets or another explicitly approved native hosting architecture before store release.
+
+The local `errorPath` improves failure behavior but does not remove that architectural dependency.
+
 ## Merge policy
 
-This work must remain on `fix/mobile-production-readiness` until explicitly approved. Do not auto-merge to `main`.
+Merge only after explicit approval, latest-main alignment, successful preview validation, and no known unresolved branch-introduced blocking defect. Native store-release approval remains a separate gate.
