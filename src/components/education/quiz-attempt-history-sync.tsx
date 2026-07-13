@@ -76,7 +76,7 @@ export function QuizAttemptHistorySync() {
 function ConvexQuizAttemptHistorySync() {
   const convex = useConvex();
   const [identity, setIdentity] = useState<ConvexLearnerIdentity | null>(null);
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
 
   useEffect(() => {
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
@@ -116,7 +116,10 @@ function ConvexQuizAttemptHistorySync() {
           .filter((attempt): attempt is QuizAttemptHistoryItem => Boolean(attempt));
 
         if (identity.source === "authenticated-convex") {
-          hydrateAuthenticatedQuizAttemptHistory(attempts, hasPendingLocalLearnerMigrationSource());
+          hydrateAuthenticatedQuizAttemptHistory(
+            attempts,
+            hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
+          );
           return;
         }
 
@@ -133,7 +136,7 @@ function ConvexQuizAttemptHistorySync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identity]);
+  }, [convex, identity, primaryEmailAddress]);
 
   return null;
 }
