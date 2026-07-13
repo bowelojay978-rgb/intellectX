@@ -9,8 +9,8 @@ const plans = [
     price: "Free",
     description: "Start with focused learning paths, quizzes, progress tracking, and local study momentum.",
     features: ["Browse available courses", "Try lesson and quiz flows", "View learning dashboard stats"],
-    cta: "Browse Courses",
-    href: "/courses",
+    cta: "Start Free",
+    href: "/signup",
     available: true,
   },
   {
