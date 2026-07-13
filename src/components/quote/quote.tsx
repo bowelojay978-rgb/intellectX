@@ -1,18 +1,21 @@
-import React from "react";
-
 export function Quote() {
   return (
-    <figure className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12 text-center">
-      <blockquote className="text-3xl leading-[1.1] font-medium tracking-tighter text-balance md:text-5xl md:text-wrap">
-        <span>&quot;IntellectX turned my study notes into a clear weekly plan, th</span>
-        <span className="text-muted-foreground/50">en helped me practice until the ideas actually stuck.&quot;</span>
-      </blockquote>
-      <figcaption className="mt-10">
-        <span className="block font-semibold tracking-tight md:text-xl">Ari Ndlovu</span>
-        <span className="text-muted-foreground mt-1 block text-xs tracking-tighter md:text-xl">
-          Computer Science Student
-        </span>
-      </figcaption>
-    </figure>
+    <section
+      id="how-it-works"
+      aria-labelledby="how-it-works-title"
+      className="mx-auto flex max-w-3xl scroll-mt-28 flex-col items-center px-4 py-12 text-center"
+    >
+      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.2em]">How it works</p>
+      <h2
+        id="how-it-works-title"
+        className="mt-4 text-3xl leading-[1.1] font-medium tracking-tighter text-balance md:text-5xl md:text-wrap"
+      >
+        Learn. Test. Review. <span className="text-muted-foreground/70">Continue with a clearer next move.</span>
+      </h2>
+      <p className="text-muted-foreground mt-8 max-w-2xl text-sm leading-7 md:text-lg">
+        Open a focused lesson, test your understanding with a related quiz, review the explanation, and use real
+        learning activity to decide what to continue next.
+      </p>
+    </section>
   );
 }
