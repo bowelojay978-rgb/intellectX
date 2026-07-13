@@ -34,6 +34,39 @@ describe("local learner migration source resolution", () => {
     });
   });
 
+  it("accepts a local migration source when it belongs to the authenticated email", () => {
+    expect(
+      resolveLocalLearnerMigrationSource({
+        authMode: "clerk-convex-ready",
+        localIdentity: { userKey: "learner:local@example.com" },
+        authenticatedEmail: " LOCAL@example.com ",
+      }),
+    ).toEqual({
+      sourceUserKey: "learner:local@example.com",
+      markerKey: "intellectx:local-auth-migration:clerk-convex-ready:learner:local@example.com",
+    });
+  });
+
+  it("rejects a stale local migration source owned by a different authenticated email", () => {
+    expect(
+      resolveLocalLearnerMigrationSource({
+        authMode: "clerk-convex-ready",
+        localIdentity: { userKey: "learner:previous@example.com" },
+        authenticatedEmail: "current@example.com",
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects migration when authenticated ownership matching is required but no email is available", () => {
+    expect(
+      resolveLocalLearnerMigrationSource({
+        authMode: "clerk-convex-ready",
+        localIdentity: { userKey: "learner:local@example.com" },
+        authenticatedEmail: null,
+      }),
+    ).toBeNull();
+  });
+
   it("rejects missing local identity", () => {
     expect(
       resolveLocalLearnerMigrationSource({
