@@ -17,6 +17,47 @@ export type LearnerDataMigrationPlan = {
   destinationUserKey: string;
 };
 
+export type LessonProgressMigrationCandidate = {
+  userKey: string;
+  lessonId: string;
+  status: string;
+  progress: number;
+  updatedAt: number;
+};
+
+function normalizeLessonProgress(progress: number) {
+  if (!Number.isFinite(progress)) {
+    return 0;
+  }
+
+  return Math.min(Math.max(progress, 0), 100);
+}
+
+export function selectMonotonicLessonProgressForMigration(
+  records: readonly LessonProgressMigrationCandidate[],
+): LessonProgressMigrationCandidate | null {
+  let selected: LessonProgressMigrationCandidate | null = null;
+
+  for (const record of records) {
+    const progress = normalizeLessonProgress(record.progress);
+    const normalized = {
+      ...record,
+      progress,
+      status: progress >= 100 ? "completed" : record.status,
+    };
+
+    if (
+      !selected ||
+      normalized.progress > selected.progress ||
+      (normalized.progress === selected.progress && normalized.updatedAt > selected.updatedAt)
+    ) {
+      selected = normalized;
+    }
+  }
+
+  return selected;
+}
+
 export function isLocalLearnerMigrationSourceUserKey(userKey: string | null | undefined) {
   const trimmedUserKey = userKey?.trim();
 
