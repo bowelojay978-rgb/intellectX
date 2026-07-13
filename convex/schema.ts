@@ -63,6 +63,21 @@ export default defineSchema({
     .index("by_target", ["targetType", "targetId"])
     .index("by_actor", ["actorUserId"])
     .index("by_event_type", ["eventType"]),
+  staffMediaUploads: defineTable({
+    storageId: v.id("_storage"),
+    uploadedBy: v.string(),
+    uploaderRole: v.union(v.literal("instructor"), v.literal("admin")),
+    kind: v.union(v.literal("video"), v.literal("poster")),
+    contentType: v.string(),
+    size: v.number(),
+    createdAt: v.number(),
+    courseStableId: v.optional(v.string()),
+    lessonStableId: v.optional(v.string()),
+    attachedAt: v.optional(v.number()),
+  })
+    .index("by_storage_id", ["storageId"])
+    .index("by_uploader", ["uploadedBy"])
+    .index("by_course_lesson", ["courseStableId", "lessonStableId"]),
   lessons: defineTable({
     stableId: v.string(),
     courseStableId: v.string(),
