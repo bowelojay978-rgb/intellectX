@@ -189,8 +189,8 @@ export function LocalDashboardContent() {
                 </div>
               </Link>
               <Link
-                href="/mobile-flashcards"
-                aria-label="Open mobile flashcards"
+                href="/flashcards"
+                aria-label="Open flashcards"
                 className={`bg-secondary/40 hover:bg-secondary flex items-center gap-3 rounded-lg p-4 ${clickableGlassCardClassName}`}
               >
                 <Layers3Icon className="size-5" />
