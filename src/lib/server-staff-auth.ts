@@ -54,12 +54,26 @@ export async function listAdminManagedUsers(): Promise<AdminManagedUser[]> {
   if (!session) return [];
 
   const client = await clerkClient();
-  const response = await client.users.getUserList({
-    limit: 100,
-    orderBy: "-created_at",
-  });
+  const pageSize = 100;
+  const users = [];
+  let offset = 0;
 
-  return response.data.map((user) => ({
+  while (true) {
+    const response = await client.users.getUserList({
+      limit: pageSize,
+      offset,
+      orderBy: "-created_at",
+    });
+
+    users.push(...response.data);
+    offset += response.data.length;
+
+    if (response.data.length === 0 || offset >= response.totalCount) {
+      break;
+    }
+  }
+
+  return users.map((user) => ({
     id: user.id,
     name:
       [user.firstName, user.lastName].filter(Boolean).join(" ") ||
