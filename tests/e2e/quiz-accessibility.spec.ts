@@ -21,13 +21,14 @@ test.beforeEach(async ({ page }) => {
 test("web quiz exposes radio semantics and manages focus across questions, results, and restart", async ({ page }) => {
   await page.goto("/quiz/ai-study-systems-check");
 
-  const firstQuestion = page.getByRole("heading", {
-    name: "Which prompt pattern best supports learning?",
-    level: 2,
-  });
+  const firstQuestionName = "Which prompt pattern best supports learning?";
+  const secondQuestionName = "What should stay central when using AI-generated practice questions?";
+  const thirdQuestionName = "What is the best output of a weekly review?";
+
+  const firstQuestion = page.getByRole("heading", { name: firstQuestionName, level: 2 });
   await expect(firstQuestion).toBeVisible();
 
-  const firstGroup = page.getByRole("radiogroup", { name: "Which prompt pattern best supports learning?" });
+  const firstGroup = page.getByRole("radiogroup", { name: firstQuestionName });
   const firstChoices = firstGroup.getByRole("radio");
   await expect(firstChoices).toHaveCount(4);
   await expect(firstChoices.first()).toHaveAttribute("aria-checked", "false");
@@ -43,23 +44,17 @@ test("web quiz exposes radio semantics and manages focus across questions, resul
   await page.getByRole("button", { name: "Submit answer" }).click();
   await page.getByRole("button", { name: "Next question" }).click();
 
-  const secondQuestion = page.getByRole("heading", {
-    name: "What should stay central when using AI-generated practice questions?",
-    level: 2,
-  });
+  const secondQuestion = page.getByRole("heading", { name: secondQuestionName, level: 2 });
   await expect(secondQuestion).toBeFocused();
 
-  await page.getByRole("radiogroup", { name: secondQuestion }).getByRole("radio").first().click();
+  await page.getByRole("radiogroup", { name: secondQuestionName }).getByRole("radio").first().click();
   await page.getByRole("button", { name: "Submit answer" }).click();
   await page.getByRole("button", { name: "Next question" }).click();
 
-  const thirdQuestion = page.getByRole("heading", {
-    name: "What is the best output of a weekly review?",
-    level: 2,
-  });
+  const thirdQuestion = page.getByRole("heading", { name: thirdQuestionName, level: 2 });
   await expect(thirdQuestion).toBeFocused();
 
-  await page.getByRole("radiogroup", { name: thirdQuestion }).getByRole("radio").first().click();
+  await page.getByRole("radiogroup", { name: thirdQuestionName }).getByRole("radio").first().click();
   await page.getByRole("button", { name: "Submit answer" }).click();
   await page.getByRole("button", { name: "See results" }).click();
 
