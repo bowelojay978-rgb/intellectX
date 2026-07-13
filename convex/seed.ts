@@ -3,8 +3,10 @@ import { lessons } from "../src/data/lessons";
 import { quizzes } from "../src/data/quizzes";
 import { internalMutationGeneric } from "convex/server";
 import { v } from "convex/values";
-
-type CatalogTable = "courses" | "lessons" | "quizzes" | "questions";
+import {
+  shouldPreserveInstructorAuthoredCatalogDoc,
+  type SeedCatalogTable,
+} from "./lib/seedCatalogProtection";
 
 const courseDocs = courses.map((course) => ({
   stableId: course.id,
@@ -52,14 +54,14 @@ const questionDocs = quizzes.flatMap((quiz) =>
   })),
 );
 
-async function getByStableId(ctx: any, table: CatalogTable, stableId: string) {
+async function getByStableId(ctx: any, table: SeedCatalogTable, stableId: string) {
   return await ctx.db
     .query(table)
     .withIndex("by_stable_id", (q: any) => q.eq("stableId", stableId))
     .first();
 }
 
-async function upsertByStableId(ctx: any, table: CatalogTable, doc: { stableId: string }) {
+async function upsertByStableId(ctx: any, table: SeedCatalogTable, doc: { stableId: string }) {
   const existing = await getByStableId(ctx, table, doc.stableId);
 
   if (existing) {
@@ -71,12 +73,26 @@ async function upsertByStableId(ctx: any, table: CatalogTable, doc: { stableId: 
   return "inserted";
 }
 
-async function removeObsoleteCatalogDocs(ctx: any, table: CatalogTable, stableIds: Set<string>) {
+async function removeObsoleteCatalogDocs(
+  ctx: any,
+  table: SeedCatalogTable,
+  stableIds: Set<string>,
+  instructorCourseStableIds: ReadonlySet<string>,
+  instructorQuizStableIds: ReadonlySet<string>,
+) {
   const docs = await ctx.db.query(table).collect();
   let removed = 0;
 
   for (const doc of docs) {
-    if (!stableIds.has(doc.stableId)) {
+    if (
+      !stableIds.has(doc.stableId) &&
+      !shouldPreserveInstructorAuthoredCatalogDoc(
+        table,
+        doc,
+        instructorCourseStableIds,
+        instructorQuizStableIds,
+      )
+    ) {
       await ctx.db.delete(doc._id);
       removed += 1;
     }
@@ -115,25 +131,44 @@ export const seedEducationCatalog = internalMutationGeneric({
       counts.questions[result] += 1;
     }
 
+    const allCourses = await ctx.db.query("courses").collect();
+    const instructorCourseStableIds = new Set(
+      allCourses.filter((course) => Boolean(course.instructorId)).map((course) => course.stableId),
+    );
+    const allQuizzes = await ctx.db.query("quizzes").collect();
+    const instructorQuizStableIds = new Set(
+      allQuizzes
+        .filter((quiz) => instructorCourseStableIds.has(quiz.courseStableId))
+        .map((quiz) => quiz.stableId),
+    );
+
     counts.questions.removed = await removeObsoleteCatalogDocs(
       ctx,
       "questions",
       new Set(questionDocs.map((question) => question.stableId)),
+      instructorCourseStableIds,
+      instructorQuizStableIds,
     );
     counts.quizzes.removed = await removeObsoleteCatalogDocs(
       ctx,
       "quizzes",
       new Set(quizDocs.map((quiz) => quiz.stableId)),
+      instructorCourseStableIds,
+      instructorQuizStableIds,
     );
     counts.lessons.removed = await removeObsoleteCatalogDocs(
       ctx,
       "lessons",
       new Set(lessonDocs.map((lesson) => lesson.stableId)),
+      instructorCourseStableIds,
+      instructorQuizStableIds,
     );
     counts.courses.removed = await removeObsoleteCatalogDocs(
       ctx,
       "courses",
       new Set(courseDocs.map((course) => course.stableId)),
+      instructorCourseStableIds,
+      instructorQuizStableIds,
     );
 
     return counts;
