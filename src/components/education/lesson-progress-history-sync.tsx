@@ -65,7 +65,7 @@ export function LessonProgressHistorySync() {
 function ConvexLessonProgressHistorySync() {
   const convex = useConvex();
   const [identity, setIdentity] = useState<ConvexLearnerIdentity | null>(null);
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
 
   useEffect(() => {
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
@@ -111,7 +111,10 @@ function ConvexLessonProgressHistorySync() {
           .filter((item): item is LessonProgressHistoryItem => Boolean(item));
 
         if (identity.source === "authenticated-convex") {
-          hydrateAuthenticatedLessonProgressHistory(items, hasPendingLocalLearnerMigrationSource());
+          hydrateAuthenticatedLessonProgressHistory(
+            items,
+            hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
+          );
           return;
         }
 
@@ -128,7 +131,7 @@ function ConvexLessonProgressHistorySync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identity]);
+  }, [convex, identity, primaryEmailAddress]);
 
   return null;
 }
