@@ -27,12 +27,15 @@ export function StudyActivitySync() {
 function ConvexStudyActivitySync() {
   const updateStudyStats = useMutation(convexApi.studyStats.updateStudyStats);
   const lastSyncedPayload = useRef<string | null>(null);
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
 
   const syncStudyStats = useCallback(() => {
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
 
-    if (isAuthenticated && hasPendingLocalLearnerMigrationSource()) {
+    if (
+      isAuthenticated &&
+      hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress })
+    ) {
       return;
     }
 
@@ -68,7 +71,7 @@ function ConvexStudyActivitySync() {
       lastSyncedPayload.current = null;
       console.warn("Unable to sync study activity to Convex", error);
     });
-  }, [isLoaded, isSignedIn, updateStudyStats, userId]);
+  }, [isLoaded, isSignedIn, primaryEmailAddress, updateStudyStats, userId]);
 
   useEffect(() => {
     lastSyncedPayload.current = null;
