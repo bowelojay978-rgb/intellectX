@@ -1,7 +1,8 @@
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const ALLOWED_OPERATIONS = new Set(["copy", "sync"]);
 const ALLOWED_PLATFORMS = new Set(["android"]);
@@ -62,4 +63,6 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
