@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -133,6 +133,18 @@ describe("Android native security configuration", () => {
     for (const colorName of ["colorPrimary", "colorPrimaryDark", "colorAccent"]) {
       expect(styles).toContain(`@color/${colorName}`);
       expect(colors).toContain(`<color name="${colorName}">`);
+    }
+  });
+
+  it("keeps critical launcher, adaptive-icon, and splash resources present", () => {
+    for (const relativePath of [
+      "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "android/app/src/main/res/drawable/splash.png",
+    ]) {
+      expect(existsSync(path.resolve(process.cwd(), relativePath)), relativePath).toBe(true);
     }
   });
 });
