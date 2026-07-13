@@ -60,10 +60,12 @@ async function mediaRecordWithUrl(ctx: any, record: any) {
 }
 
 export const generateStaffMediaUploadUrl = mutationGeneric({
-  args: {},
-  handler: async (ctx) => {
+  args: { courseStableId: v.string() },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    requireInstructorOrAdmin(identity);
+    const actor = requireInstructorOrAdmin(identity);
+    const course = await getManageableCourse(ctx, args.courseStableId, actor);
+    assertInstructorCourseEditable(course);
     return await ctx.storage.generateUploadUrl();
   },
 });
