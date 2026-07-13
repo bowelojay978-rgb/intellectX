@@ -1,13 +1,14 @@
 "use client";
 
-import { MobileNav } from "@/components/hero/mobile-nav";
 import { DesktopNav } from "@/components/hero/desktop-nav";
-import { useUser } from "@clerk/nextjs";
+import { MobileNav } from "@/components/hero/mobile-nav";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
+import { isMobileAppRuntime } from "@/lib/feature-scope";
 import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
 import { isAuthenticatedAppPath } from "@/lib/learner-routes";
 import { resolveMobileNavigationSurface } from "@/lib/navigation-surface";
-import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const publicNavItems = [
@@ -65,29 +66,11 @@ const mobileFreeNavItems = [
 
 type SessionState = LearnerSession | null | undefined;
 
-type MaybeCapacitorWindow = Window & {
-  Capacitor?: {
-    isNativePlatform?: () => boolean;
-    getPlatform?: () => string;
-  };
-};
-
-function isNativeAppSurface() {
-  const maybeWindow = window as MaybeCapacitorWindow;
-
-  if (maybeWindow.Capacitor?.isNativePlatform?.()) {
-    return true;
-  }
-
-  const platform = maybeWindow.Capacitor?.getPlatform?.();
-  return platform === "ios" || platform === "android";
-}
-
 function useNativeAppSurface() {
   const [nativeAppSurface, setNativeAppSurface] = useState(false);
 
   useEffect(() => {
-    setNativeAppSurface(isNativeAppSurface());
+    setNativeAppSurface(isMobileAppRuntime());
   }, []);
 
   return nativeAppSurface;
@@ -103,16 +86,8 @@ export function Nav() {
 
 function ClerkNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
   const nativeAppSurface = useNativeAppSurface();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn && pathname === "/" && isNativeAppSurface()) {
-      router.replace("/mobile-quizzes");
-    }
-  }, [isLoaded, isSignedIn, pathname, router]);
-
   const isAppRoute = isAuthenticatedAppPath(pathname);
   const showAuthenticatedNav = isAppRoute || (isLoaded && isSignedIn);
   const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
@@ -140,18 +115,12 @@ function ClerkNav() {
 
 function LocalSessionNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const [session, setSession] = useState<SessionState>(undefined);
   const nativeAppSurface = useNativeAppSurface();
 
   useEffect(() => {
     function syncSession() {
-      const nextSession = getLearnerSession();
-      setSession(nextSession);
-
-      if (nextSession && pathname === "/" && isNativeAppSurface()) {
-        router.replace("/mobile-quizzes");
-      }
+      setSession(getLearnerSession());
     }
 
     function syncSessionWhenVisible() {
@@ -174,7 +143,7 @@ function LocalSessionNav() {
       window.removeEventListener(LEARNER_SESSION_CHANGE_EVENT, syncSession);
       document.removeEventListener("visibilitychange", syncSessionWhenVisible);
     };
-  }, [pathname, router]);
+  }, []);
 
   const isAppRoute = isAuthenticatedAppPath(pathname);
   const showAuthenticatedNav = isAppRoute || Boolean(session);

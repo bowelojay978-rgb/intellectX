@@ -4,8 +4,10 @@ import { AcademicProfileSync } from "@/components/education/academic-profile-syn
 import { CourseSelectionSync } from "@/components/education/course-selection-sync";
 import { LessonProgressHistorySync } from "@/components/education/lesson-progress-history-sync";
 import { LocalLearnerDataMigrationSync } from "@/components/education/local-learner-data-migration-sync";
+import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { QuizAttemptHistorySync } from "@/components/education/quiz-attempt-history-sync";
 import { StudyActivitySync } from "@/components/education/study-activity-sync";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { Footer } from "@/components/footer/footer";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
@@ -18,29 +20,36 @@ import {
 } from "@/lib/authenticated-learner-local-data";
 import { getAuthEnvironmentStatus } from "@/lib/auth-env";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
+import { isMobileAppRuntime, isRouteWebOnly } from "@/lib/feature-scope";
 import { getLearnerSession } from "@/lib/learner-session";
 import { isAuthenticatedAppPath, isLearnerAppPath } from "@/lib/learner-routes";
-import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+type PageShellSurface = "web" | "mobile";
+
 type PageShellProps = {
   children: React.ReactNode;
+  surface?: PageShellSurface;
 };
 
-type PageShellFrameProps = PageShellProps & {
+type ResolvedPageShellProps = PageShellProps & {
+  surface: PageShellSurface;
+};
+
+type PageShellFrameProps = ResolvedPageShellProps & {
   canShowApp: boolean;
 };
 
-export function PageShell({ children }: PageShellProps) {
+export function PageShell({ children, surface = "web" }: PageShellProps) {
   if (isClerkAuthEnabled()) {
-    return <ClerkPageShell>{children}</ClerkPageShell>;
+    return <ClerkPageShell surface={surface}>{children}</ClerkPageShell>;
   }
 
-  return <LocalPageShell>{children}</LocalPageShell>;
+  return <LocalPageShell surface={surface}>{children}</LocalPageShell>;
 }
 
-function ClerkPageShell({ children }: PageShellProps) {
+function ClerkPageShell({ children, surface }: ResolvedPageShellProps) {
   const pathname = usePathname();
   const guarded = isLearnerAppPath(pathname);
   const authenticatedAppPath = isAuthenticatedAppPath(pathname);
@@ -81,6 +90,10 @@ function ClerkPageShell({ children }: PageShellProps) {
   }, [isLoaded, isSignedIn, userId]);
 
   useEffect(() => {
+    if (isMobileAppRuntime() && isRouteWebOnly(pathname)) {
+      return;
+    }
+
     if (guarded && isLoaded && !isSignedIn) {
       window.location.replace("/login");
     }
@@ -95,18 +108,25 @@ function ClerkPageShell({ children }: PageShellProps) {
           authenticatedUserId={userId}
         />
       ) : null}
-      <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
+      <PageShellFrame canShowApp={canShowApp} surface={surface}>
+        {children}
+      </PageShellFrame>
     </>
   );
 }
 
-function LocalPageShell({ children }: PageShellProps) {
+function LocalPageShell({ children, surface }: ResolvedPageShellProps) {
   const pathname = usePathname();
   const guarded = isLearnerAppPath(pathname);
   const [canShowApp, setCanShowApp] = useState(!guarded);
 
   useEffect(() => {
     function enforceAccess() {
+      if (isMobileAppRuntime() && isRouteWebOnly(pathname)) {
+        setCanShowApp(false);
+        return;
+      }
+
       if (!guarded) {
         setCanShowApp(true);
         return;
@@ -140,25 +160,45 @@ function LocalPageShell({ children }: PageShellProps) {
     };
   }, [guarded, pathname]);
 
-  return <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>;
+  return (
+    <PageShellFrame canShowApp={canShowApp} surface={surface}>
+      {children}
+    </PageShellFrame>
+  );
 }
 
-function PageShellFrame({ canShowApp, children }: PageShellFrameProps) {
+function LearnerSyncs() {
   return (
     <>
-      {canShowApp ? (
-        <>
-          <CourseSelectionSync />
-          <AcademicProfileSync />
-          <QuizAttemptHistorySync />
-          <StudyActivitySync />
-          <LessonProgressHistorySync />
-        </>
-      ) : null}
+      <CourseSelectionSync />
+      <AcademicProfileSync />
+      <QuizAttemptHistorySync />
+      <StudyActivitySync />
+      <LessonProgressHistorySync />
+    </>
+  );
+}
+
+function PageShellFrame({ canShowApp, children, surface }: PageShellFrameProps) {
+  const syncs = canShowApp ? <LearnerSyncs /> : null;
+  const content = canShowApp ? children : null;
+
+  if (surface === "mobile") {
+    return (
+      <>
+        {syncs}
+        <MobileAppShell>{content}</MobileAppShell>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {syncs}
       <div className="relative isolate z-10 min-h-screen overflow-hidden px-6 pt-32 pb-8 md:px-10 md:pt-36">
         <BackgroundBlur className="-top-40 md:-top-0" />
         <Nav />
-        <main className="relative z-10 mx-auto w-full max-w-6xl">{canShowApp ? children : null}</main>
+        <main className="relative z-10 mx-auto w-full max-w-6xl">{content}</main>
       </div>
       <Footer />
     </>

@@ -1,14 +1,14 @@
 import { MobileAppShell } from "@/components/education/mobile-app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { featureScope, isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
+import { isFeatureAllowedOnMobile, type StudyFeature } from "@/lib/feature-scope";
 import { BookOpenTextIcon, Layers3Icon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Mobile Study - IntellectX",
-  description: "Open IntellectX mobile study tools for quizzes and flashcard-style review.",
+  description: "Open IntellectX mobile study tools for quizzes and flashcards.",
 };
 
 type StudyItem = {
@@ -25,7 +25,7 @@ export default function MobileStudyPage() {
     {
       feature: "quizzes" as const,
       title: "Quizzes",
-      description: "Open the mobile quiz hub and practice with the existing quiz system.",
+      description: "Test recall with focused knowledge checks and clear explanations after each answer.",
       href: "/mobile-quizzes",
       cta: "Open quizzes",
       icon: BookOpenTextIcon,
@@ -33,7 +33,7 @@ export default function MobileStudyPage() {
     {
       feature: "flashcards" as const,
       title: "Flashcards",
-      description: "Review existing flashcard-style lesson cards without adding a new study model yet.",
+      description: "Review key lesson concepts with quick tap-to-reveal cards built for focused repetition.",
       href: "/mobile-flashcards",
       cta: "Open flashcards",
       icon: Layers3Icon,
@@ -73,10 +73,6 @@ export default function MobileStudyPage() {
           );
         })}
       </section>
-
-      <p className="text-muted-foreground mt-8 text-center text-sm">
-        Mobile scope: {featureScope.mobileStudyFeatures.join(", ")}.
-      </p>
     </MobileAppShell>
   );
 }
