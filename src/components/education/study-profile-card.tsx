@@ -61,11 +61,17 @@ export function StudyProfileCard({
 
     const storedProfile = loadAcademicProfile();
 
-    if (storedProfile && isAcademicProfileComplete(storedProfile)) {
+    if (storedProfile) {
       const normalizedStoredProfile = normalizeAcademicProfileForLevel(storedProfile);
       setProfile(normalizedStoredProfile);
-      setSavedProfile(normalizedStoredProfile);
-      setIsEditing(false);
+
+      if (isAcademicProfileComplete(normalizedStoredProfile)) {
+        setSavedProfile(normalizedStoredProfile);
+        setIsEditing(false);
+      } else {
+        setSavedProfile(null);
+        setIsEditing(true);
+      }
     } else {
       setSavedProfile(null);
       setIsEditing(true);
