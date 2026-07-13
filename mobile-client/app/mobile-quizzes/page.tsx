@@ -8,7 +8,7 @@ export default function MobileQuizzesPage() {
         <span className="mobile-eyebrow">Mobile quizzes</span>
         <h1 className="mobile-title">Practice with focused quizzes</h1>
         <p className="mobile-description">
-          Quiz metadata comes from the shared IntellectX catalog. Scoring and answer delivery remain behind the shared assessment contract.
+          Choose a knowledge check, answer at your pace, and review explanations when quiz execution is available.
         </p>
       </section>
 
@@ -29,15 +29,10 @@ export default function MobileQuizzesPage() {
                 </span>
               </div>
               <h2>{quiz.title}</h2>
-              <p>Shared catalog reference: {quiz.id}</p>
             </article>
           ))}
         </section>
       )}
-
-      <aside className="mobile-note">
-        This foundation intentionally excludes quiz answer keys and client-owned scoring logic. The backend assessment contract remains authoritative before native quiz execution is wired into the bundle.
-      </aside>
     </MobileShell>
   );
 }
