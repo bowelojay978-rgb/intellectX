@@ -29,7 +29,7 @@ export function AppLoadingSpinner({ className, label = "Loading", size = "sm", s
       data-testid="app-loading-spinner"
       className={cn("inline-flex flex-col items-center gap-3", className)}
     >
-      <div className={cn("relative animate-spin", sizeClassName[size])}>
+      <div className={cn("relative motion-safe:animate-spin motion-reduce:animate-none", sizeClassName[size])}>
         {Array.from({ length: segmentCount }).map((_, index) => (
           <span
             key={index}
