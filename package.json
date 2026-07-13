@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:mobile": "next dev mobile-client --turbopack",
     "build": "next build",
+    "build:mobile": "next build mobile-client",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
