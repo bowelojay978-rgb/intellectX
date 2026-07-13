@@ -68,7 +68,7 @@ function ConvexCourseSelectionSync() {
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
 
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
 
   useEffect(() => {
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
@@ -111,7 +111,7 @@ function ConvexCourseSelectionSync() {
             syncingRemoteToLocal.current = true;
             hydrateAuthenticatedCourseSelection(
               normalizedRemoteSelection,
-              hasPendingLocalLearnerMigrationSource(),
+              hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
             );
             window.setTimeout(() => {
               syncingRemoteToLocal.current = false;
@@ -135,7 +135,10 @@ function ConvexCourseSelectionSync() {
 
         if (identity.source === "authenticated-convex") {
           syncingRemoteToLocal.current = true;
-          hydrateAuthenticatedCourseSelection(null, hasPendingLocalLearnerMigrationSource());
+          hydrateAuthenticatedCourseSelection(
+            null,
+            hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
+          );
           window.setTimeout(() => {
             syncingRemoteToLocal.current = false;
           }, 0);
@@ -159,7 +162,7 @@ function ConvexCourseSelectionSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identity, upsertCourseSelection]);
+  }, [convex, identity, primaryEmailAddress, upsertCourseSelection]);
 
   useEffect(() => {
     function syncLocalSelectionToConvex() {
@@ -167,7 +170,10 @@ function ConvexCourseSelectionSync() {
         return;
       }
 
-      if (identity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
+      if (
+        identity.source === "authenticated-convex" &&
+        hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress })
+      ) {
         return;
       }
 
@@ -182,7 +188,7 @@ function ConvexCourseSelectionSync() {
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
     };
-  }, [identity, upsertCourseSelection]);
+  }, [identity, primaryEmailAddress, upsertCourseSelection]);
 
   return null;
 }
