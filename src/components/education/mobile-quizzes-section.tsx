@@ -3,13 +3,25 @@
 import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useLearnerCatalog } from "@/lib/learner-catalog-client";
+import { convexEnv } from "@/lib/education-data";
+import { buildLearnerCatalog, type LearnerCatalog, useLearnerCatalog } from "@/lib/learner-catalog-client";
 import { ArrowRightIcon, BookOpenCheckIcon } from "lucide-react";
 import Link from "next/link";
 
 export function MobileQuizzesSection() {
-  const catalog = useLearnerCatalog();
+  if (!convexEnv.isConfigured) {
+    return <MobileQuizzesContent catalog={buildLearnerCatalog()} />;
+  }
 
+  return <ConvexMobileQuizzesSection />;
+}
+
+function ConvexMobileQuizzesSection() {
+  const catalog = useLearnerCatalog();
+  return <MobileQuizzesContent catalog={catalog} />;
+}
+
+function MobileQuizzesContent({ catalog }: { catalog: LearnerCatalog }) {
   if (catalog.isLoading) {
     return (
       <div className="flex min-h-48 items-center justify-center">
