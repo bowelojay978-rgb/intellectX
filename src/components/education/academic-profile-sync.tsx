@@ -68,7 +68,7 @@ function ConvexAcademicProfileSync() {
   const remoteHydrated = useRef(false);
   const syncingRemoteToLocal = useRef(false);
 
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
 
   useEffect(() => {
     const isAuthenticated = Boolean(isLoaded && isSignedIn && userId);
@@ -111,7 +111,7 @@ function ConvexAcademicProfileSync() {
             syncingRemoteToLocal.current = true;
             hydrateAuthenticatedAcademicProfile(
               normalizedRemoteProfile,
-              hasPendingLocalLearnerMigrationSource(),
+              hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
             );
             window.setTimeout(() => {
               syncingRemoteToLocal.current = false;
@@ -135,7 +135,10 @@ function ConvexAcademicProfileSync() {
 
         if (identity.source === "authenticated-convex") {
           syncingRemoteToLocal.current = true;
-          hydrateAuthenticatedAcademicProfile(null, hasPendingLocalLearnerMigrationSource());
+          hydrateAuthenticatedAcademicProfile(
+            null,
+            hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress }),
+          );
           window.setTimeout(() => {
             syncingRemoteToLocal.current = false;
           }, 0);
@@ -159,7 +162,7 @@ function ConvexAcademicProfileSync() {
     return () => {
       cancelled = true;
     };
-  }, [convex, identity, upsertAcademicProfile]);
+  }, [convex, identity, primaryEmailAddress, upsertAcademicProfile]);
 
   useEffect(() => {
     function syncLocalProfileToConvex() {
@@ -167,7 +170,10 @@ function ConvexAcademicProfileSync() {
         return;
       }
 
-      if (identity.source === "authenticated-convex" && hasPendingLocalLearnerMigrationSource()) {
+      if (
+        identity.source === "authenticated-convex" &&
+        hasPendingLocalLearnerMigrationSource({ authenticatedEmail: primaryEmailAddress })
+      ) {
         return;
       }
 
@@ -191,7 +197,7 @@ function ConvexAcademicProfileSync() {
     return () => {
       window.removeEventListener(ACADEMIC_PROFILE_CHANGE_EVENT, syncLocalProfileToConvex);
     };
-  }, [clearRemoteAcademicProfile, identity, upsertAcademicProfile]);
+  }, [clearRemoteAcademicProfile, identity, primaryEmailAddress, upsertAcademicProfile]);
 
   return null;
 }
