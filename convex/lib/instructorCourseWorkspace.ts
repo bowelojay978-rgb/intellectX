@@ -61,6 +61,24 @@ function optionalText(value: string | undefined) {
   return normalized ? normalized : undefined;
 }
 
+function optionalHttpUrl(value: string | undefined, label: string) {
+  const normalized = optionalText(value);
+  if (!normalized) return undefined;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    throw new Error(`${label} must be a valid http or https URL.`);
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(`${label} must be a valid http or https URL.`);
+  }
+
+  return normalized;
+}
+
 function normalizeIdentifier(value: string, label: string) {
   const normalized = requiredText(value, label).toLowerCase();
 
@@ -109,8 +127,8 @@ export function normalizeInstructorCourseDraftInput(input: InstructorCourseDraft
     duration: lesson.duration.trim(),
     summary: lesson.summary.trim(),
     content: lesson.content.map((block) => block.trim()).filter(Boolean),
-    videoUrl: optionalText(lesson.videoUrl),
-    posterUrl: optionalText(lesson.posterUrl),
+    videoUrl: optionalHttpUrl(lesson.videoUrl, `Lesson ${index + 1} video URL`),
+    posterUrl: optionalHttpUrl(lesson.posterUrl, `Lesson ${index + 1} poster URL`),
     order: index,
   }));
 
