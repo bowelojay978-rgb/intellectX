@@ -3,7 +3,7 @@
 import { SignIn, SignUp, useAuth } from "@clerk/nextjs";
 import { CLERK_LOGIN_REDIRECT_URL, CLERK_SIGNUP_REDIRECT_URL } from "@/lib/auth-redirects";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheckIcon, SparklesIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 import { useEffect } from "react";
 import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { resolvePostLoginRouteFromClaims } from "@/lib/post-login-route";
@@ -27,17 +27,11 @@ const contentByMode = {
 } satisfies Record<ClerkAuthPanelProps["mode"], { eyebrow: string; title: string; description: string }>;
 
 const clerkAppearance = {
-  variables: {
-    borderRadius: "0.5rem",
-  },
   elements: {
     rootBox: "w-full",
     cardBox: "w-full shadow-none",
     card: "w-full gap-0 border-0 bg-transparent p-0 shadow-none",
     header: "hidden",
-    main: "gap-4",
-    form: "gap-4",
-    formFieldRow: "gap-2",
     socialButtonsBlockButton:
       "h-11 rounded-lg border border-input bg-background/80 text-sm shadow-none hover:bg-secondary/70",
     dividerLine: "bg-border",
@@ -47,7 +41,6 @@ const clerkAppearance = {
       "h-11 rounded-lg border border-input bg-background/80 px-4 text-sm shadow-none outline-none focus:border-primary/50 focus:ring-ring/40 focus:ring-[3px]",
     formButtonPrimary:
       "mt-2 h-11 w-full rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-none hover:bg-primary/90",
-    footer: "mt-5 border-t border-border/60 pt-5",
     footerAction: "text-muted-foreground text-sm",
     footerActionLink: "text-foreground font-medium underline underline-offset-4",
     identityPreview: "rounded-lg border border-border bg-background/80",
@@ -78,14 +71,7 @@ export function ClerkAuthPanel({ mode }: ClerkAuthPanelProps) {
           <CardDescription className="mt-3 leading-6">{content.description}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="border-primary/25 bg-primary/5 text-muted-foreground flex gap-3 rounded-lg border border-dashed px-4 py-3 text-sm leading-6">
-          <ShieldCheckIcon className="text-primary mt-0.5 size-4 shrink-0" />
-          <p>
-            Clerk securely verifies the account. IntellectX keeps the familiar access card and routes only trusted
-            staff claims to staff workspaces.
-          </p>
-        </div>
+      <CardContent>
         {!isLoaded || isSignedIn ? (
           <div className="flex min-h-56 items-center justify-center">
             <AppLoadingSpinner label="Checking your IntellectX session" showLabel />
