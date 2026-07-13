@@ -13,7 +13,7 @@ import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/q
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { CheckCircle2Icon, CircleIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type QuizSurface = "web" | "mobile";
 
@@ -101,6 +101,7 @@ type QuizPlayerCoreProps = {
 
 function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
   const initialTimeInSeconds = useMemo(() => parseEstimatedTimeInSeconds(quiz.estimatedTime), [quiz.estimatedTime]);
+  const completionRef = useRef(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -114,7 +115,8 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
 
   const completeQuiz = useCallback(
     (nextAnswers: number[], timedOut = false) => {
-      if (results || !hasQuestions) return;
+      if (completionRef.current || results || !hasQuestions) return;
+      completionRef.current = true;
 
       const finalAnswers = quiz.questions.map((_, index) => nextAnswers[index] ?? -1);
       const finalScore = finalAnswers.reduce(
@@ -135,6 +137,7 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
   );
 
   useEffect(() => {
+    completionRef.current = false;
     setCurrentIndex(0);
     setSelectedIndex(null);
     setSubmitted(false);
@@ -188,6 +191,7 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
   }
 
   function restartQuiz() {
+    completionRef.current = false;
     setCurrentIndex(0);
     setSelectedIndex(null);
     setSubmitted(false);
