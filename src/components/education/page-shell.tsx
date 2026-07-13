@@ -44,7 +44,7 @@ function ClerkPageShell({ children }: PageShellProps) {
   const pathname = usePathname();
   const guarded = isLearnerAppPath(pathname);
   const authenticatedAppPath = isAuthenticatedAppPath(pathname);
-  const { isLoaded, isSignedIn, userId } = useLearnerAuthRuntime();
+  const { isLoaded, isSignedIn, userId, primaryEmailAddress } = useLearnerAuthRuntime();
   const [preparedUserId, setPreparedUserId] = useState<string | null>(null);
   const canShowApp =
     !authenticatedAppPath || Boolean(isLoaded && isSignedIn && userId && preparedUserId === userId);
@@ -64,7 +64,9 @@ function ClerkPageShell({ children }: PageShellProps) {
     }
 
     const previousUserId = readActiveClerkLearnerUserId();
-    const hasMigrationSource = hasPendingLocalLearnerMigrationSource();
+    const hasMigrationSource = hasPendingLocalLearnerMigrationSource({
+      authenticatedEmail: primaryEmailAddress,
+    });
 
     if (
       shouldClearAuthenticatedLearnerLocalDataForTransition({
@@ -78,7 +80,7 @@ function ClerkPageShell({ children }: PageShellProps) {
 
     writeActiveClerkLearnerUserId(userId);
     setPreparedUserId(userId);
-  }, [isLoaded, isSignedIn, userId]);
+  }, [isLoaded, isSignedIn, primaryEmailAddress, userId]);
 
   useEffect(() => {
     if (guarded && isLoaded && !isSignedIn) {
@@ -93,6 +95,7 @@ function ClerkPageShell({ children }: PageShellProps) {
           isAuthLoaded={isLoaded}
           isSignedIn={isSignedIn}
           authenticatedUserId={userId}
+          authenticatedEmail={primaryEmailAddress}
         />
       ) : null}
       <PageShellFrame canShowApp={canShowApp}>{children}</PageShellFrame>
