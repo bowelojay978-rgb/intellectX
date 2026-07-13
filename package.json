@@ -15,7 +15,9 @@
     "convex:codegen": "convex codegen",
     "test:unit": "vitest run",
     "check:prod-env": "node scripts/check-production-env.mjs",
-    "check:prod-env:strict": "node scripts/check-production-env.mjs --strict"
+    "check:prod-env:strict": "node scripts/check-production-env.mjs --strict",
+    "check:mobile-release": "node scripts/check-mobile-release.mjs",
+    "check:mobile-release:strict": "node scripts/check-mobile-release.mjs --strict"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
