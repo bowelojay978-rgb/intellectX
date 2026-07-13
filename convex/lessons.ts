@@ -132,7 +132,7 @@ export const updateLessonProgress = mutationGeneric({
 
     const existing = await ctx.db
       .query("lessonProgress")
-      .withIndex("by_user_lesson", (q) => q.eq("userKey", userKey).eq("lessonId", args.lessonId))
+      .withIndex("by_user_lesson", (q: any) => q.eq("userKey", userKey).eq("lessonId", args.lessonId))
       .first();
     const normalized = normalizeLessonProgressWrite({
       requestedStatus: args.status,
