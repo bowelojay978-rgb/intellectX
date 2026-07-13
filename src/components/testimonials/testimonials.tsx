@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { TestimonialMarquee } from "@/components/testimonials/testimonial-marquee";
 
 export type Testimonial = {
   name: string;
@@ -10,53 +9,46 @@ export type Testimonial = {
   rating: number;
 };
 
-const testimonials = [
+const productPrinciples = [
   {
-    name: "Giana Herwitz",
-    date: "May 4",
-    title: "Revision finally clicked",
-    content: `"The lesson-to-quiz flow helped me stop rereading and start proving what I actually knew."`,
-    rating: 5,
+    title: "Learn with context",
+    content: "Keep instructor notes, lesson material, and video playlists attached to the lesson flow.",
   },
   {
-    name: "Hanna Gouse",
-    date: "May 4",
-    title: "Calmer exam prep",
-    content: `"My dashboard made the next study step obvious, which removed a lot of last-minute stress."`,
-    rating: 5,
+    title: "Test understanding",
+    content: "Use focused quiz questions, explanations after submission, and a final review when the quiz ends.",
   },
   {
-    name: "Kaiya Donin",
-    date: "May 4",
-    title: "Great for deep work",
-    content: `"The AI prompts feel like a patient tutor instead of another answer machine."`,
-    rating: 5,
+    title: "See honest progress",
+    content: "Track real lesson activity and quiz history without placeholder percentages or invented enrolment data.",
   },
   {
-    name: "Alex Bergwijn",
-    date: "May 4",
-    title: "Sharp progress view",
-    content: `"I can see what I studied, where I missed questions, and what to continue next."`,
-    rating: 5,
+    title: "Ask for focused help",
+    content: "AI support is designed to stay lesson-scoped and hint-first instead of becoming a generic answer machine.",
   },
-] satisfies Testimonial[];
+];
 
 export function Testimonials() {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-6 py-14 md:py-25">
+    <section className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-6 py-14 md:py-25">
       <Badge variant="secondary" className="mb-2 uppercase">
-        Testimonial
+        Study experience
       </Badge>
       <h2 className="text-center text-3xl leading-[1.1] font-medium tracking-tight sm:text-5xl">
-        Learners build<div className="text-muted-foreground">real momentum</div>
+        Built for<div className="text-muted-foreground">clearer next moves</div>
       </h2>
       <p className="mb-3 max-w-lg text-center leading-6 tracking-tight sm:text-xl lg:mb-8">
-        A premium study experience for people who want clarity, focus, and useful feedback after every session.
+        Every learner-facing surface is designed to reduce noise, keep feedback close to the work, and make the next
+        study action easier to see.
       </p>
-      <div className="relative w-[calc(100%+3rem)] overflow-x-hidden py-4 lg:w-full">
-        <TestimonialMarquee testimonials={testimonials} className="mb-4" />
-        <TestimonialMarquee testimonials={testimonials} reverse />
+      <div className="grid w-full gap-4 md:grid-cols-2">
+        {productPrinciples.map((principle) => (
+          <article key={principle.title} className="bg-card rounded-xl border p-7 shadow-sm md:p-8">
+            <h3 className="text-lg font-semibold">{principle.title}</h3>
+            <p className="text-muted-foreground mt-3 text-sm leading-6 md:text-base">{principle.content}</p>
+          </article>
+        ))}
       </div>
-    </div>
+    </section>
   );
 }

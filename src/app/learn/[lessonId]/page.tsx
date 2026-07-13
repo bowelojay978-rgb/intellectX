@@ -1,4 +1,3 @@
-import { elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { AiLessonTutorPanel } from "@/components/education/ai-lesson-tutor-panel";
 import { LessonBlockRenderer } from "@/components/education/lesson-block-renderer";
 import { LessonCompletionAction } from "@/components/education/lesson-completion-action";
@@ -8,7 +7,6 @@ import { SubjectMark } from "@/components/education/subject-mark";
 import { VideoPlayer } from "@/components/education/video-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getLesson, lessons } from "@/data/lessons";
 import { getLearnerLessonDetail } from "@/lib/learner-catalog";
 import { ArrowRightIcon, ClockIcon, FileQuestionIcon } from "lucide-react";
@@ -77,14 +75,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
                 playlist={detail.lessons}
               />
             </div>
-            <Card id="lesson-flashcards" className={`scroll-mt-28 rounded-lg ${elevatedGlassCardClassName}`}>
-              <CardContent className="space-y-6 py-8 text-base leading-8 md:text-lg">
+            <section id="lesson-flashcards" aria-label="Lesson notes" className="scroll-mt-28 py-2">
+              <div className="space-y-6 text-base leading-8 md:text-lg">
                 {lesson.content.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
                 {lesson.blocks && <LessonBlockRenderer blocks={lesson.blocks} />}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
             <AiLessonTutorPanel lesson={lesson} />
           </div>
         </section>

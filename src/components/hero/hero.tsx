@@ -4,7 +4,7 @@ import { LearnerEntryLink } from "@/components/auth/learner-entry-link";
 import { Nav } from "@/components/hero/nav";
 import { BackgroundBlur } from "@/components/ui/background-blur";
 import { Button } from "@/components/ui/button";
-import { Pill, PillAvatar, PillAvatarGroup } from "@/components/ui/pill";
+import { Pill } from "@/components/ui/pill";
 import { useLearnerAccessState } from "@/lib/use-learner-access-state";
 import Link from "next/link";
 
@@ -18,18 +18,8 @@ export function Hero() {
       <Nav />
       <div className="flex flex-col items-center gap-6">
         <Pill>
-          <PillAvatarGroup className="hidden sm:flex">
-            <PillAvatar src="/avatars/1.jpg" />
-            <PillAvatar src="/avatars/2.jpg" />
-            <PillAvatar src="/avatars/3.jpg" />
-            <PillAvatar src="/avatars/4.jpg" />
-          </PillAvatarGroup>
-          <p className="text-muted-foreground px-2 text-xs font-medium sm:border-l-1 sm:text-sm">
-            {authenticated ? (
-              <>Your learning workspace is ready</>
-            ) : (
-              <>Join <span className="text-foreground">42,000</span> learners building sharper study habits</>
-            )}
+          <p className="text-muted-foreground px-2 text-xs font-medium sm:text-sm">
+            {authenticated ? "Your learning workspace is ready" : "Built for focused study habits and clearer next steps"}
           </p>
         </Pill>
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { elevatedGlassCardClassName } from "@/components/education/glass-card";
 import { ProgressBar } from "@/components/education/progress-bar";
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Quiz } from "@/data/quizzes";
@@ -13,7 +13,7 @@ import { saveQuizAttemptHistoryItem, type QuizAttemptHistoryItem } from "@/lib/q
 import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { CheckCircle2Icon, CircleIcon, RotateCcwIcon, XCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type QuizSurface = "web" | "mobile";
 
@@ -107,10 +107,23 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
   const [answers, setAnswers] = useState<number[]>([]);
   const [results, setResults] = useState<QuizResults | null>(null);
   const [timeLeft, setTimeLeft] = useState(initialTimeInSeconds);
+  const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const resultsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const choiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const shouldFocusQuestionRef = useRef(false);
   const hasQuestions = quiz.questions.length > 0;
   const question = quiz.questions[currentIndex];
   const isCorrect = Boolean(question && submitted && selectedIndex === question.answerIndex);
   const progress = hasQuestions ? ((currentIndex + (results ? 1 : 0)) / quiz.questions.length) * 100 : 0;
+  const questionHeadingId = question ? `quiz-${quiz.id}-question-${question.id}` : undefined;
+  const timerAnnouncement =
+    surface === "web"
+      ? timeLeft === 60
+        ? "One minute remaining"
+        : timeLeft === 10
+          ? "Ten seconds remaining"
+          : ""
+      : "";
 
   const completeQuiz = useCallback(
     (nextAnswers: number[], timedOut = false) => {
@@ -141,6 +154,7 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
     setAnswers([]);
     setResults(null);
     setTimeLeft(initialTimeInSeconds);
+    shouldFocusQuestionRef.current = false;
   }, [initialTimeInSeconds, quiz.id]);
 
   useEffect(() => {
@@ -165,6 +179,21 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
     completeQuiz(timedAnswers, true);
   }, [answers, completeQuiz, currentIndex, hasQuestions, results, selectedIndex, submitted, timeLeft]);
 
+  useEffect(() => {
+    if (surface !== "web" || results || !shouldFocusQuestionRef.current) return;
+
+    shouldFocusQuestionRef.current = false;
+    const frame = window.requestAnimationFrame(() => questionHeadingRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentIndex, results, surface]);
+
+  useEffect(() => {
+    if (surface !== "web" || !results) return;
+
+    const frame = window.requestAnimationFrame(() => resultsHeadingRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [results, surface]);
+
   function submitAnswer() {
     if (selectedIndex === null) return;
     setSubmitted(true);
@@ -182,18 +211,47 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
       return;
     }
 
+    if (surface === "web") {
+      shouldFocusQuestionRef.current = true;
+    }
     setCurrentIndex((value) => value + 1);
     setSelectedIndex(null);
     setSubmitted(false);
   }
 
   function restartQuiz() {
+    if (surface === "web") {
+      shouldFocusQuestionRef.current = true;
+    }
     setCurrentIndex(0);
     setSelectedIndex(null);
     setSubmitted(false);
     setAnswers([]);
     setResults(null);
     setTimeLeft(initialTimeInSeconds);
+  }
+
+  function selectChoice(index: number) {
+    if (!submitted) setSelectedIndex(index);
+  }
+
+  function handleChoiceKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (surface !== "web" || submitted || !question) return;
+
+    const lastIndex = question.choices.length - 1;
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = index === lastIndex ? 0 : index + 1;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = index === 0 ? lastIndex : index - 1;
+    }
+
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    setSelectedIndex(nextIndex);
+    window.requestAnimationFrame(() => choiceRefs.current[nextIndex]?.focus());
   }
 
   if (!question) {
@@ -219,7 +277,9 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
       <Card className={`rounded-lg ${elevatedGlassCardClassName}`}>
         <CardHeader>
           <p className="text-muted-foreground text-sm">Final results</p>
-          <CardTitle className="text-3xl tracking-tight">{percent}% score</CardTitle>
+          <h2 ref={resultsHeadingRef} tabIndex={-1} className="text-3xl font-semibold tracking-tight outline-none">
+            {percent}% score
+          </h2>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground leading-6">
@@ -271,32 +331,59 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
               Question {currentIndex + 1} of {quiz.questions.length}
             </span>
             <span
-              aria-live="polite"
+              {...(surface === "mobile" ? { "aria-live": "polite" as const } : {})}
               className={cn("shrink-0 font-medium", timeLeft <= 60 && "text-destructive")}
             >
               Time left: {formatQuizTime(timeLeft)}
             </span>
+            {surface === "web" ? (
+              <span className="sr-only" aria-live="polite" aria-atomic="true">
+                {timerAnnouncement}
+              </span>
+            ) : null}
           </div>
           <ProgressBar value={progress} />
         </div>
-        <CardTitle className="text-2xl tracking-tight">{question.prompt}</CardTitle>
+        <h2
+          id={questionHeadingId}
+          ref={questionHeadingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-tight outline-none"
+        >
+          {question.prompt}
+        </h2>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid gap-3">
+        <div
+          className="grid gap-3"
+          {...(surface === "web" ? { role: "radiogroup", "aria-labelledby": questionHeadingId } : {})}
+        >
           {question.choices.map((choice, index) => {
             const selected = selectedIndex === index;
             const correct = submitted && index === question.answerIndex;
             const incorrect = submitted && selected && index !== question.answerIndex;
+            const webRadioProps =
+              surface === "web"
+                ? {
+                    role: "radio" as const,
+                    "aria-checked": selected,
+                    "aria-disabled": submitted || undefined,
+                    tabIndex: selectedIndex === null ? (index === 0 ? 0 : -1) : selected ? 0 : -1,
+                  }
+                : {};
 
             return (
               <button
                 key={choice}
-                type="button"
-                onClick={() => {
-                  if (!submitted) setSelectedIndex(index);
+                ref={(element) => {
+                  choiceRefs.current[index] = element;
                 }}
+                type="button"
+                onClick={() => selectChoice(index)}
+                onKeyDown={(event) => handleChoiceKeyDown(event, index)}
+                {...webRadioProps}
                 className={cn(
-                  "flex min-h-14 w-full touch-manipulation items-center gap-3 rounded-lg border bg-white/70 px-4 py-3 text-left text-sm transition-colors dark:bg-card/70",
+                  "flex min-h-14 w-full touch-manipulation items-center gap-3 rounded-lg border bg-white/70 px-4 py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-card/70",
                   selected && "border-primary bg-secondary/70",
                   correct && "border-success bg-success/10",
                   incorrect && "border-destructive bg-destructive/10",
