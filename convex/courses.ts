@@ -1,4 +1,4 @@
-import { mutationGeneric, queryGeneric } from "convex/server";
+﻿import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import {
   filterLearnerVisibleCourseRecords,
@@ -350,7 +350,7 @@ export const getInstructorCourseDraft = queryGeneric({
     const lessons = await listCourseLessons(ctx, course.stableId);
     const quizzes = await listCourseQuizzes(ctx, course.stableId);
     const quizzesWithQuestions = await Promise.all(
-      quizzes.map(async (quiz) => ({
+      quizzes.map(async (quiz: any) => ({
         ...quiz,
         questions: await listQuizQuestions(ctx, quiz.stableId),
       })),
@@ -684,3 +684,4 @@ export const archiveCourse = mutationGeneric({
     return course._id;
   },
 });
+

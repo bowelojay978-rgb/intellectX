@@ -1,10 +1,10 @@
-import { AdminInstructorsWorkspace } from "@/components/admin/admin-instructors-workspace";
+﻿import { AdminInstructorsWorkspace } from "@/components/admin/admin-instructors-workspace";
 import { AdminWorkspaceNav } from "@/components/admin/admin-workspace-nav";
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getAdminClerkSession, listAdminManagedUsers } from "@/lib/server-staff-auth";
+import { getAdminClerkSession, listAdminManagedUsers, type AdminManagedUser } from "@/lib/server-staff-auth";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default async function AdminInstructorsPage() {
   const session = await getAdminClerkSession();
-  let users = [];
+  let users: AdminManagedUser[] = [];
   let loadError: string | null = null;
 
   if (session) {
@@ -54,3 +54,4 @@ export default async function AdminInstructorsPage() {
     </StaffRouteGuard>
   );
 }
+
