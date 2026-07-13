@@ -77,7 +77,8 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
     setNotice(null);
 
     try {
-      const uploadUrl = await generateUploadUrl({});
+      // Server-side editability and ownership checks happen before any bytes are uploaded.
+      const uploadUrl = await generateUploadUrl({ courseStableId });
       const response = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": file.type || "application/octet-stream" },
