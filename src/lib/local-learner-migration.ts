@@ -17,7 +17,16 @@ export type LocalLearnerMigrationSource = {
 type ResolveLocalLearnerMigrationSourceArgs = {
   localIdentity: Pick<LearnerIdentity, "userKey"> | null | undefined;
   authMode: AuthEnvironmentMode;
+  authenticatedEmail?: string | null;
 };
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function getLocalLearnerEmailFromUserKey(userKey: string) {
+  return normalizeEmail(userKey.slice("learner:".length));
+}
 
 export function isLocalLearnerMigrationSourceUserKey(userKey: string | null | undefined) {
   const trimmedUserKey = userKey?.trim();
@@ -32,6 +41,7 @@ export function getLocalLearnerMigrationMarkerKey(authMode: AuthEnvironmentMode,
 export function resolveLocalLearnerMigrationSource({
   localIdentity,
   authMode,
+  authenticatedEmail,
 }: ResolveLocalLearnerMigrationSourceArgs): LocalLearnerMigrationSource | null {
   const sourceUserKey = localIdentity?.userKey?.trim();
 
@@ -41,6 +51,14 @@ export function resolveLocalLearnerMigrationSource({
 
   if (sourceUserKey.startsWith("auth:") || !isLocalLearnerMigrationSourceUserKey(sourceUserKey)) {
     return null;
+  }
+
+  if (authenticatedEmail !== undefined) {
+    const normalizedAuthenticatedEmail = normalizeEmail(authenticatedEmail ?? "");
+
+    if (!normalizedAuthenticatedEmail || getLocalLearnerEmailFromUserKey(sourceUserKey) !== normalizedAuthenticatedEmail) {
+      return null;
+    }
   }
 
   return {

@@ -19,6 +19,10 @@ export type AuthenticatedLearnerTransition = {
   hasMigrationSource: boolean;
 };
 
+type PendingMigrationSourceOptions = {
+  authenticatedEmail: string | null;
+};
+
 export function shouldClearAuthenticatedLearnerLocalDataForTransition({
   previousUserId,
   nextUserId,
@@ -27,11 +31,12 @@ export function shouldClearAuthenticatedLearnerLocalDataForTransition({
   return Boolean(nextUserId && previousUserId !== nextUserId && !hasMigrationSource);
 }
 
-export function hasPendingLocalLearnerMigrationSource() {
+export function hasPendingLocalLearnerMigrationSource(options?: PendingMigrationSourceOptions) {
   const authEnvironment = getAuthEnvironmentStatus();
   const migrationSource = resolveLocalLearnerMigrationSource({
     localIdentity: getCurrentLearnerIdentity(),
     authMode: authEnvironment.mode,
+    ...(options ? { authenticatedEmail: options.authenticatedEmail } : {}),
   });
 
   return Boolean(migrationSource && !hasCompletedLocalLearnerMigration(migrationSource.markerKey));
