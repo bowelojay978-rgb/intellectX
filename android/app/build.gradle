@@ -1,11 +1,40 @@
 apply plugin: 'com.android.application'
 
-def appVersionCode = (project.findProperty('APP_VERSION_CODE') ?: '1').toInteger()
-def appVersionName = project.findProperty('APP_VERSION_NAME') ?: '1.0.0'
+def appVersionCode = (project.findProperty('APP_VERSION_CODE') ?: System.getenv('APP_VERSION_CODE') ?: '1').toInteger()
+def appVersionName = project.findProperty('APP_VERSION_NAME') ?: System.getenv('APP_VERSION_NAME') ?: '1.0.0'
+
+def releaseKeystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
+def releaseKeystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+def releaseSigningValues = [
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+]
+def hasAnyReleaseSigningCredential = releaseSigningValues.any { value -> value != null && !value.trim().isEmpty() }
+def hasAllReleaseSigningCredentials = releaseSigningValues.every { value -> value != null && !value.trim().isEmpty() }
+
+if (hasAnyReleaseSigningCredential && !hasAllReleaseSigningCredentials) {
+    throw new GradleException('Android release signing is partially configured. Provide all ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD values or none of them.')
+}
 
 android {
     namespace = "com.intellectx.app"
     compileSdk = rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        if (hasAllReleaseSigningCredentials) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     defaultConfig {
         applicationId "com.intellectx.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -21,6 +50,9 @@ android {
     }
     buildTypes {
         release {
+            if (hasAllReleaseSigningCredentials) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
