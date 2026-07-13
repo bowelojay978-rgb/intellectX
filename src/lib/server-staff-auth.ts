@@ -16,16 +16,20 @@ function normalizeRole(value: unknown): AdminManagedUser["role"] {
   return role === "instructor" || role === "admin" ? role : "learner";
 }
 
-function readUserRole(user: { publicMetadata?: Record<string, unknown> }) {
+export function readAdminManagedUserRole(user: { publicMetadata?: Record<string, unknown> }) {
   const publicMetadata = user.publicMetadata ?? {};
   const nestedStaff = publicMetadata.staff;
+  const roleCandidates: AdminManagedUser["role"][] = [normalizeRole(publicMetadata.role)];
 
   if (nestedStaff && typeof nestedStaff === "object" && !Array.isArray(nestedStaff)) {
-    const nestedRole = (nestedStaff as Record<string, unknown>).role;
-    if (typeof nestedRole === "string") return normalizeRole(nestedRole);
+    roleCandidates.push(normalizeRole((nestedStaff as Record<string, unknown>).role));
   }
 
-  return normalizeRole(publicMetadata.role);
+  // Fail safe when recognized metadata shapes disagree: never hide or downgrade an
+  // admin marker just because another supported field contains a weaker role.
+  if (roleCandidates.includes("admin")) return "admin";
+  if (roleCandidates.includes("instructor")) return "instructor";
+  return "learner";
 }
 
 export async function getAdminClerkSession() {
@@ -63,7 +67,7 @@ export async function listAdminManagedUsers(): Promise<AdminManagedUser[]> {
       user.primaryEmailAddress?.emailAddress ||
       "Unnamed user",
     email: user.primaryEmailAddress?.emailAddress ?? "No primary email",
-    role: readUserRole(user),
+    role: readAdminManagedUserRole(user),
     createdAt: user.createdAt,
     lastSignInAt: user.lastSignInAt ?? null,
   }));
