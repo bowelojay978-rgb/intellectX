@@ -1,13 +1,14 @@
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
 import { InstructorCourseBuilder } from "@/components/instructor/instructor-course-builder";
+import { InstructorLessonMediaManager } from "@/components/instructor/instructor-lesson-media-manager";
 import { InstructorWorkspaceNav } from "@/components/instructor/instructor-workspace-nav";
 import { Badge } from "@/components/ui/badge";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Course Builder - IntellectX",
-  description: "Create and edit authenticated instructor course drafts, lessons, quizzes, and questions.",
+  description: "Create and edit authenticated instructor course drafts, lessons, quizzes, questions, and lesson media.",
 };
 
 type InstructorCourseBuilderPageProps = {
@@ -29,10 +30,13 @@ export default async function InstructorNewCoursePage({ searchParams }: Instruct
             {edit ? "Continue building your course" : "Build a new learning path"}
           </h1>
           <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
-            Course details, lessons, quizzes, questions, draft persistence, workflow state, and review submission are backed by authenticated Convex operations.
+            Course details, lessons, quizzes, questions, authenticated file uploads, draft persistence, workflow state, and review submission are backed by server-authorized Convex operations.
           </p>
         </section>
-        <InstructorCourseBuilder editStableId={edit} />
+        <div className="space-y-6">
+          <InstructorCourseBuilder editStableId={edit} />
+          {edit ? <InstructorLessonMediaManager courseStableId={edit} /> : null}
+        </div>
       </PageShell>
     </StaffRouteGuard>
   );
