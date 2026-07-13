@@ -1,4 +1,4 @@
-﻿import { mutationGeneric, queryGeneric } from "convex/server";
+import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import { isLearnerVisibleCourseRecord, learnerCourseVisibilityOptions } from "./lib/courseWorkflow";
 import { resolveLearnerUserKey } from "./lib/identity";
@@ -147,6 +147,8 @@ export const getQuizAttempts = queryGeneric({
       }
     }
 
-    return visibleAttempts.sort((left, right) => right.completedAt - left.completedAt).slice(0, 20);
+    // Hydration and streak calculation depend on complete visible history.
+    // Recent-attempt UI limits its own display independently.
+    return visibleAttempts.sort((left, right) => right.completedAt - left.completedAt);
   },
 });

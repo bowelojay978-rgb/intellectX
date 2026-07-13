@@ -92,6 +92,7 @@ function ConvexLessonProgressHistorySync() {
 
     let cancelled = false;
     const identityArgs = getIdentityArgs(identity);
+    const remoteRequestedAt = Date.now();
 
     convex
       .query(convexApi.progress.getProgressSummary, identityArgs)
@@ -111,7 +112,11 @@ function ConvexLessonProgressHistorySync() {
           .filter((item): item is LessonProgressHistoryItem => Boolean(item));
 
         if (identity.source === "authenticated-convex") {
-          hydrateAuthenticatedLessonProgressHistory(items, hasPendingLocalLearnerMigrationSource());
+          hydrateAuthenticatedLessonProgressHistory(
+            items,
+            hasPendingLocalLearnerMigrationSource(),
+            remoteRequestedAt,
+          );
           return;
         }
 

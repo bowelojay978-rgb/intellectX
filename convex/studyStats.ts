@@ -1,6 +1,16 @@
 import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 import { resolveLearnerUserKey } from "./lib/identity";
+import { mergeStudyStatsSnapshot } from "./lib/studyStats";
+
+async function getCurrentStudyStatsRecords(ctx: any, userKey: string) {
+  const records = await ctx.db
+    .query("studyStats")
+    .withIndex("by_user", (q: any) => q.eq("userKey", userKey))
+    .collect();
+
+  return records.sort((left: any, right: any) => right.updatedAt - left.updatedAt);
+}
 
 export const updateStudyStats = mutationGeneric({
   args: {
@@ -12,17 +22,26 @@ export const updateStudyStats = mutationGeneric({
   },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
-    const existing = await ctx.db
-      .query("studyStats")
-      .withIndex("by_user", (q) => q.eq("userKey", userKey))
-      .first();
-
+    const [existing, ...duplicates] = await getCurrentStudyStatsRecords(ctx, userKey);
+    const mergedStats = mergeStudyStatsSnapshot(
+      existing
+        ? {
+            currentStreak: existing.currentStreak,
+            longestStreak: existing.longestStreak,
+            weeklyActiveDays: existing.weeklyActiveDays,
+            lastStudiedDate: existing.lastStudiedDate,
+          }
+        : null,
+      {
+        currentStreak: args.currentStreak,
+        longestStreak: args.longestStreak,
+        weeklyActiveDays: args.weeklyActiveDays,
+        lastStudiedDate: args.lastStudiedDate,
+      },
+    );
     const nextStats = {
       userKey,
-      currentStreak: Math.max(0, args.currentStreak),
-      longestStreak: Math.max(existing?.longestStreak ?? 0, args.longestStreak, args.currentStreak),
-      weeklyActiveDays: args.weeklyActiveDays,
-      lastStudiedDate: args.lastStudiedDate,
+      ...mergedStats,
       updatedAt: Date.now(),
     };
 
@@ -31,6 +50,7 @@ export const updateStudyStats = mutationGeneric({
     }
 
     await ctx.db.patch(existing._id, nextStats);
+    await Promise.all(duplicates.map((record: any) => ctx.db.delete(record._id)));
 
     return existing._id;
   },
@@ -44,28 +64,35 @@ export const updateStudyStreak = mutationGeneric({
   },
   handler: async (ctx, args) => {
     const { userKey } = await resolveLearnerUserKey(ctx, args);
-    const existing = await ctx.db
-      .query("studyStats")
-      .withIndex("by_user", (q) => q.eq("userKey", userKey))
-      .first();
-
-    if (!existing) {
-      return await ctx.db.insert("studyStats", {
-        userKey,
+    const [existing, ...duplicates] = await getCurrentStudyStatsRecords(ctx, userKey);
+    const mergedStats = mergeStudyStatsSnapshot(
+      existing
+        ? {
+            currentStreak: existing.currentStreak,
+            longestStreak: existing.longestStreak,
+            weeklyActiveDays: existing.weeklyActiveDays,
+            lastStudiedDate: existing.lastStudiedDate,
+          }
+        : null,
+      {
         currentStreak: args.currentStreak,
         longestStreak: args.currentStreak,
-        weeklyActiveDays: [],
+        weeklyActiveDays: existing?.weeklyActiveDays ?? [],
         lastStudiedDate: args.lastStudiedDate,
-        updatedAt: Date.now(),
-      });
+      },
+    );
+    const nextStats = {
+      userKey,
+      ...mergedStats,
+      updatedAt: Date.now(),
+    };
+
+    if (!existing) {
+      return await ctx.db.insert("studyStats", nextStats);
     }
 
-    await ctx.db.patch(existing._id, {
-      currentStreak: args.currentStreak,
-      longestStreak: Math.max(existing.longestStreak, args.currentStreak),
-      lastStudiedDate: args.lastStudiedDate,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(existing._id, nextStats);
+    await Promise.all(duplicates.map((record: any) => ctx.db.delete(record._id)));
 
     return existing._id;
   },
