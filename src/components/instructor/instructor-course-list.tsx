@@ -128,6 +128,7 @@ function ConvexInstructorCourseList() {
             const status = resolveInstructorCourseStatus(course);
             const editable = isInstructorCourseEditable(course);
             const previewAvailable = isInstructorLearnerPreviewAvailable(course);
+            const builderHref = `/instructor/courses/new?edit=${encodeURIComponent(course.stableId)}${editable ? "" : "&readonly=1"}`;
 
             return (
               <Card key={course.stableId} className={`rounded-lg ${glassCardClassName} ${clickableGlassCardClassName}`}>
@@ -168,7 +169,7 @@ function ConvexInstructorCourseList() {
 
                 <CardFooter className="flex flex-wrap gap-2">
                   <Button size="sm" asChild>
-                    <Link href={`/instructor/courses/new?edit=${encodeURIComponent(course.stableId)}`}>
+                    <Link href={builderHref}>
                       <PencilIcon className="size-4" />
                       {editable ? "Edit" : "View"}
                     </Link>
