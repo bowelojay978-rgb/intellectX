@@ -1,0 +1,333 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light dark;
+  --background: #f7f8fc;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: #ffffff;
+  --text: #111827;
+  --muted: #667085;
+  --border: rgba(15, 23, 42, 0.1);
+  --primary: #3157d5;
+  --primary-contrast: #ffffff;
+  --secondary: #eef2ff;
+  --success: #067647;
+  --danger: #b42318;
+  --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1020;
+    --surface: rgba(17, 24, 39, 0.9);
+    --surface-strong: #111827;
+    --text: #f8fafc;
+    --muted: #a5b4cc;
+    --border: rgba(255, 255, 255, 0.1);
+    --primary: #7c9cff;
+    --primary-contrast: #081128;
+    --secondary: #182342;
+    --success: #6ce9a6;
+    --danger: #fda29b;
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  }
+}
+
+html {
+  background: var(--background);
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+.mobile-app {
+  min-height: 100dvh;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));
+}
+
+.mobile-header {
+  position: sticky;
+  top: calc(8px + env(safe-area-inset-top));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100%, 448px);
+  min-height: 52px;
+  margin: 0 auto 20px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-brand {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.mobile-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mobile-main {
+  width: min(100%, 448px);
+  margin: 0 auto;
+}
+
+.mobile-hero {
+  margin-bottom: 24px;
+}
+
+.mobile-eyebrow {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mobile-title {
+  margin: 0;
+  font-size: clamp(30px, 9vw, 40px);
+  line-height: 1.06;
+  letter-spacing: -0.045em;
+}
+
+.mobile-description {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.mobile-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.mobile-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-card h2,
+.mobile-card h3 {
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.mobile-card h2 {
+  font-size: 21px;
+}
+
+.mobile-card h3 {
+  font-size: 18px;
+}
+
+.mobile-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.mobile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.mobile-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mobile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  cursor: pointer;
+  font-weight: 750;
+  touch-action: manipulation;
+}
+
+.mobile-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mobile-button-secondary {
+  background: var(--secondary);
+  color: var(--text);
+}
+
+.mobile-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 30;
+  padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 -18px 40px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-nav-inner {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: min(100%, 448px);
+  margin: 0 auto;
+}
+
+.mobile-nav-link {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.mobile-nav-link[aria-current="page"] {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.mobile-offline {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #f5c451;
+  border-radius: 14px;
+  background: #fff7db;
+  color: #6f4f00;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-offline {
+    border-color: rgba(245, 196, 81, 0.45);
+    background: rgba(111, 79, 0, 0.32);
+    color: #ffe28a;
+  }
+}
+
+.flashcard-stage {
+  min-height: 330px;
+}
+
+.flashcard-cue {
+  margin: 24px 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--secondary);
+  text-align: center;
+  font-weight: 700;
+}
+
+.flashcard-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.flashcard-reveal {
+  grid-column: 1 / -1;
+}
+
+.mobile-empty {
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.mobile-note {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--secondary);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .mobile-app {
+    padding-inline: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-card,
+  .mobile-nav-link,
+  .mobile-button {
+    transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+  }
+
+  .mobile-button:active,
+  .mobile-nav-link:active {
+    transform: scale(0.98);
+  }
+}
