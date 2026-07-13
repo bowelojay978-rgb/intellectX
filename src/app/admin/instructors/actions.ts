@@ -1,6 +1,10 @@
 "use server";
 
-import { getAdminClerkSession } from "@/lib/server-staff-auth";
+import {
+  buildPublicMetadataWithStaffRole,
+  getAdminClerkSession,
+  readUserRole,
+} from "@/lib/server-staff-auth";
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
@@ -27,17 +31,14 @@ export async function setInstructorAccessAction(formData: FormData) {
 
   const client = await clerkClient();
   const targetUser = await client.users.getUser(userId);
-  const currentRole = String(targetUser.publicMetadata?.role ?? "learner").trim().toLowerCase();
+  const currentRole = readUserRole(targetUser);
 
   if (currentRole === "admin") {
     throw new Error("Admin roles cannot be changed from the instructor-management page.");
   }
 
   await client.users.updateUserMetadata(userId, {
-    publicMetadata: {
-      ...targetUser.publicMetadata,
-      role: nextRole,
-    },
+    publicMetadata: buildPublicMetadataWithStaffRole(targetUser.publicMetadata, nextRole),
   });
 
   revalidatePath("/admin/instructors");
