@@ -1,7 +1,10 @@
 ﻿import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { prepareLearnerDataMigration } from "./lib/migrateLearnerData";
+import {
+  prepareLearnerDataMigration,
+  selectMonotonicLessonProgressForMigration,
+} from "./lib/migrateLearnerData";
 
 type MigrationSummary = {
   sourceUserKey: string;
@@ -149,21 +152,21 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
     const lessonIds = new Set([...sourceLessonProgress, ...destinationLessonProgress].map((progress) => progress.lessonId));
 
     for (const lessonId of lessonIds) {
-      const latestProgress = latestByUpdatedAt(
+      const mergedProgress = selectMonotonicLessonProgressForMigration(
         [...sourceLessonProgress, ...destinationLessonProgress].filter((progress) => progress.lessonId === lessonId),
       );
       const destinationProgress = destinationLessonProgress.find((progress) => progress.lessonId === lessonId);
 
-      if (!latestProgress || latestProgress.userKey === destinationUserKey) {
+      if (!mergedProgress || mergedProgress.userKey === destinationUserKey) {
         continue;
       }
 
       const nextProgress = {
         userKey: destinationUserKey,
-        lessonId: latestProgress.lessonId,
-        status: latestProgress.status,
-        progress: latestProgress.progress,
-        updatedAt: latestProgress.updatedAt,
+        lessonId: mergedProgress.lessonId,
+        status: mergedProgress.status,
+        progress: mergedProgress.progress,
+        updatedAt: mergedProgress.updatedAt,
       };
 
       if (destinationProgress) {
