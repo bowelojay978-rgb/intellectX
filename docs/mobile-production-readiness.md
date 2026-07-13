@@ -62,6 +62,28 @@ A successful merge does not by itself make the native app store-release-ready. F
 
 The local `errorPath` improves failure behavior but does not remove that architectural dependency.
 
+## Deep audit phase 1
+
+The production-native delivery decision is now documented in `docs/architecture/mobile-native-delivery.md`.
+
+Accepted target architecture:
+
+- Keep the full Next.js web application as its own web deployment.
+- Build a dedicated bundled mobile client for the approved Quizzes + Flashcards native scope.
+- Reuse shared learner, catalog, entitlement, auth, quiz, and flashcard domain rules instead of duplicating them.
+- Remove remote `server.url` from the eventual production release configuration.
+- Keep any remote development loading explicit and development-only.
+- Add a release check that rejects accidental production `server.url` reintroduction.
+
+A direct whole-application Next.js static export is not considered a safe drop-in migration because the current application uses server-dependent behavior, including configured response headers and live Convex-backed learner content resolution.
+
+Additional confirmed audit findings:
+
+- The GitHub Actions workflow omitted the existing unit test suite; the audit branch adds `npm run test:unit` to CI.
+- Android release minification is currently disabled and requires build validation before changing.
+- Android application backup is enabled; backup contents must be audited before deciding whether to disable backup or define explicit exclusion rules.
+- iOS release readiness is not yet established.
+
 ## Merge policy
 
 Merge only after explicit approval, latest-main alignment, successful preview validation, and no known unresolved branch-introduced blocking defect. Native store-release approval remains a separate gate.
