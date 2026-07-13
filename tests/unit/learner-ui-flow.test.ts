@@ -26,6 +26,20 @@ describe("learner UI flow contracts", () => {
     expect(source).toContain("ShieldCheckIcon");
   });
 
+  it("prevents signed-in Clerk sessions from entering the SignIn redirect loop", () => {
+    const continuePage = readSource("src/app/auth/continue/page.tsx");
+    const continuation = readSource("src/components/auth/clerk-session-continuation.tsx");
+    const authPanel = readSource("src/components/auth/clerk-auth-panel.tsx");
+
+    expect(continuePage).toContain("ClerkSessionContinuation");
+    expect(continuePage).not.toContain("@clerk/nextjs/server");
+    expect(continuePage).toContain("isClerkAuthEnabled");
+    expect(continuation).toContain("useAuth()");
+    expect(continuation).toContain("window.location.replace(destination)");
+    expect(authPanel).toContain("!isLoaded || isSignedIn");
+    expect(authPanel.indexOf("!isLoaded || isSignedIn")).toBeLessThan(authPanel.indexOf("<SignIn"));
+  });
+
   it("provides a full lesson player control set and side playlist", () => {
     const source = readSource("src/components/education/video-player.tsx");
 

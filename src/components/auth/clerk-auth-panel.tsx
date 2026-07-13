@@ -1,7 +1,12 @@
-import { SignIn, SignUp } from "@clerk/nextjs";
+"use client";
+
+import { SignIn, SignUp, useAuth } from "@clerk/nextjs";
 import { CLERK_LOGIN_REDIRECT_URL, CLERK_SIGNUP_REDIRECT_URL } from "@/lib/auth-redirects";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheckIcon, SparklesIcon } from "lucide-react";
+import { useEffect } from "react";
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
+import { resolvePostLoginRouteFromClaims } from "@/lib/post-login-route";
 
 type ClerkAuthPanelProps = {
   mode: "login" | "signup";
@@ -51,6 +56,13 @@ const clerkAppearance = {
 
 export function ClerkAuthPanel({ mode }: ClerkAuthPanelProps) {
   const content = contentByMode[mode];
+  const { isLoaded, isSignedIn, sessionClaims } = useAuth();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      window.location.replace(resolvePostLoginRouteFromClaims(sessionClaims));
+    }
+  }, [isLoaded, isSignedIn, sessionClaims]);
 
   return (
     <Card className="border-white/70 bg-white/85 shadow-3xl backdrop-blur dark:border-white/10 dark:bg-card/85">
@@ -74,7 +86,11 @@ export function ClerkAuthPanel({ mode }: ClerkAuthPanelProps) {
             staff claims to staff workspaces.
           </p>
         </div>
-        {mode === "signup" ? (
+        {!isLoaded || isSignedIn ? (
+          <div className="flex min-h-56 items-center justify-center">
+            <AppLoadingSpinner label="Checking your IntellectX session" showLabel />
+          </div>
+        ) : mode === "signup" ? (
           <SignUp
             appearance={clerkAppearance}
             forceRedirectUrl={CLERK_SIGNUP_REDIRECT_URL}
