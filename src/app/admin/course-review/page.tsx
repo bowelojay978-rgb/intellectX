@@ -1,38 +1,38 @@
+import { AdminCourseReviewWorkspace } from "@/components/admin/admin-course-review-workspace";
+import { AdminWorkspaceNav } from "@/components/admin/admin-workspace-nav";
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getStaffPlaceholderMetadata } from "@/lib/staff-route-placeholder";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Course Review - IntellectX",
-  description: "Placeholder admin course-review route for future production workflow controls.",
+  description: "Secure admin review and publication workflow for instructor-created IntellectX courses.",
 };
 
-export default function AdminCourseReviewPage() {
-  const metadata = getStaffPlaceholderMetadata("admin-course-review");
+type AdminCourseReviewPageProps = {
+  searchParams: Promise<{ course?: string }>;
+};
+
+export default async function AdminCourseReviewPage({ searchParams }: AdminCourseReviewPageProps) {
+  const { course } = await searchParams;
 
   return (
     <StaffRouteGuard pathname="/admin/course-review">
       <PageShell>
-        <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <Badge variant="secondary" className="uppercase">
-            {metadata.roleLabel}
+        <AdminWorkspaceNav />
+        <section className="mb-8 flex flex-col gap-4">
+          <Badge variant="secondary" className="w-fit uppercase">
+            Admin review
           </Badge>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{metadata.heading}</h1>
-          <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">{metadata.summary}</p>
-          <p className="text-muted-foreground max-w-2xl leading-6">{metadata.detail}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/admin">Back to admin</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/courses">Browse learner courses</Link>
-            </Button>
-          </div>
+          <h1 className="max-w-4xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+            Review, approve, and publish courses
+          </h1>
+          <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
+            Inspect real submitted lesson content, videos, quizzes, questions, and audit history before applying server-authorized workflow decisions.
+          </p>
         </section>
+        <AdminCourseReviewWorkspace initialCourseStableId={course} />
       </PageShell>
     </StaffRouteGuard>
   );

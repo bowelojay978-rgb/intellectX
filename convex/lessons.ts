@@ -1,4 +1,4 @@
-﻿import { mutationGeneric, queryGeneric } from "convex/server";
+import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import { isLearnerVisibleCourseRecord, learnerCourseVisibilityOptions } from "./lib/courseWorkflow";
 import { resolveLearnerUserKey } from "./lib/identity";
@@ -20,6 +20,27 @@ function hasFreeLearnerAccess(record: { accessLevel?: string }) {
   return record.accessLevel !== "paid";
 }
 
+async function resolveLessonMedia(ctx: any, lesson: any) {
+  const attachments = await ctx.db
+    .query("staffMediaUploads")
+    .withIndex("by_course_lesson", (q: any) =>
+      q.eq("courseStableId", lesson.courseStableId).eq("lessonStableId", lesson.stableId),
+    )
+    .collect();
+  const video = attachments
+    .filter((record: any) => record.kind === "video")
+    .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
+  const poster = attachments
+    .filter((record: any) => record.kind === "poster")
+    .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
+
+  return {
+    ...lesson,
+    videoUrl: video ? await ctx.storage.getUrl(video.storageId) : lesson.videoUrl,
+    posterUrl: poster ? await ctx.storage.getUrl(poster.storageId) : lesson.posterUrl,
+  };
+}
+
 export const getLessonsByCourse = queryGeneric({
   args: { courseStableId: v.string() },
   handler: async (ctx, args) => {
@@ -33,8 +54,9 @@ export const getLessonsByCourse = queryGeneric({
       .query("lessons")
       .withIndex("by_course_stable_id", (q) => q.eq("courseStableId", args.courseStableId))
       .collect();
+    const visibleLessons = lessons.filter(hasFreeLearnerAccess);
 
-    return lessons.filter(hasFreeLearnerAccess);
+    return await Promise.all(visibleLessons.map((lesson) => resolveLessonMedia(ctx, lesson)));
   },
 });
 
@@ -48,7 +70,7 @@ export const listLessons = queryGeneric({
       const course = await getLearnerVisibleCourseByStableId(ctx, lesson.courseStableId);
 
       if (course && hasFreeLearnerAccess(course) && hasFreeLearnerAccess(lesson)) {
-        visibleLessons.push(lesson);
+        visibleLessons.push(await resolveLessonMedia(ctx, lesson));
       }
     }
 
@@ -74,7 +96,7 @@ export const getLessonById = queryGeneric({
       return null;
     }
 
-    return lesson;
+    return await resolveLessonMedia(ctx, lesson);
   },
 });
 

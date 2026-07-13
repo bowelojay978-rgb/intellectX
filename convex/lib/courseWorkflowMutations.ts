@@ -1,4 +1,4 @@
-﻿import type { StaffRole } from "./staffRbac";
+import type { StaffRole } from "./staffRbac";
 
 export const DRAFT = "draft" as const;
 export const SUBMITTED_FOR_REVIEW = "submitted_for_review" as const;
@@ -33,6 +33,7 @@ export type CourseWorkflowRecord = {
 
 export type CourseWorkflowEventType =
   | "course.draft_created"
+  | "course.draft_updated"
   | "course.submitted_for_review"
   | "course.changes_requested"
   | "course.approved"
@@ -72,6 +73,10 @@ export function assertCanApproveCourse(course: CourseWorkflowRecord) {
 export function assertCanPublishCourse(course: CourseWorkflowRecord) {
   if (course.reviewStatus !== APPROVED) {
     throw new Error("Course can only be published after approval.");
+  }
+
+  if (course.publicationStatus === PUBLISHED) {
+    throw new Error("Course is already published.");
   }
 }
 
