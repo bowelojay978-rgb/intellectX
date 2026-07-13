@@ -136,6 +136,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userKey"])
+    .index("by_user_lesson", ["userKey", "lessonId"])
     .index("by_lesson", ["lessonId"]),
   quizAttempts: defineTable({
     userId: v.optional(v.id("users")),
