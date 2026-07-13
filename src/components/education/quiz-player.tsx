@@ -236,7 +236,7 @@ function QuizPlayerCore({ quiz, surface, onComplete }: QuizPlayerCoreProps) {
   }
 
   function handleChoiceKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
-    if (surface !== "web" || submitted) return;
+    if (surface !== "web" || submitted || !question) return;
 
     const lastIndex = question.choices.length - 1;
     let nextIndex: number | null = null;
