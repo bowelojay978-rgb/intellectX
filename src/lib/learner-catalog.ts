@@ -290,7 +290,9 @@ export async function getLearnerLessonDetail(lessonId: string) {
     const lesson = getLesson(lessonId);
     const course = lesson ? getCourse(lesson.courseId) : null;
 
-    return lesson && course && accessAllowed(course) && accessAllowed(lesson) ? { lesson, course } : null;
+    return lesson && course && accessAllowed(course) && accessAllowed(lesson)
+      ? { lesson, course, lessons: getLessonsByCourse(course.id).filter(accessAllowed) }
+      : null;
   }
 
   const convexLesson = (await client.query(convexApi.lessons.getLessonById, { lessonId })) as ConvexLessonRecord | null;
@@ -299,13 +301,15 @@ export async function getLearnerLessonDetail(lessonId: string) {
     const lesson = getLesson(lessonId);
     const course = lesson ? getCourse(lesson.courseId) : null;
 
-    return lesson && course && accessAllowed(course) && accessAllowed(lesson) ? { lesson, course } : null;
+    return lesson && course && accessAllowed(course) && accessAllowed(lesson)
+      ? { lesson, course, lessons: getLessonsByCourse(course.id).filter(accessAllowed) }
+      : null;
   }
 
   const courseDetail = await getLearnerCourseDetail(convexLesson.courseStableId);
   const lesson = courseDetail?.lessons.find((item) => item.id === lessonId) ?? null;
 
-  return lesson && courseDetail ? { lesson, course: courseDetail.course } : null;
+  return lesson && courseDetail ? { lesson, course: courseDetail.course, lessons: courseDetail.lessons } : null;
 }
 
 export async function getLearnerQuizDetail(quizId: string) {

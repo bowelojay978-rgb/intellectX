@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { LearnerEntryLink } from "@/components/auth/learner-entry-link";
 
 function AccordionItemFAQs(props: React.ComponentProps<typeof AccordionItem>) {
   return (
@@ -45,14 +45,16 @@ export function FAQs() {
           Get answers about the IntellectX learning experience.
         </p>
         <Button className="w-fit" size="lg" asChild>
-          <Link href="/signup">Start Free</Link>
+          <LearnerEntryLink signedInHref="/dashboard" signedInLabel="Open IntellectX" signedOutLabel="Start Free">
+            Start Free
+          </LearnerEntryLink>
         </Button>
       </div>
       <Accordion type="single" collapsible defaultValue="accounts" className="grid w-full gap-4">
         <AccordionItemFAQs value="accounts">
           <AccordionTriggerFAQs>Is IntellectX using real student accounts yet?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>No. IntellectX uses local learner sessions and browser-based persistence for some flows while account-level persistence is being completed.</p>
+            <p>Yes. Clerk provides secure account login, while IntellectX keeps learner data scoped to the active account.</p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="courses">
@@ -64,7 +66,7 @@ export function FAQs() {
         <AccordionItemFAQs value="scores">
           <AccordionTriggerFAQs>Does the quiz save my score?</AccordionTriggerFAQs>
           <AccordionContentFAQs>
-            <p>Not yet. Quiz selection and feedback happen in the browser with no backend persistence.</p>
+            <p>Yes. Completed attempts update your learner history and sync to your account when Convex account persistence is available.</p>
           </AccordionContentFAQs>
         </AccordionItemFAQs>
         <AccordionItemFAQs value="ai">
@@ -77,5 +79,3 @@ export function FAQs() {
     </div>
   );
 }
-
-

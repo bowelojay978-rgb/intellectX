@@ -69,7 +69,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <section className="space-y-6">
           <div className="space-y-6">
             <div className="hidden lg:block">
-              <VideoPlayer title={lesson.title} videoUrl={lesson.videoUrl} posterUrl={lesson.posterUrl} />
+              <VideoPlayer
+                title={lesson.title}
+                videoUrl={lesson.videoUrl}
+                posterUrl={lesson.posterUrl}
+                currentLessonId={lesson.id}
+                playlist={detail.lessons}
+              />
             </div>
             <Card id="lesson-flashcards" className={`scroll-mt-28 rounded-lg ${elevatedGlassCardClassName}`}>
               <CardContent className="space-y-6 py-8 text-base leading-8 md:text-lg">
