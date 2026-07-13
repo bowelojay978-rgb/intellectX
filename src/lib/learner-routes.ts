@@ -5,6 +5,7 @@ export function isLearnerAppPath(pathname: string) {
     pathname === "/profile" ||
     pathname === "/courses" ||
     pathname.startsWith("/courses/") ||
+    pathname === "/flashcards" ||
     pathname === "/quizzes" ||
     pathname === "/progress" ||
     pathname.startsWith("/learn/") ||
