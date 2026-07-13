@@ -3,6 +3,10 @@ import { lessons } from "../src/data/lessons";
 import { quizzes } from "../src/data/quizzes";
 import { internalMutationGeneric } from "convex/server";
 import { v } from "convex/values";
+import {
+  shouldRemoveObsoleteSeedManagedCatalogRecord,
+  shouldRunSeedCleanup,
+} from "./lib/seedCatalogSafety";
 
 type CatalogTable = "courses" | "lessons" | "quizzes" | "questions";
 
@@ -17,6 +21,7 @@ const courseDocs = courses.map((course) => ({
   accent: course.accent,
   reviewStatus: course.reviewStatus,
   publicationStatus: course.publicationStatus,
+  seedManaged: true,
 }));
 
 const lessonDocs = lessons.map((lesson) => ({
@@ -29,6 +34,7 @@ const lessonDocs = lessons.map((lesson) => ({
   ...(lesson.videoUrl ? { videoUrl: lesson.videoUrl } : {}),
   ...(lesson.posterUrl ? { posterUrl: lesson.posterUrl } : {}),
   order: (courses.find((course) => course.id === lesson.courseId)?.lessonIds.indexOf(lesson.id) ?? -1) + 1,
+  seedManaged: true,
 }));
 
 const quizDocs = quizzes.map((quiz) => ({
@@ -38,6 +44,7 @@ const quizDocs = quizzes.map((quiz) => ({
   title: quiz.title,
   difficulty: quiz.difficulty,
   estimatedTime: quiz.estimatedTime,
+  seedManaged: true,
 }));
 
 const questionDocs = quizzes.flatMap((quiz) =>
@@ -49,6 +56,7 @@ const questionDocs = quizzes.flatMap((quiz) =>
     answerIndex: question.answerIndex,
     explanation: question.explanation,
     order: index,
+    seedManaged: true,
   })),
 );
 
@@ -71,12 +79,12 @@ async function upsertByStableId(ctx: any, table: CatalogTable, doc: { stableId: 
   return "inserted";
 }
 
-async function removeObsoleteCatalogDocs(ctx: any, table: CatalogTable, stableIds: Set<string>) {
+async function removeObsoleteSeedManagedCatalogDocs(ctx: any, table: CatalogTable, stableIds: Set<string>) {
   const docs = await ctx.db.query(table).collect();
   let removed = 0;
 
   for (const doc of docs) {
-    if (!stableIds.has(doc.stableId)) {
+    if (shouldRemoveObsoleteSeedManagedCatalogRecord(doc, stableIds)) {
       await ctx.db.delete(doc._id);
       removed += 1;
     }
@@ -87,7 +95,7 @@ async function removeObsoleteCatalogDocs(ctx: any, table: CatalogTable, stableId
 
 export const seedEducationCatalog = internalMutationGeneric({
   args: { reset: v.optional(v.boolean()) },
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const counts = {
       courses: { seeded: courseDocs.length, inserted: 0, updated: 0, removed: 0 },
       lessons: { seeded: lessonDocs.length, inserted: 0, updated: 0, removed: 0 },
@@ -115,26 +123,28 @@ export const seedEducationCatalog = internalMutationGeneric({
       counts.questions[result] += 1;
     }
 
-    counts.questions.removed = await removeObsoleteCatalogDocs(
-      ctx,
-      "questions",
-      new Set(questionDocs.map((question) => question.stableId)),
-    );
-    counts.quizzes.removed = await removeObsoleteCatalogDocs(
-      ctx,
-      "quizzes",
-      new Set(quizDocs.map((quiz) => quiz.stableId)),
-    );
-    counts.lessons.removed = await removeObsoleteCatalogDocs(
-      ctx,
-      "lessons",
-      new Set(lessonDocs.map((lesson) => lesson.stableId)),
-    );
-    counts.courses.removed = await removeObsoleteCatalogDocs(
-      ctx,
-      "courses",
-      new Set(courseDocs.map((course) => course.stableId)),
-    );
+    if (shouldRunSeedCleanup(args.reset)) {
+      counts.questions.removed = await removeObsoleteSeedManagedCatalogDocs(
+        ctx,
+        "questions",
+        new Set(questionDocs.map((question) => question.stableId)),
+      );
+      counts.quizzes.removed = await removeObsoleteSeedManagedCatalogDocs(
+        ctx,
+        "quizzes",
+        new Set(quizDocs.map((quiz) => quiz.stableId)),
+      );
+      counts.lessons.removed = await removeObsoleteSeedManagedCatalogDocs(
+        ctx,
+        "lessons",
+        new Set(lessonDocs.map((lesson) => lesson.stableId)),
+      );
+      counts.courses.removed = await removeObsoleteSeedManagedCatalogDocs(
+        ctx,
+        "courses",
+        new Set(courseDocs.map((course) => course.stableId)),
+      );
+    }
 
     return counts;
   },
