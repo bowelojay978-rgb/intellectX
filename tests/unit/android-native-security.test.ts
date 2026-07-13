@@ -77,4 +77,13 @@ describe("Android native security configuration", () => {
     expect(mainActivity).toContain("setEnabled(false)");
     expect(mainActivity).toContain("getOnBackPressedDispatcher().onBackPressed()");
   });
+
+  it("enables release-only Android code and resource optimization", () => {
+    const appBuildGradle = readRepositoryFile("android/app/build.gradle");
+
+    expect(appBuildGradle).toContain("release {");
+    expect(appBuildGradle).toContain("minifyEnabled true");
+    expect(appBuildGradle).toContain("shrinkResources true");
+    expect(appBuildGradle).toContain("getDefaultProguardFile('proguard-android-optimize.txt')");
+  });
 });
