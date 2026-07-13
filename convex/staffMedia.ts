@@ -1,6 +1,6 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
-import { assertInstructorCourseEditable } from "./lib/instructorCourseWorkspace";
+import { assertInstructorCourseEditable, isInstructorCourseEditable } from "./lib/instructorCourseWorkspace";
 import {
   STAFF_MEDIA_POSTER,
   STAFF_MEDIA_VIDEO,
@@ -119,36 +119,39 @@ export const listInstructorLessonMedia = queryGeneric({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const actor = requireInstructorOrAdmin(identity);
-    await getManageableCourse(ctx, args.courseStableId, actor);
+    const course = await getManageableCourse(ctx, args.courseStableId, actor);
 
     const lessons = await ctx.db
       .query("lessons")
       .withIndex("by_course_stable_id", (q: any) => q.eq("courseStableId", args.courseStableId))
       .collect();
 
-    return await Promise.all(
-      lessons
-        .sort((left: any, right: any) => left.order - right.order)
-        .map(async (lesson: any) => {
-          const attachments = await listLessonAttachments(ctx, args.courseStableId, lesson.stableId);
-          const video = attachments
-            .filter((record: any) => record.kind === STAFF_MEDIA_VIDEO)
-            .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
-          const poster = attachments
-            .filter((record: any) => record.kind === STAFF_MEDIA_POSTER)
-            .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
+    return {
+      editable: isInstructorCourseEditable(course),
+      lessons: await Promise.all(
+        lessons
+          .sort((left: any, right: any) => left.order - right.order)
+          .map(async (lesson: any) => {
+            const attachments = await listLessonAttachments(ctx, args.courseStableId, lesson.stableId);
+            const video = attachments
+              .filter((record: any) => record.kind === STAFF_MEDIA_VIDEO)
+              .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
+            const poster = attachments
+              .filter((record: any) => record.kind === STAFF_MEDIA_POSTER)
+              .sort((left: any, right: any) => right.attachedAt - left.attachedAt)[0];
 
-          return {
-            stableId: lesson.stableId,
-            title: lesson.title,
-            order: lesson.order,
-            externalVideoUrl: lesson.videoUrl ?? null,
-            externalPosterUrl: lesson.posterUrl ?? null,
-            video: video ? await mediaRecordWithUrl(ctx, video) : null,
-            poster: poster ? await mediaRecordWithUrl(ctx, poster) : null,
-          };
-        }),
-    );
+            return {
+              stableId: lesson.stableId,
+              title: lesson.title,
+              order: lesson.order,
+              externalVideoUrl: lesson.videoUrl ?? null,
+              externalPosterUrl: lesson.posterUrl ?? null,
+              video: video ? await mediaRecordWithUrl(ctx, video) : null,
+              poster: poster ? await mediaRecordWithUrl(ctx, poster) : null,
+            };
+          }),
+      ),
+    };
   },
 });
 
