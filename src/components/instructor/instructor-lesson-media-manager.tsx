@@ -30,15 +30,21 @@ function acceptedTypes(kind: MediaKind) {
   return kind === "video" ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp";
 }
 
-export function InstructorLessonMediaManager({ courseStableId }: { courseStableId: string }) {
+export function InstructorLessonMediaManager({
+  courseStableId,
+  readOnly = false,
+}: {
+  courseStableId: string;
+  readOnly?: boolean;
+}) {
   if (!convexEnv.isConfigured) {
     return null;
   }
 
-  return <ConvexInstructorLessonMediaManager courseStableId={courseStableId} />;
+  return <ConvexInstructorLessonMediaManager courseStableId={courseStableId} readOnly={readOnly} />;
 }
 
-function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId: string }) {
+function ConvexInstructorLessonMediaManager({ courseStableId, readOnly }: { courseStableId: string; readOnly: boolean }) {
   const convex = useConvex();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const generateUploadUrl = useMutation(convexApi.staffMedia.generateStaffMediaUploadUrl);
@@ -71,6 +77,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
   }, [isAuthenticated, isLoading, loadLessons]);
 
   async function uploadFile(lessonStableId: string, kind: MediaKind, file: File) {
+    if (readOnly) {
+      setError("Media uploads are disabled while this course is read-only.");
+      return;
+    }
+
     const key = `${lessonStableId}:${kind}`;
     setBusyKey(key);
     setError(null);
@@ -110,6 +121,11 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
   }
 
   async function remove(lessonStableId: string, kind: MediaKind) {
+    if (readOnly) {
+      setError("Media removal is disabled while this course is read-only.");
+      return;
+    }
+
     const key = `${lessonStableId}:${kind}`;
     setBusyKey(key);
     setError(null);
@@ -142,7 +158,9 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
       <CardHeader>
         <CardTitle>Lesson video uploads</CardTitle>
         <p className="text-muted-foreground text-sm leading-6">
-          Upload MP4, WebM, or MOV videos up to 500 MB and optional JPEG, PNG, or WebP posters up to 10 MB. Uploads are authorized and validated server-side before attachment.
+          {readOnly
+            ? "This course is read-only in its current workflow state. Existing lesson media can be inspected, but upload and removal controls are hidden."
+            : "Upload MP4, WebM, or MOV videos up to 500 MB and optional JPEG, PNG, or WebP posters up to 10 MB. Uploads are authorized and validated server-side before attachment."}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -174,6 +192,7 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
                   kind="video"
                   lesson={lesson}
                   busy={busyKey === `${lesson.stableId}:video`}
+                  readOnly={readOnly}
                   onUpload={(file) => uploadFile(lesson.stableId, "video", file)}
                   onRemove={() => remove(lesson.stableId, "video")}
                 />
@@ -183,6 +202,7 @@ function ConvexInstructorLessonMediaManager({ courseStableId }: { courseStableId
                   kind="poster"
                   lesson={lesson}
                   busy={busyKey === `${lesson.stableId}:poster`}
+                  readOnly={readOnly}
                   onUpload={(file) => uploadFile(lesson.stableId, "poster", file)}
                   onRemove={() => remove(lesson.stableId, "poster")}
                 />
@@ -205,6 +225,7 @@ function MediaControl({
   kind,
   lesson,
   busy,
+  readOnly,
   onUpload,
   onRemove,
 }: {
@@ -213,6 +234,7 @@ function MediaControl({
   kind: MediaKind;
   lesson: LessonMediaItem;
   busy: boolean;
+  readOnly: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
 }) {
@@ -240,29 +262,31 @@ function MediaControl({
       ) : (
         <p className="text-muted-foreground mt-3 text-sm">No media attached.</p>
       )}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-secondary/60">
-          <UploadIcon className="size-4" />
-          {busy ? "Uploading…" : media ? "Replace upload" : "Upload file"}
-          <input
-            type="file"
-            accept={acceptedTypes(kind)}
-            disabled={busy}
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) onUpload(file);
-              event.currentTarget.value = "";
-            }}
-          />
-        </label>
-        {media ? (
-          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={onRemove}>
-            <Trash2Icon className="size-4" />
-            Remove upload
-          </Button>
-        ) : null}
-      </div>
+      {readOnly ? null : (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-secondary/60">
+            <UploadIcon className="size-4" />
+            {busy ? "Uploading…" : media ? "Replace upload" : "Upload file"}
+            <input
+              type="file"
+              accept={acceptedTypes(kind)}
+              disabled={busy}
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) onUpload(file);
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+          {media ? (
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={onRemove}>
+              <Trash2Icon className="size-4" />
+              Remove upload
+            </Button>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
