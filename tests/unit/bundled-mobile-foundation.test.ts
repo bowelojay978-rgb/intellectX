@@ -46,6 +46,23 @@ describe("bundled mobile runtime foundation", () => {
     expect(home).not.toContain("Notes");
   });
 
+  it("refreshes connectivity on foreground resume and removes every lifecycle listener on cleanup", () => {
+    const shell = readRepositoryFile("mobile-client/components/mobile-shell.tsx");
+
+    expect(shell).toContain('document.visibilityState === "visible"');
+    expect(shell).toContain('document.addEventListener("visibilitychange", handleVisibilityChange)');
+    expect(shell).toContain('document.removeEventListener("visibilitychange", handleVisibilityChange)');
+    expect(shell).toContain('window.removeEventListener("online", updateConnectivity)');
+    expect(shell).toContain('window.removeEventListener("offline", updateConnectivity)');
+  });
+
+  it("uses safe-area insets for the mobile shell and bottom navigation", () => {
+    const styles = readRepositoryFile("mobile-client/app/globals.css");
+
+    expect(styles).toContain("env(safe-area-inset-top)");
+    expect(styles).toContain("env(safe-area-inset-bottom)");
+  });
+
   it("exposes explicit development and static-build commands for the mobile target", () => {
     const packageJson = JSON.parse(readRepositoryFile("package.json")) as {
       scripts?: Record<string, string>;
