@@ -11,14 +11,15 @@ import { StreakCard } from "@/components/education/streak-card";
 import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
+import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
-import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import {
   LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
   readLessonProgressHistory,
@@ -55,6 +56,8 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
   latestLessons: [],
 };
 
+const selectedCoursePreviewCount = 2;
+
 export function LocalProfileContent() {
   const catalog = useLearnerCatalog();
   const profileSourceLabel = isClerkAuthEnabled() ? "Account-backed learner profile" : "Browser-backed learner profile";
@@ -63,6 +66,7 @@ export function LocalProfileContent() {
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
   const [quizAttemptCount, setQuizAttemptCount] = useState(0);
   const [averageQuizScore, setAverageQuizScore] = useState<number | null>(null);
+  const [showAllSelectedCourses, setShowAllSelectedCourses] = useState(false);
 
   useEffect(() => {
     function syncSelection() {
@@ -123,9 +127,16 @@ export function LocalProfileContent() {
       .filter((course): course is Course => Boolean(course));
   }, [catalog.courseById, selection]);
 
+  const visibleSelectedCourses = showAllSelectedCourses
+    ? selectedCourses
+    : selectedCourses.slice(0, selectedCoursePreviewCount);
+  const hasAdditionalSelectedCourses = selectedCourses.length > selectedCoursePreviewCount;
+
   return (
     <>
-      <section className={`animate-widget mb-8 flex flex-col gap-6 rounded-lg p-6 md:flex-row md:items-center md:p-8 ${elevatedGlassCardClassName}`}>
+      <section
+        className={`animate-widget mb-8 flex flex-col gap-6 rounded-lg p-6 md:flex-row md:items-center md:p-8 ${elevatedGlassCardClassName}`}
+      >
         <Avatar className="size-20">
           <AvatarFallback>IX</AvatarFallback>
         </Avatar>
@@ -165,10 +176,24 @@ export function LocalProfileContent() {
 
       <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div>
-          <h2 className="mb-4 text-2xl font-semibold tracking-tight">Selected courses</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Selected courses</h2>
+            {hasAdditionalSelectedCourses ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-expanded={showAllSelectedCourses}
+                aria-controls="selected-courses-grid"
+                onClick={() => setShowAllSelectedCourses((current) => !current)}
+              >
+                {showAllSelectedCourses ? "Show less" : `View all ${selectedCourses.length}`}
+              </Button>
+            ) : null}
+          </div>
           {selectedCourses.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {selectedCourses.slice(0, 2).map((course) => (
+            <div id="selected-courses-grid" className="grid gap-5 md:grid-cols-2">
+              {visibleSelectedCourses.map((course) => (
                 <CourseCard key={course.id} course={course} showProgress={false} />
               ))}
             </div>
@@ -197,7 +222,10 @@ export function LocalProfileContent() {
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
               <p>Plan: Learner access</p>
               <p>Selected courses: {selectedCourses.length === 0 ? "None yet" : selectedCourses.length}</p>
-              <p>Lesson activity: {lessonSummary.lessonCount === 0 ? "No lessons recorded yet" : `${lessonSummary.lessonCount} lessons viewed`}</p>
+              <p>
+                Lesson activity:{" "}
+                {lessonSummary.lessonCount === 0 ? "No lessons recorded yet" : `${lessonSummary.lessonCount} lessons viewed`}
+              </p>
               <p>Quiz attempts: {quizAttemptCount === 0 ? "No attempts yet" : quizAttemptCount}</p>
             </CardContent>
           </Card>
