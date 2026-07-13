@@ -20,7 +20,7 @@ async function getTrustedStaffRouteAccess(pathname: string) {
     return resolveStaffRouteAccess(role, pathname);
   } catch {
     // Fail closed when Clerk server auth is unavailable or trusted role claims
-    // are not wired yet. Do not replace this with local or client-editable state.
+    // are not available. Do not replace this with local or client-editable state.
     return resolveStaffRouteAccess(null, pathname);
   }
 }
@@ -34,8 +34,7 @@ function StaffAccessDenied() {
         </Badge>
         <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">Staff access is locked</h1>
         <p className="text-muted-foreground max-w-xl leading-6 md:text-lg">
-          A trusted staff role is required to view this route. Staff placeholders remain unavailable until real RBAC is
-          wired to authenticated claims.
+          A trusted authenticated instructor or admin role is required for this workspace. Missing, malformed, or insufficient role claims fail closed.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild>

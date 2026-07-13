@@ -1,10 +1,31 @@
-﻿import { makeFunctionReference } from "convex/server";
+import { makeFunctionReference } from "convex/server";
 
 export const convexApi = {
   courses: {
     listCourses: makeFunctionReference<"query">("courses:listCourses"),
     getCourseBySlug: makeFunctionReference<"query">("courses:getCourseBySlug"),
     getCourseByStableId: makeFunctionReference<"query">("courses:getCourseByStableId"),
+    listInstructorCourses: makeFunctionReference<"query">("courses:listInstructorCourses"),
+    getInstructorCourseDraft: makeFunctionReference<"query">("courses:getInstructorCourseDraft"),
+    createInstructorCourseDraft: makeFunctionReference<"mutation">("courses:createInstructorCourseDraft"),
+    saveInstructorCourseDraft: makeFunctionReference<"mutation">("courses:saveInstructorCourseDraft"),
+    submitCourseForReview: makeFunctionReference<"mutation">("courses:submitCourseForReview"),
+    requestCourseChanges: makeFunctionReference<"mutation">("courses:requestCourseChanges"),
+    approveCourse: makeFunctionReference<"mutation">("courses:approveCourse"),
+    publishCourse: makeFunctionReference<"mutation">("courses:publishCourse"),
+    unpublishCourse: makeFunctionReference<"mutation">("courses:unpublishCourse"),
+    archiveCourse: makeFunctionReference<"mutation">("courses:archiveCourse"),
+  },
+  adminCourses: {
+    listAdminCourses: makeFunctionReference<"query">("adminCourses:listAdminCourses"),
+    getAdminCourseReview: makeFunctionReference<"query">("adminCourses:getAdminCourseReview"),
+  },
+  staffMedia: {
+    generateStaffMediaUploadUrl: makeFunctionReference<"mutation">("staffMedia:generateStaffMediaUploadUrl"),
+    registerStaffMediaUpload: makeFunctionReference<"mutation">("staffMedia:registerStaffMediaUpload"),
+    listInstructorLessonMedia: makeFunctionReference<"query">("staffMedia:listInstructorLessonMedia"),
+    attachLessonMedia: makeFunctionReference<"mutation">("staffMedia:attachLessonMedia"),
+    removeLessonMedia: makeFunctionReference<"mutation">("staffMedia:removeLessonMedia"),
   },
   courseSelections: {
     getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
@@ -52,8 +73,3 @@ export const convexApi = {
     getLessonTutor: makeFunctionReference<"action">("aiTutor:getLessonTutor"),
   },
 };
-
-
-
-
-

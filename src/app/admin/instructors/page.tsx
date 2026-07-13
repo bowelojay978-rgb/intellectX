@@ -1,39 +1,57 @@
+﻿import { AdminInstructorsWorkspace } from "@/components/admin/admin-instructors-workspace";
+import { AdminWorkspaceNav } from "@/components/admin/admin-workspace-nav";
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getStaffPlaceholderMetadata } from "@/lib/staff-route-placeholder";
+import { Card, CardContent } from "@/components/ui/card";
+import { getAdminClerkSession, listAdminManagedUsers, type AdminManagedUser } from "@/lib/server-staff-auth";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Instructors - IntellectX",
-  description: "Placeholder admin instructor-management route for future production workflow controls.",
+  description: "Secure Clerk-backed instructor access management for IntellectX administrators.",
 };
 
-export default function AdminInstructorsPage() {
-  const metadata = getStaffPlaceholderMetadata("admin-instructors");
+export default async function AdminInstructorsPage() {
+  const session = await getAdminClerkSession();
+  let users: AdminManagedUser[] = [];
+  let loadError: string | null = null;
+
+  if (session) {
+    try {
+      users = await listAdminManagedUsers();
+    } catch (error) {
+      loadError = error instanceof Error ? error.message : "Unable to load Clerk users.";
+    }
+  }
 
   return (
     <StaffRouteGuard pathname="/admin/instructors">
       <PageShell>
-        <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <Badge variant="secondary" className="uppercase">
-            {metadata.roleLabel}
+        <AdminWorkspaceNav />
+        <section className="mb-8 flex flex-col gap-4">
+          <Badge variant="secondary" className="w-fit uppercase">
+            Instructor access
           </Badge>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{metadata.heading}</h1>
-          <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">{metadata.summary}</p>
-          <p className="text-muted-foreground max-w-2xl leading-6">{metadata.detail}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/admin">Back to admin</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/courses">Browse learner courses</Link>
-            </Button>
-          </div>
+          <h1 className="max-w-4xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+            Manage trusted instructors
+          </h1>
+          <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
+            Grant or revoke instructor access through server-authorized Clerk metadata changes. Admin accounts remain protected from this surface.
+          </p>
         </section>
+
+        {loadError ? (
+          <Card className="rounded-lg border-rose-500/20 bg-rose-500/5">
+            <CardContent className="py-8 text-sm leading-6">
+              Unable to load Clerk users: {loadError}
+            </CardContent>
+          </Card>
+        ) : (
+          <AdminInstructorsWorkspace users={users} />
+        )}
       </PageShell>
     </StaffRouteGuard>
   );
 }
+

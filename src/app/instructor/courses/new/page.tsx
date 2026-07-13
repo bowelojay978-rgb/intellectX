@@ -1,38 +1,43 @@
 import { StaffRouteGuard } from "@/components/auth/staff-route-guard";
 import { PageShell } from "@/components/education/page-shell";
+import { InstructorCourseBuilder } from "@/components/instructor/instructor-course-builder";
+import { InstructorLessonMediaManager } from "@/components/instructor/instructor-lesson-media-manager";
+import { InstructorWorkspaceNav } from "@/components/instructor/instructor-workspace-nav";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getStaffPlaceholderMetadata } from "@/lib/staff-route-placeholder";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Create Course - IntellectX",
-  description: "Placeholder instructor course-creation route for future production workflow controls.",
+  title: "Course Builder - IntellectX",
+  description: "Create and edit authenticated instructor course drafts, lessons, quizzes, questions, and lesson media.",
 };
 
-export default function InstructorNewCoursePage() {
-  const metadata = getStaffPlaceholderMetadata("instructor-courses-new");
+type InstructorCourseBuilderPageProps = {
+  searchParams: Promise<{ edit?: string; readonly?: string }>;
+};
+
+export default async function InstructorNewCoursePage({ searchParams }: InstructorCourseBuilderPageProps) {
+  const { edit, readonly } = await searchParams;
+  const readOnly = readonly === "1" || readonly === "true";
 
   return (
     <StaffRouteGuard pathname="/instructor/courses/new">
       <PageShell>
-        <section className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-          <Badge variant="secondary" className="uppercase">
-            {metadata.roleLabel}
+        <InstructorWorkspaceNav />
+        <section className="mb-8 flex flex-col gap-4">
+          <Badge variant="secondary" className="w-fit uppercase">
+            {edit ? (readOnly ? "View course" : "Edit course") : "Create course"}
           </Badge>
-          <h1 className="text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{metadata.heading}</h1>
-          <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">{metadata.summary}</p>
-          <p className="text-muted-foreground max-w-2xl leading-6">{metadata.detail}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild>
-              <Link href="/instructor/courses">Back to instructor courses</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/courses">Browse learner courses</Link>
-            </Button>
-          </div>
+          <h1 className="max-w-4xl text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">
+            {edit ? (readOnly ? "Review your course" : "Continue building your course") : "Build a new learning path"}
+          </h1>
+          <p className="text-muted-foreground max-w-2xl leading-7 md:text-lg">
+            Course details, lessons, quizzes, questions, authenticated file uploads, draft persistence, workflow state, and review submission are backed by server-authorized Convex operations.
+          </p>
         </section>
+        <div className="space-y-6">
+          <InstructorCourseBuilder editStableId={edit} />
+          {edit ? <InstructorLessonMediaManager courseStableId={edit} readOnly={readOnly} /> : null}
+        </div>
       </PageShell>
     </StaffRouteGuard>
   );
