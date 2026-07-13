@@ -26,12 +26,26 @@ function readAndroidString(source, name) {
   return source.match(new RegExp(`<string\\s+name=["']${name}["']>([^<]+)</string>`))?.[1]?.trim() ?? null;
 }
 
-function isRemoteServerUrlConfigured(capacitorConfig) {
-  return /\bserver\s*:\s*\{[\s\S]*?\burl\s*:\s*["']https?:\/\//.test(capacitorConfig);
+function readBundledWebDir(capacitorConfig) {
+  const conditionalMatch = capacitorConfig.match(
+    /\bwebDir\s*:\s*bundledMobileRelease\s*\?\s*["']([^"']+)["']\s*:\s*["']([^"']+)["']/,
+  );
+
+  if (conditionalMatch) {
+    return conditionalMatch[1];
+  }
+
+  return readQuotedSetting(capacitorConfig, "webDir");
 }
 
-function readWebDir(capacitorConfig) {
-  return readQuotedSetting(capacitorConfig, "webDir");
+function hasActiveRemoteServerInBundledMode(capacitorConfig) {
+  const containsRemoteUrl = /\burl\s*:\s*["']https?:\/\//.test(capacitorConfig);
+
+  if (!containsRemoteUrl) {
+    return false;
+  }
+
+  return !capacitorConfig.includes("...(bundledMobileRelease ? {} : { server: remoteServerConfig })");
 }
 
 export function evaluateAndroidStoreRelease({
@@ -73,18 +87,22 @@ export function evaluateAndroidStoreRelease({
     errors.push("Capacitor appId, Android applicationId, and package_name must match exactly");
   }
 
-  const webDir = readWebDir(capacitorConfig);
+  if (!capacitorConfig.includes('process.env.INTELLECTX_MOBILE_BUNDLED === "true"')) {
+    errors.push("Capacitor config must expose an explicit INTELLECTX_MOBILE_BUNDLED release mode");
+  }
+
+  const webDir = readBundledWebDir(capacitorConfig);
 
   if (webDir !== "mobile-client/out") {
-    errors.push('production Capacitor webDir must be "mobile-client/out"');
+    errors.push('production bundled Capacitor webDir must be "mobile-client/out"');
   }
 
   if (!bundledEntryExists) {
     errors.push("validated bundled mobile index.html is missing");
   }
 
-  if (isRemoteServerUrlConfigured(capacitorConfig)) {
-    errors.push("production Capacitor config must not contain a remote server.url");
+  if (hasActiveRemoteServerInBundledMode(capacitorConfig)) {
+    errors.push("bundled production mode must not activate a remote server.url");
   }
 
   for (const name of SIGNING_ENV_NAMES) {
@@ -108,7 +126,7 @@ export function inspectCurrentAndroidStoreRelease(rootDir = process.cwd(), env =
   const capacitorConfig = readFileSync(path.join(rootDir, "capacitor.config.ts"), "utf8");
   const androidBuildGradle = readFileSync(path.join(rootDir, "android/app/build.gradle"), "utf8");
   const androidStrings = readFileSync(path.join(rootDir, "android/app/src/main/res/values/strings.xml"), "utf8");
-  const webDir = readWebDir(capacitorConfig);
+  const webDir = readBundledWebDir(capacitorConfig);
   const bundledEntryExists = Boolean(webDir && existsSync(path.join(rootDir, webDir, "index.html")));
 
   const keystorePath = hasValue(env.ANDROID_KEYSTORE_PATH)
@@ -129,7 +147,7 @@ export function inspectCurrentAndroidStoreRelease(rootDir = process.cwd(), env =
 
 export function printAndroidStoreReleaseReport(report) {
   console.log(`Android package ID: ${report.packageId ?? "mismatch or missing"}`);
-  console.log(`Capacitor webDir: ${report.webDir ?? "missing"}`);
+  console.log(`Bundled Capacitor webDir: ${report.webDir ?? "missing"}`);
 
   if (report.errors.length === 0) {
     console.log("Android store-release gate: passed");
