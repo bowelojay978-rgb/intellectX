@@ -34,6 +34,27 @@ describe("staff workspace production wiring", () => {
     expect(source).not.toContain("No backend publication");
   });
 
+  it("shows submitted quiz questions, choices, correct answers, and explanations before approval", () => {
+    const source = read("src/components/admin/admin-course-review-workspace.tsx");
+
+    expect(source).toContain("question.prompt");
+    expect(source).toContain("question.choices.map");
+    expect(source).toContain("question.answerIndex");
+    expect(source).toContain("question.explanation");
+    expect(source).toContain("(correct)");
+  });
+
+  it("keeps read-only course views from showing upload controls", () => {
+    const list = read("src/components/instructor/instructor-course-list.tsx");
+    const page = read("src/app/instructor/courses/new/page.tsx");
+    const mediaManager = read("src/components/instructor/instructor-lesson-media-manager.tsx");
+
+    expect(list).toContain("readonly=1");
+    expect(page).toContain("readOnly={readOnly}");
+    expect(mediaManager).toContain("readOnly ? null");
+    expect(mediaManager).toContain("Media uploads are disabled while this course is read-only.");
+  });
+
   it("keeps instructor authoring and file uploads on authenticated Convex boundaries", () => {
     const builderPage = read("src/app/instructor/courses/new/page.tsx");
     const mediaApi = read("convex/staffMedia.ts");
@@ -53,10 +74,14 @@ describe("staff workspace production wiring", () => {
   it("requires trusted admin authorization for review data and instructor access changes", () => {
     const adminQueries = read("convex/adminCourses.ts");
     const serverAction = read("src/app/admin/instructors/actions.ts");
+    const serverAuth = read("src/lib/server-staff-auth.ts");
 
     expect(adminQueries).toContain("requireAdmin(identity)");
     expect(serverAction).toContain("getAdminClerkSession");
     expect(serverAction).toContain("updateUserMetadata");
     expect(serverAction).toContain('nextRole !== "instructor" && nextRole !== "learner"');
+    expect(serverAction).toContain("buildPublicMetadataWithStaffRole");
+    expect(serverAuth).toContain("staff:");
+    expect(serverAuth).toContain("offset");
   });
 });
