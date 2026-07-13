@@ -56,12 +56,15 @@ describe("Android native security configuration", () => {
     expect(extractionRules).toContain("<device-transfer>");
   });
 
-  it("enforces HTTPS-only transport at the Android manifest boundary", () => {
+  it("enforces HTTPS-only transport and production-safe WebView defaults", () => {
     const manifest = readRepositoryFile("android/app/src/main/AndroidManifest.xml");
     const capacitorConfig = readRepositoryFile("capacitor.config.ts");
 
     expect(manifest).toContain('android:usesCleartextTraffic="false"');
     expect(capacitorConfig).toContain("cleartext: false");
+    expect(capacitorConfig).toContain("allowMixedContent: false");
+    expect(capacitorConfig).toContain("webContentsDebuggingEnabled: false");
+    expect(capacitorConfig).toContain('loggingBehavior: "debug"');
     expect(capacitorConfig).not.toContain("allowMixedContent: true");
     expect(capacitorConfig).not.toContain("webContentsDebuggingEnabled: true");
   });
