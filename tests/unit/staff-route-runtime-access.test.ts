@@ -13,6 +13,24 @@ describe("staff route runtime access", () => {
     expect(resolveTrustedStaffRoleFromClaims({ staff: { role: "ADMIN" } })).toBe("admin");
   });
 
+  it("uses the same canonical claim precedence as Convex server RBAC when trusted claim paths conflict", () => {
+    expect(
+      resolveTrustedStaffRoleFromClaims({
+        staff: { role: "learner" },
+        metadata: { role: "admin" },
+        publicMetadata: { role: "instructor" },
+        appMetadata: { role: "admin" },
+      }),
+    ).toBe("learner");
+
+    expect(
+      resolveTrustedStaffRoleFromClaims({
+        staff: { role: "admin" },
+        metadata: { role: "learner" },
+      }),
+    ).toBe("admin");
+  });
+
   it("rejects missing, unknown, and unsafe role claims", () => {
     expect(resolveTrustedStaffRoleFromClaims(null)).toBeNull();
     expect(resolveTrustedStaffRoleFromClaims({})).toBeNull();

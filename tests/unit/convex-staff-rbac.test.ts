@@ -43,6 +43,28 @@ describe("Convex staff RBAC", () => {
     expect(resolveStaffRoleFromIdentity(identity({ staff: { role: " admin " } }))).toBe("admin");
   });
 
+  it("uses staff.role as the canonical trusted claim when signed claim paths conflict", () => {
+    expect(
+      resolveStaffRoleFromIdentity(
+        identity({
+          staff: { role: "learner" },
+          metadata: { role: "admin" },
+          publicMetadata: { role: "instructor" },
+          appMetadata: { role: "admin" },
+        }),
+      ),
+    ).toBe("learner");
+
+    expect(
+      resolveStaffRoleFromIdentity(
+        identity({
+          staff: { role: "admin" },
+          metadata: { role: "learner" },
+        }),
+      ),
+    ).toBe("admin");
+  });
+
   it("does not trust root or unsafe metadata role values", () => {
     expect(resolveStaffRoleFromIdentity(identity({ role: "admin" }))).toBeNull();
     expect(resolveStaffRoleFromIdentity(identity({ unsafeMetadata: { role: "admin" } }))).toBeNull();
