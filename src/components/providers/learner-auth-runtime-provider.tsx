@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { createContext, useContext, useMemo } from "react";
 
 export type LearnerAuthRuntime = {
@@ -8,6 +8,7 @@ export type LearnerAuthRuntime = {
   isLoaded: boolean;
   isSignedIn: boolean;
   userId: string | null;
+  primaryEmailAddress: string | null;
 };
 
 const localLearnerAuthRuntime: LearnerAuthRuntime = {
@@ -15,6 +16,7 @@ const localLearnerAuthRuntime: LearnerAuthRuntime = {
   isLoaded: true,
   isSignedIn: false,
   userId: null,
+  primaryEmailAddress: null,
 };
 
 const LearnerAuthRuntimeContext = createContext<LearnerAuthRuntime>(localLearnerAuthRuntime);
@@ -32,15 +34,19 @@ export function LocalLearnerAuthRuntimeProvider({ children }: LearnerAuthRuntime
 }
 
 export function ClerkLearnerAuthRuntimeProvider({ children }: LearnerAuthRuntimeProviderProps) {
-  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { isLoaded: isAuthLoaded, isSignedIn, userId } = useAuth();
+  const { isLoaded: isUserLoaded, user } = useUser();
+  const primaryEmailAddress = user?.primaryEmailAddress?.emailAddress ?? null;
+  const isLoaded = Boolean(isAuthLoaded && (!isSignedIn || isUserLoaded));
   const value = useMemo<LearnerAuthRuntime>(
     () => ({
       mode: "clerk",
-      isLoaded: Boolean(isLoaded),
+      isLoaded,
       isSignedIn: Boolean(isSignedIn),
       userId: userId ?? null,
+      primaryEmailAddress,
     }),
-    [isLoaded, isSignedIn, userId],
+    [isLoaded, isSignedIn, primaryEmailAddress, userId],
   );
 
   return <LearnerAuthRuntimeContext.Provider value={value}>{children}</LearnerAuthRuntimeContext.Provider>;
