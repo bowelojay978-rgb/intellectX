@@ -75,6 +75,17 @@ describe("bundled mobile runtime foundation", () => {
     expect(styles).toContain("env(safe-area-inset-bottom)");
   });
 
+  it("provides route and runtime recovery without rendering raw exception details", () => {
+    const notFound = readRepositoryFile("mobile-client/app/not-found.tsx");
+    const errorBoundary = readRepositoryFile("mobile-client/app/error.tsx");
+
+    expect(notFound).toContain("Back to quizzes");
+    expect(errorBoundary).toContain('role="alert"');
+    expect(errorBoundary).toContain("onClick={reset}");
+    expect(errorBoundary).not.toContain("error.message");
+    expect(errorBoundary).not.toContain("error.digest");
+  });
+
   it("exposes explicit development, typecheck, static-build, and bundle-verification commands", () => {
     const packageJson = JSON.parse(readRepositoryFile("package.json")) as {
       scripts?: Record<string, string>;
