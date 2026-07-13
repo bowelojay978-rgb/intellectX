@@ -10,6 +10,22 @@ export const convexApi = {
     createInstructorCourseDraft: makeFunctionReference<"mutation">("courses:createInstructorCourseDraft"),
     saveInstructorCourseDraft: makeFunctionReference<"mutation">("courses:saveInstructorCourseDraft"),
     submitCourseForReview: makeFunctionReference<"mutation">("courses:submitCourseForReview"),
+    requestCourseChanges: makeFunctionReference<"mutation">("courses:requestCourseChanges"),
+    approveCourse: makeFunctionReference<"mutation">("courses:approveCourse"),
+    publishCourse: makeFunctionReference<"mutation">("courses:publishCourse"),
+    unpublishCourse: makeFunctionReference<"mutation">("courses:unpublishCourse"),
+    archiveCourse: makeFunctionReference<"mutation">("courses:archiveCourse"),
+  },
+  adminCourses: {
+    listAdminCourses: makeFunctionReference<"query">("adminCourses:listAdminCourses"),
+    getAdminCourseReview: makeFunctionReference<"query">("adminCourses:getAdminCourseReview"),
+  },
+  staffMedia: {
+    generateStaffMediaUploadUrl: makeFunctionReference<"mutation">("staffMedia:generateStaffMediaUploadUrl"),
+    registerStaffMediaUpload: makeFunctionReference<"mutation">("staffMedia:registerStaffMediaUpload"),
+    listInstructorLessonMedia: makeFunctionReference<"query">("staffMedia:listInstructorLessonMedia"),
+    attachLessonMedia: makeFunctionReference<"mutation">("staffMedia:attachLessonMedia"),
+    removeLessonMedia: makeFunctionReference<"mutation">("staffMedia:removeLessonMedia"),
   },
   courseSelections: {
     getCourseSelection: makeFunctionReference<"query">("courseSelections:getCourseSelection"),
