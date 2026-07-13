@@ -93,11 +93,10 @@ export function GlobalNavigationLoader() {
 
   return (
     <div
-      aria-hidden="true"
       data-testid="global-navigation-loader"
-      className="pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-background/20 backdrop-blur-[1px]"
+      className="pointer-events-none fixed top-3 left-1/2 z-[60] -translate-x-1/2 rounded-full border border-border/70 bg-background/90 px-3 py-2 shadow-sm backdrop-blur"
     >
-      <AppLoadingSpinner />
+      <AppLoadingSpinner label="Loading page" size="sm" />
     </div>
   );
 }
