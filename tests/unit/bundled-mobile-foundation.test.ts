@@ -16,6 +16,18 @@ describe("bundled mobile runtime foundation", () => {
     expect(rootConfig).not.toContain('output: "export"');
   });
 
+  it("isolates mobile TypeScript validation from the full web application", () => {
+    const rootTsconfig = JSON.parse(readRepositoryFile("tsconfig.json")) as {
+      exclude?: string[];
+    };
+    const packageJson = JSON.parse(readRepositoryFile("package.json")) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(rootTsconfig.exclude).toContain("mobile-client");
+    expect(packageJson.scripts?.["typecheck:mobile"]).toBe("tsc -p mobile-client/tsconfig.json --noEmit");
+  });
+
   it("reuses shared quiz and lesson sources instead of defining a competing catalog", () => {
     const catalog = readRepositoryFile("mobile-client/lib/mobile-catalog.ts");
 
@@ -63,12 +75,15 @@ describe("bundled mobile runtime foundation", () => {
     expect(styles).toContain("env(safe-area-inset-bottom)");
   });
 
-  it("exposes explicit development and static-build commands for the mobile target", () => {
+  it("exposes explicit development, typecheck, static-build, and bundle-verification commands", () => {
     const packageJson = JSON.parse(readRepositoryFile("package.json")) as {
       scripts?: Record<string, string>;
     };
 
     expect(packageJson.scripts?.["dev:mobile"]).toBe("next dev mobile-client --turbopack");
+    expect(packageJson.scripts?.["typecheck:mobile"]).toBe("tsc -p mobile-client/tsconfig.json --noEmit");
     expect(packageJson.scripts?.["build:mobile"]).toBe("next build mobile-client");
+    expect(packageJson.scripts?.["check:mobile-bundle"]).toBe("node scripts/check-mobile-bundle.mjs");
+    expect(packageJson.scripts?.["verify:mobile-foundation"]).toContain("npm run build:mobile");
   });
 });
