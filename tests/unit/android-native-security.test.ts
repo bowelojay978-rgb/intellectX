@@ -100,9 +100,30 @@ describe("Android native security configuration", () => {
     const appBuildGradle = readRepositoryFile("android/app/build.gradle");
 
     expect(appBuildGradle).toContain("project.findProperty('APP_VERSION_CODE')");
+    expect(appBuildGradle).toContain("System.getenv('APP_VERSION_CODE')");
     expect(appBuildGradle).toContain("project.findProperty('APP_VERSION_NAME')");
+    expect(appBuildGradle).toContain("System.getenv('APP_VERSION_NAME')");
     expect(appBuildGradle).toContain("versionCode appVersionCode");
     expect(appBuildGradle).toContain("versionName appVersionName");
+  });
+
+  it("keeps Android release signing secrets outside source control", () => {
+    const appBuildGradle = readRepositoryFile("android/app/build.gradle");
+    const gitignore = readRepositoryFile(".gitignore");
+
+    for (const envName of [
+      "ANDROID_KEYSTORE_PATH",
+      "ANDROID_KEYSTORE_PASSWORD",
+      "ANDROID_KEY_ALIAS",
+      "ANDROID_KEY_PASSWORD",
+    ]) {
+      expect(appBuildGradle).toContain(`System.getenv('${envName}')`);
+    }
+
+    expect(appBuildGradle).toContain("hasAnyReleaseSigningCredential && !hasAllReleaseSigningCredentials");
+    expect(appBuildGradle).toContain("signingConfig signingConfigs.release");
+    expect(gitignore).toContain("*.jks");
+    expect(gitignore).toContain("*.keystore");
   });
 
   it("defines every custom Android theme color referenced by app styles", () => {
