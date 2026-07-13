@@ -66,7 +66,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         </section>
         <section className="space-y-6">
           <div className="space-y-6">
-            <div className="hidden lg:block">
+            <div>
               <VideoPlayer
                 title={lesson.title}
                 videoUrl={lesson.videoUrl}

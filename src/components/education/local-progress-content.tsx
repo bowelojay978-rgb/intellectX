@@ -13,10 +13,12 @@ import {
   type CourseSelection,
   loadCourseSelection,
 } from "@/lib/course-selection";
+import { calculateCourseProgress } from "@/lib/course-progress";
 import {
   LESSON_PROGRESS_HISTORY_CHANGE_EVENT,
   readLessonProgressHistory,
   summarizeLessonProgressHistory,
+  type LessonProgressHistoryItem,
   type LessonProgressHistorySummary,
 } from "@/lib/lesson-progress-history";
 import { useLearnerCatalog } from "@/lib/learner-catalog-client";
@@ -39,6 +41,7 @@ const emptyLessonProgressSummary: LessonProgressHistorySummary = {
 export function LocalProgressContent() {
   const catalog = useLearnerCatalog();
   const [selection, setSelection] = useState<CourseSelection | null>(null);
+  const [lessonHistory, setLessonHistory] = useState<LessonProgressHistoryItem[]>([]);
   const [lessonSummary, setLessonSummary] = useState<LessonProgressHistorySummary>(emptyLessonProgressSummary);
   const [studyActivity, setStudyActivity] = useState<StudyActivitySummary>(emptyStudyActivitySummary);
 
@@ -48,7 +51,9 @@ export function LocalProgressContent() {
     }
 
     function syncLessons() {
-      setLessonSummary(summarizeLessonProgressHistory(readLessonProgressHistory()));
+      const history = readLessonProgressHistory();
+      setLessonHistory(history);
+      setLessonSummary(summarizeLessonProgressHistory(history));
     }
 
     function syncActivity() {
@@ -94,6 +99,15 @@ export function LocalProgressContent() {
       .filter((course): course is Course => Boolean(course));
   }, [catalog.courseById, selection]);
 
+  const selectedCoursesWithProgress = useMemo(
+    () =>
+      selectedCourses.map((course) => ({
+        ...course,
+        progress: calculateCourseProgress(course.lessonIds, lessonHistory),
+      })),
+    [lessonHistory, selectedCourses],
+  );
+
   return (
     <>
       <section className="mb-8 grid gap-4 md:grid-cols-3">
@@ -124,10 +138,10 @@ export function LocalProgressContent() {
             <CardTitle>Selected courses</CardTitle>
           </CardHeader>
           <CardContent>
-            {selectedCourses.length > 0 ? (
+            {selectedCoursesWithProgress.length > 0 ? (
               <div className="grid gap-5 md:grid-cols-2">
-                {selectedCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} showProgress={false} />
+                {selectedCoursesWithProgress.map((course) => (
+                  <CourseCard key={course.id} course={course} />
                 ))}
               </div>
             ) : (
