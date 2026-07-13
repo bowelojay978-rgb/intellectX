@@ -22,6 +22,10 @@ function hasValue(env, name) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function isExplicitTrue(value) {
+  return typeof value === 'string' && value.trim().toLowerCase() === 'true';
+}
+
 function isHttpsUrl(value) {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return false;
@@ -39,11 +43,11 @@ export function evaluateProductionEnv(env = process.env) {
   const results = checks.map((name) => ({ name, present: hasValue(env, name) }));
   const warnings = [];
 
-  if (env.ALLOW_LOCAL_USERKEY_FALLBACK === 'true') {
+  if (isExplicitTrue(env.ALLOW_LOCAL_USERKEY_FALLBACK)) {
     warnings.push('ALLOW_LOCAL_USERKEY_FALLBACK is enabled');
   }
 
-  if (env.NEXT_PUBLIC_PAYMENTS_ENABLED === 'true') {
+  if (isExplicitTrue(env.NEXT_PUBLIC_PAYMENTS_ENABLED)) {
     warnings.push('NEXT_PUBLIC_PAYMENTS_ENABLED is enabled');
   }
 
@@ -54,11 +58,11 @@ export function evaluateProductionEnv(env = process.env) {
     errors.push('CLERK_JWT_ISSUER_DOMAIN must be an https URL');
   }
 
-  if (env.ALLOW_LOCAL_USERKEY_FALLBACK === 'true') {
+  if (isExplicitTrue(env.ALLOW_LOCAL_USERKEY_FALLBACK)) {
     errors.push('ALLOW_LOCAL_USERKEY_FALLBACK must be unset or false for production');
   }
 
-  if (env.NEXT_PUBLIC_PAYMENTS_ENABLED === 'true') {
+  if (isExplicitTrue(env.NEXT_PUBLIC_PAYMENTS_ENABLED)) {
     errors.push('NEXT_PUBLIC_PAYMENTS_ENABLED must remain false until payments are production-ready');
   }
 
