@@ -509,6 +509,9 @@ export const submitCourseForReview = mutationGeneric({
       reviewStatus: SUBMITTED_FOR_REVIEW,
       publicationStatus: UNPUBLISHED,
       submittedAt,
+      reviewReason: undefined,
+      reviewedAt: undefined,
+      reviewedBy: undefined,
       updatedAt: submittedAt,
     };
 
