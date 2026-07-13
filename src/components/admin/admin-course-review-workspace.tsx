@@ -414,7 +414,7 @@ function CourseReviewDetail({
             <span>Instructor: {course.instructorId ?? "Unassigned"}</span>
             <span>Submitted: {formatDate(course.submittedAt)}</span>
           </div>
-          {course.reviewReason ? (
+          {course.reviewStatus === "changes_requested" && course.reviewReason ? (
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-sm leading-6">
               <strong>Latest review reason:</strong> {course.reviewReason}
             </div>
@@ -435,7 +435,13 @@ function CourseReviewDetail({
                   </div>
                   <Badge variant="outline">{lesson.duration}</Badge>
                 </div>
-                <p className="text-muted-foreground mt-3 text-sm">{lesson.content.filter(Boolean).length} content blocks</p>
+                <div className="mt-4 space-y-2">
+                  {lesson.content.filter(Boolean).map((block, blockIndex) => (
+                    <p key={`${lesson.stableId}-block-${blockIndex}`} className="rounded-md border border-border/60 bg-background/70 p-3 text-sm leading-6">
+                      {block}
+                    </p>
+                  ))}
+                </div>
                 {lesson.videoUrl ? (
                   <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium underline underline-offset-4">
                     <ExternalLinkIcon className="size-4" />
@@ -461,7 +467,21 @@ function CourseReviewDetail({
                   </div>
                   <FileQuestionIcon className="text-muted-foreground size-5" />
                 </div>
-                <p className="text-muted-foreground mt-3 text-sm">{quiz.questions.length} questions</p>
+                <div className="mt-4 space-y-3">
+                  {quiz.questions.map((question, questionIndex) => (
+                    <div key={question.stableId} className="rounded-md border border-border/60 bg-background/70 p-3 text-sm">
+                      <p className="font-medium">{questionIndex + 1}. {question.prompt}</p>
+                      <ol className="mt-2 space-y-1 pl-5 text-muted-foreground">
+                        {question.choices.map((choice, choiceIndex) => (
+                          <li key={`${question.stableId}-choice-${choiceIndex}`} className="list-[upper-alpha]">
+                            {choice}{choiceIndex === question.answerIndex ? " — Correct answer" : ""}
+                          </li>
+                        ))}
+                      </ol>
+                      <p className="mt-3 text-muted-foreground"><strong className="text-foreground">Explanation:</strong> {question.explanation}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )) : (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">No quizzes submitted.</p>
