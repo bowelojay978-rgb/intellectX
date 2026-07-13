@@ -6,8 +6,10 @@ const config: CapacitorConfig = {
   webDir: "public",
   server: {
     url: "https://intellect-x-coral.vercel.app",
-    cleartext: false
-  }
+    cleartext: false,
+    appStartPath: "/mobile-quizzes",
+    errorPath: "mobile-error.html",
+  },
 };
 
 export default config;

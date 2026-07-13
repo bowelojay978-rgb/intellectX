@@ -1,11 +1,7 @@
-import { PageShell } from "@/components/education/page-shell";
-import { QuizPlayer } from "@/components/education/quiz-player";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { QuizPageContent } from "@/components/education/quiz-page-content";
 import { getQuiz, quizzes } from "@/data/quizzes";
 import { getLearnerQuizDetail } from "@/lib/learner-catalog";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type QuizPageProps = {
@@ -34,30 +30,10 @@ export default async function QuizPage({ params, searchParams }: QuizPageProps) 
   const detail = await getLearnerQuizDetail(quizId);
   const quiz = detail?.quiz;
   const course = detail?.course;
-  const fromMobile = from === "mobile";
 
   if (!quiz || !course) {
     notFound();
   }
 
-  return (
-    <PageShell>
-      <section className="mx-auto max-w-3xl">
-        <Badge variant="secondary" className="mb-5">
-          Quiz
-        </Badge>
-        <h1 className="mb-4 text-4xl leading-[1.1] font-medium tracking-tight md:text-6xl">{quiz.title}</h1>
-        <p className="text-muted-foreground mb-8 leading-6">
-          Select an answer, check your result, and use the feedback to close the learning loop. Completed attempts are
-          saved so your scores and learning activity can appear across IntellectX.
-        </p>
-        <QuizPlayer quiz={quiz} />
-        <Button className="mt-6" variant="ghost" asChild>
-          <Link href={fromMobile ? "/mobile-quizzes" : `/courses/${course.id}`}>
-            {fromMobile ? "Back to mobile quizzes" : "Back to course"}
-          </Link>
-        </Button>
-      </section>
-    </PageShell>
-  );
+  return <QuizPageContent quiz={quiz} courseId={course.id} mobileRequested={from === "mobile"} />;
 }

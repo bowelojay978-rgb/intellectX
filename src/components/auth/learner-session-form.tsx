@@ -1,9 +1,10 @@
 "use client";
 
+import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { StudyProfileCard } from "@/components/education/study-profile-card";
 import { isAcademicProfileComplete, loadAcademicProfile } from "@/lib/academic-profile";
+import { getLearnerHomeRouteForCurrentRuntime } from "@/lib/feature-scope";
 import { createLearnerSession, getLearnerSession, type LearnerSession } from "@/lib/learner-session";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon, MailIcon, SparklesIcon } from "lucide-react";
@@ -21,7 +22,7 @@ const contentByMode = {
   login: {
     eyebrow: "Learner access",
     title: "Welcome back",
-    description: "Use your learner email and password to continue with a browser-backed session on this device.",
+    description: "Use your learner email and password to continue on this device.",
     submitLabel: "Continue",
   },
   signup: {
@@ -33,7 +34,7 @@ const contentByMode = {
   "forgot-password": {
     eyebrow: "Account recovery",
     title: "Return to learner access",
-    description: "Password recovery is not available for browser-backed sessions yet. Return to login to continue.",
+    description: "Password recovery is not available for device-backed fallback sessions yet. Return to login to continue.",
     submitLabel: "Return to login",
   },
 } satisfies Record<LearnerSessionMode, { eyebrow: string; title: string; description: string; submitLabel: string }>;
@@ -78,14 +79,14 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
     }
 
     createLearnerSession(nextSession);
-    window.location.assign("/courses");
+    window.location.assign(getLearnerHomeRouteForCurrentRuntime());
   }
 
   function completeSignup() {
     if (!pendingSession) return;
 
     createLearnerSession(pendingSession);
-    window.location.assign("/courses");
+    window.location.assign(getLearnerHomeRouteForCurrentRuntime());
   }
 
   return (
@@ -105,8 +106,8 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
       <CardContent>
         {isProfileSetup ? (
           <div className="grid gap-5">
-            <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Complete your study profile to unlock courses, quizzes, lessons, dashboard, and progress pages.
+            <div className="border-primary/25 bg-primary/5 text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm leading-6">
+              Complete your study profile to unlock your IntellectX study experience.
             </div>
             <StudyProfileCard
               loadSavedProfile={false}
@@ -147,8 +148,8 @@ export function LearnerSessionForm({ mode }: LearnerSessionFormProps) {
                 onChange={setPassword}
               />
             ) : null}
-            <div className="rounded-lg border border-dashed border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Browser-backed session: learner details stay on this device until logout or browser storage is cleared.
+            <div className="border-primary/25 bg-primary/5 text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm leading-6">
+              Device-backed fallback session: learner details stay on this device until logout or local storage is cleared.
             </div>
             <Button type="submit" size="lg" className="mt-2 w-full">
               {content.submitLabel}
@@ -208,7 +209,7 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
   if (mode === "signup") {
     return (
       <div className="text-muted-foreground mt-6 grid gap-2 text-center text-sm">
-        <p>After signup, complete your study profile to prioritize relevant courses and quizzes.</p>
+        <p>After signup, complete your study profile to prioritize relevant learning content.</p>
         <p>
           Already have a learner session?{" "}
           <Link href="/login" className="text-foreground font-medium underline underline-offset-4">
@@ -228,5 +229,3 @@ function AuthFooter({ mode }: { mode: LearnerSessionMode }) {
     </p>
   );
 }
-
-

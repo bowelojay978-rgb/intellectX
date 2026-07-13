@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Onboarding - IntellectX",
-  description: "Complete your mandatory IntellectX Study Profile before choosing courses.",
+  description: "Complete your mandatory IntellectX Study Profile before entering your study experience.",
 };
 
 export default function OnboardingPage() {
@@ -20,7 +20,8 @@ export default function OnboardingPage() {
             Set up your Study Profile
           </h1>
           <p className="text-muted-foreground max-w-2xl leading-6 md:text-lg">
-            Complete your academic profile first. You will then continue to the existing course-selection flow.
+            Complete your academic profile first. IntellectX will then continue to the correct study experience for
+            this device.
           </p>
         </div>
         <LearnerOnboarding />

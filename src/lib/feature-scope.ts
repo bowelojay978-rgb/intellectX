@@ -8,8 +8,15 @@ const mobileAllowedRoutePrefixes = [
   "/mobile-study",
   "/mobile-quizzes",
   "/mobile-flashcards",
-  "/mobile-notes",
-  "/quiz/",
+  "/quiz",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/auth",
+  "/onboarding",
+  "/privacy-policy",
+  "/terms-and-conditions",
+  "/refund-policy",
 ] as const;
 
 export const featureScope = {
@@ -29,15 +36,18 @@ export function isMobileAppRuntime() {
     };
   };
 
-  // The app does not import @capacitor/core in the web bundle yet. Capacitor injects
-  // window.Capacitor at runtime in the native wrapper, so this keeps SSR and web
-  // builds safe while giving the mobile app a single detection point.
+  // Capacitor injects window.Capacitor in the native WebView. Keeping native
+  // detection here prevents mobile routing and navigation from drifting apart.
   if (maybeWindow.Capacitor?.isNativePlatform?.()) {
     return true;
   }
 
   const platform = maybeWindow.Capacitor?.getPlatform?.();
   return platform === "ios" || platform === "android";
+}
+
+export function getLearnerHomeRouteForCurrentRuntime() {
+  return isMobileAppRuntime() ? "/mobile-quizzes" : "/courses";
 }
 
 export function isFeatureAllowedOnSurface(feature: StudyFeature, surface: AppSurface) {
@@ -52,6 +62,10 @@ export function isFeatureAllowedOnMobile(feature: StudyFeature) {
   return isFeatureAllowedOnSurface(feature, "mobile");
 }
 
+function matchesRoutePrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 export function isRouteWebOnly(pathname: string) {
   const normalizedPathname = pathname === "" ? "/" : pathname;
 
@@ -59,7 +73,5 @@ export function isRouteWebOnly(pathname: string) {
     return true;
   }
 
-  return !mobileAllowedRoutePrefixes.some(
-    (prefix) => normalizedPathname === prefix || normalizedPathname.startsWith(prefix),
-  );
+  return !mobileAllowedRoutePrefixes.some((prefix) => matchesRoutePrefix(normalizedPathname, prefix));
 }

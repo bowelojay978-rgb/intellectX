@@ -10,8 +10,8 @@ import {
   getAcademicProfileOptions,
   getDefaultAcademicProfile,
   isAcademicProfileComplete,
-  normalizeAcademicProfileForLevel,
   loadAcademicProfile,
+  normalizeAcademicProfileForLevel,
   saveAcademicProfile,
 } from "@/lib/academic-profile";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function StudyProfileCard({
       </CardHeader>
       <CardContent className="space-y-5">
         <p className="text-muted-foreground text-sm leading-6">
-          Choose your academic track so IntellectX can prioritize relevant courses and quizzes in this browser.
+          Choose your academic track so IntellectX can prioritize relevant courses, quizzes, and study tools.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           <ProfileSelect
@@ -135,7 +135,7 @@ export function StudyProfileCard({
                   aria-pressed={selected}
                   onClick={() => toggleSubject(subject)}
                   className={cn(
-                    "rounded-full border px-3 py-2 text-sm transition-all",
+                    "min-h-11 touch-manipulation rounded-full border px-3 py-2 text-sm transition-all",
                     selected
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background/70 text-muted-foreground hover:text-foreground",
@@ -153,11 +153,11 @@ export function StudyProfileCard({
           ) : null}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button type="button" onClick={saveProfile}>
+          <Button type="button" className="min-h-12" onClick={saveProfile}>
             {saved ? "Saved" : submitLabel}
           </Button>
           {showReset ? (
-            <Button type="button" variant="outline" onClick={resetProfile}>
+            <Button type="button" className="min-h-12" variant="outline" onClick={resetProfile}>
               Clear profile
             </Button>
           ) : null}
@@ -181,7 +181,7 @@ function ProfileSelect({ label, value, options, onChange }: ProfileSelectProps) 
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="border-input bg-background/80 h-11 rounded-lg border px-3 text-sm outline-none transition-all focus:border-primary/50 focus:ring-ring/40 focus:ring-[3px]"
+        className="border-input bg-background/80 h-12 rounded-lg border px-3 text-sm outline-none transition-all focus:border-primary/50 focus:ring-ring/40 focus:ring-[3px]"
       >
         {options.map((option) => (
           <option key={option} value={option}>
