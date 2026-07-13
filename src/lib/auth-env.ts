@@ -37,7 +37,9 @@ export function getAuthEnvironmentStatus(
     usesClerkGuard: clerkPublishableKeyPresent,
     canRunConvexSync: convexUrlPresent,
     canRunLocalToAuthMigration: clerkPublishableKeyPresent && convexUrlPresent,
-    awaitingConvexAuthConfig: clerkPublishableKeyPresent && convexUrlPresent,
+    // Source auth config already exists in convex/auth.config.ts. This browser-facing helper cannot prove
+    // server-side issuer configuration or deployment state; those remain separate production verification gates.
+    awaitingConvexAuthConfig: false,
   };
 }
 

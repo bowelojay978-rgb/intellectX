@@ -16,8 +16,6 @@ export type LessonProgressHistorySummary = {
 export const LESSON_PROGRESS_HISTORY_KEY = "intellectx:lesson-progress-history";
 export const LESSON_PROGRESS_HISTORY_CHANGE_EVENT = "intellectx-lesson-progress-history-change";
 
-const maxStoredLessonProgressItems = 50;
-
 function isLessonProgressHistoryItem(value: unknown): value is LessonProgressHistoryItem {
   if (!value || typeof value !== "object") {
     return false;
@@ -51,7 +49,10 @@ function compactLatestByLesson(items: LessonProgressHistoryItem[]) {
     }
   }
 
-  return sortLessonProgressHistory([...latestByLessonId.values()]).slice(0, maxStoredLessonProgressItems);
+  // Course progress and resume behavior depend on complete per-lesson history.
+  // Do not truncate this cache to a recent-item window; display summaries can
+  // limit their own output without discarding correctness-critical state.
+  return sortLessonProgressHistory([...latestByLessonId.values()]);
 }
 
 export function readLessonProgressHistory(storage: Storage = window.localStorage) {

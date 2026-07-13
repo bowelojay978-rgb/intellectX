@@ -11,6 +11,7 @@ import {
   type CourseSelection,
 } from "@/lib/course-selection";
 import {
+  readLessonProgressHistory,
   writeLessonProgressHistory,
   type LessonProgressHistoryItem,
 } from "@/lib/lesson-progress-history";
@@ -67,14 +68,60 @@ export function hydrateAuthenticatedQuizAttemptHistory(
   return "replaced";
 }
 
+function toTimestamp(value: string) {
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
+function mergeLessonProgressWithoutRegression(
+  remoteItems: LessonProgressHistoryItem[],
+  localItemsRecordedAfterRequest: LessonProgressHistoryItem[],
+) {
+  const mergedByLessonId = new Map(remoteItems.map((item) => [item.lessonId, item]));
+
+  for (const localItem of localItemsRecordedAfterRequest) {
+    const remoteItem = mergedByLessonId.get(localItem.lessonId);
+
+    if (!remoteItem) {
+      mergedByLessonId.set(localItem.lessonId, localItem);
+      continue;
+    }
+
+    const latestItem = toTimestamp(localItem.updatedAt) >= toTimestamp(remoteItem.updatedAt) ? localItem : remoteItem;
+    const progress = Math.max(remoteItem.progress, localItem.progress);
+    const completed =
+      progress >= 100 || remoteItem.status === "completed" || localItem.status === "completed";
+
+    mergedByLessonId.set(localItem.lessonId, {
+      ...latestItem,
+      lessonTitle: latestItem.lessonTitle ?? remoteItem.lessonTitle ?? localItem.lessonTitle,
+      status: completed ? "completed" : latestItem.status,
+      progress: completed ? 100 : progress,
+    });
+  }
+
+  return [...mergedByLessonId.values()];
+}
+
 export function hydrateAuthenticatedLessonProgressHistory(
   remoteItems: LessonProgressHistoryItem[],
   hasPendingMigrationSource: boolean,
+  remoteRequestedAt?: number,
 ): AuthenticatedHydrationResult {
   if (hasPendingMigrationSource) {
     return "deferred-for-migration";
   }
 
-  writeLessonProgressHistory(remoteItems);
+  if (remoteRequestedAt === undefined) {
+    writeLessonProgressHistory(remoteItems);
+    return "replaced";
+  }
+
+  const localItemsRecordedAfterRequest = readLessonProgressHistory().filter(
+    (item) => toTimestamp(item.updatedAt) >= remoteRequestedAt,
+  );
+  const mergedItems = mergeLessonProgressWithoutRegression(remoteItems, localItemsRecordedAfterRequest);
+
+  writeLessonProgressHistory(mergedItems);
   return "replaced";
 }

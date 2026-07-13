@@ -10,8 +10,6 @@ export type QuizAttemptHistoryItem = {
 export const QUIZ_ATTEMPT_HISTORY_KEY = "intellectx:quiz-attempt-history";
 export const QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT = "intellectx-quiz-attempt-history-change";
 
-const maxStoredAttempts = 20;
-
 function isQuizAttemptHistoryItem(value: unknown): value is QuizAttemptHistoryItem {
   if (!value || typeof value !== "object") {
     return false;
@@ -61,7 +59,10 @@ export function readQuizAttemptHistory(storage: Storage = window.localStorage) {
 }
 
 export function writeQuizAttemptHistory(attempts: QuizAttemptHistoryItem[], storage: Storage = window.localStorage) {
-  const history = sortQuizAttemptHistory(attempts.filter(isQuizAttemptHistoryItem)).slice(0, maxStoredAttempts);
+  // Study activity, streaks, performance summaries, and account hydration depend
+  // on complete attempt history. Limit individual display surfaces instead of
+  // discarding correctness-critical history from the shared cache.
+  const history = sortQuizAttemptHistory(attempts.filter(isQuizAttemptHistoryItem));
 
   storage.setItem(QUIZ_ATTEMPT_HISTORY_KEY, JSON.stringify(history));
   window.dispatchEvent(new Event(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT));
@@ -128,10 +129,8 @@ export function saveQuizAttemptHistoryItem(
     percentage: Math.round((item.score / item.totalQuestions) * 100),
     completedAt: new Date().toISOString(),
   };
-  const history = [attempt, ...readQuizAttemptHistory(storage)].slice(0, maxStoredAttempts);
 
-  storage.setItem(QUIZ_ATTEMPT_HISTORY_KEY, JSON.stringify(history));
-  window.dispatchEvent(new Event(QUIZ_ATTEMPT_HISTORY_CHANGE_EVENT));
+  writeQuizAttemptHistory([attempt, ...readQuizAttemptHistory(storage)], storage);
 
   return attempt;
 }
