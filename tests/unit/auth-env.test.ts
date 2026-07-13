@@ -42,7 +42,7 @@ describe("auth environment mode detection", () => {
     });
   });
 
-  it("detects Clerk and Convex as ready for auth activation while awaiting Convex auth config", () => {
+  it("detects Clerk and Convex as ready for frontend auth while awaiting Convex issuer config", () => {
     expect(
       getAuthEnvironmentStatus({
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
@@ -57,6 +57,25 @@ describe("auth environment mode detection", () => {
       canRunConvexSync: true,
       canRunLocalToAuthMigration: true,
       awaitingConvexAuthConfig: true,
+    });
+  });
+
+  it("detects configured Clerk and Convex development auth as fully activated", () => {
+    expect(
+      getAuthEnvironmentStatus({
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        NEXT_PUBLIC_CONVEX_URL: "https://example.convex.cloud",
+        CLERK_JWT_ISSUER_DOMAIN: "https://example.clerk.accounts.dev",
+      }),
+    ).toMatchObject({
+      clerkPublishableKeyPresent: true,
+      convexUrlPresent: true,
+      mode: "clerk-convex-ready",
+      usesLocalFallbackGuard: false,
+      usesClerkGuard: true,
+      canRunConvexSync: true,
+      canRunLocalToAuthMigration: true,
+      awaitingConvexAuthConfig: false,
     });
   });
 });
