@@ -1,6 +1,11 @@
 "use client";
 
 import type { LessonBlock } from "@/data/lessons";
+import {
+  buildMobileFlashcardSessionCardKey,
+  readMobileFlashcardSession,
+  writeMobileFlashcardSession,
+} from "@mobile/lib/mobile-flashcard-session";
 import { useEffect, useState } from "react";
 
 type FlashcardBlock = Extract<LessonBlock, { type: "visualMemoryCard" | "tapReveal" }>;
@@ -23,15 +28,36 @@ function getBack(card: ReviewCard) {
   return card.block.type === "visualMemoryCard" ? card.block.detail : card.block.explanation;
 }
 
+function getSessionCardKey(card: ReviewCard) {
+  return buildMobileFlashcardSessionCardKey({
+    lessonId: card.lessonId,
+    blockType: card.block.type,
+    front: getFront(card),
+  });
+}
+
 export function MobileFlashcardReview({ cards }: { cards: readonly ReviewCard[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const currentCard = cards[currentIndex];
 
   useEffect(() => {
-    setCurrentIndex((index) => Math.min(index, Math.max(cards.length - 1, 0)));
+    const savedCardKey = readMobileFlashcardSession(window.localStorage);
+    const savedIndex = savedCardKey ? cards.findIndex((card) => getSessionCardKey(card) === savedCardKey) : -1;
+
+    setCurrentIndex(savedIndex >= 0 ? savedIndex : 0);
     setRevealed(false);
-  }, [cards.length]);
+    setSessionReady(true);
+  }, [cards]);
+
+  useEffect(() => {
+    if (!sessionReady || !currentCard) {
+      return;
+    }
+
+    writeMobileFlashcardSession(window.localStorage, getSessionCardKey(currentCard));
+  }, [currentCard, sessionReady]);
 
   function moveTo(index: number) {
     setCurrentIndex(index);
