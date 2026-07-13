@@ -18,7 +18,7 @@ const publicNavItems = [
   },
   {
     label: "How it works",
-    href: "/#features",
+    href: "/#how-it-works",
   },
   {
     label: "Pricing",
