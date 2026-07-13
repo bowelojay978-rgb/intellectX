@@ -3,12 +3,30 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
-function hasPattern(source, pattern) {
-  return pattern.test(source);
+function readWebDir(capacitorConfig, bundledMode) {
+  const conditionalMatch = capacitorConfig.match(
+    /\bwebDir\s*:\s*bundledMobileRelease\s*\?\s*["']([^"']+)["']\s*:\s*["']([^"']+)["']/,
+  );
+
+  if (conditionalMatch) {
+    return bundledMode ? conditionalMatch[1] : conditionalMatch[2];
+  }
+
+  return capacitorConfig.match(/\bwebDir\s*:\s*["']([^"']+)["']/)?.[1] ?? null;
 }
 
-function readWebDir(capacitorConfig) {
-  return capacitorConfig.match(/\bwebDir\s*:\s*["']([^"']+)["']/)?.[1] ?? null;
+function hasActiveRemoteServerUrl(capacitorConfig, bundledMode) {
+  const containsRemoteUrl = /\burl\s*:\s*["']https?:\/\//.test(capacitorConfig);
+
+  if (!containsRemoteUrl) {
+    return false;
+  }
+
+  const serverIsDisabledForBundledMode = capacitorConfig.includes(
+    "...(bundledMobileRelease ? {} : { server: remoteServerConfig })",
+  );
+
+  return !(bundledMode && serverIsDisabledForBundledMode);
 }
 
 export function evaluateMobileReleaseConfig({
@@ -16,12 +34,13 @@ export function evaluateMobileReleaseConfig({
   androidManifest,
   androidBuildGradle,
   bundledIndexExists,
+  bundledMode = false,
 }) {
   const errors = [];
-  const webDir = readWebDir(capacitorConfig);
+  const webDir = readWebDir(capacitorConfig, bundledMode);
 
-  if (hasPattern(capacitorConfig, /\bserver\s*:\s*\{[\s\S]*?\burl\s*:\s*["']https?:\/\//)) {
-    errors.push("production Capacitor config must not contain a remote server.url");
+  if (hasActiveRemoteServerUrl(capacitorConfig, bundledMode)) {
+    errors.push("production Capacitor config must not contain an active remote server.url");
   }
 
   if (!webDir) {
@@ -52,15 +71,16 @@ export function evaluateMobileReleaseConfig({
 
   return {
     webDir,
+    bundledMode,
     errors,
   };
 }
 
-export function inspectCurrentMobileReleaseConfig(rootDir = process.cwd()) {
+export function inspectCurrentMobileReleaseConfig(rootDir = process.cwd(), { bundledMode = false } = {}) {
   const capacitorConfig = readFileSync(path.join(rootDir, "capacitor.config.ts"), "utf8");
   const androidManifest = readFileSync(path.join(rootDir, "android/app/src/main/AndroidManifest.xml"), "utf8");
   const androidBuildGradle = readFileSync(path.join(rootDir, "android/app/build.gradle"), "utf8");
-  const webDir = readWebDir(capacitorConfig);
+  const webDir = readWebDir(capacitorConfig, bundledMode);
   const bundledIndexExists = Boolean(webDir && existsSync(path.join(rootDir, webDir, "index.html")));
 
   return evaluateMobileReleaseConfig({
@@ -68,10 +88,12 @@ export function inspectCurrentMobileReleaseConfig(rootDir = process.cwd()) {
     androidManifest,
     androidBuildGradle,
     bundledIndexExists,
+    bundledMode,
   });
 }
 
 export function printMobileReleaseReport(report) {
+  console.log(`Mobile delivery mode: ${report.bundledMode ? "bundled" : "default"}`);
   console.log(`Mobile webDir: ${report.webDir ?? "missing"}`);
 
   if (report.errors.length === 0) {
@@ -88,7 +110,8 @@ export function printMobileReleaseReport(report) {
 function main() {
   const args = new Set(process.argv.slice(2));
   const strict = args.has("--strict");
-  const report = inspectCurrentMobileReleaseConfig();
+  const bundledMode = args.has("--bundled");
+  const report = inspectCurrentMobileReleaseConfig(process.cwd(), { bundledMode });
 
   printMobileReleaseReport(report);
 
