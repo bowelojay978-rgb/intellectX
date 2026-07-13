@@ -11,9 +11,12 @@ const validEnv = {
 };
 
 const bundledCapacitorConfig = `
+const bundledMobileRelease = process.env.INTELLECTX_MOBILE_BUNDLED === "true";
+const remoteServerConfig = { url: "https://intellect-x-coral.vercel.app" };
 const config = {
   appId: "com.intellectx.app",
-  webDir: "mobile-client/out",
+  webDir: bundledMobileRelease ? "mobile-client/out" : "public",
+  ...(bundledMobileRelease ? {} : { server: remoteServerConfig }),
 };
 `;
 
@@ -111,7 +114,7 @@ describe("Android store-release preflight", () => {
     );
   });
 
-  it("rejects remote WebView delivery and missing bundled assets", () => {
+  it("rejects missing bundled release mode, wrong output directory, and active remote delivery", () => {
     const report = evaluateAndroidStoreRelease({
       env: validEnv,
       capacitorConfig: `
@@ -129,9 +132,10 @@ describe("Android store-release preflight", () => {
 
     expect(report.errors).toEqual(
       expect.arrayContaining([
-        'production Capacitor webDir must be "mobile-client/out"',
+        "Capacitor config must expose an explicit INTELLECTX_MOBILE_BUNDLED release mode",
+        'production bundled Capacitor webDir must be "mobile-client/out"',
         "validated bundled mobile index.html is missing",
-        "production Capacitor config must not contain a remote server.url",
+        "bundled production mode must not activate a remote server.url",
       ]),
     );
   });
