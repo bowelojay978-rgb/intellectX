@@ -13,11 +13,13 @@ export type StaffRouteAccessDecision = {
   reason: "allowed" | "missing_role" | "denied" | "not_staff_route";
 };
 
+// Keep this precedence aligned with Convex server RBAC in convex/lib/staffRbac.ts.
+// `staff.role` is the canonical staff claim path written by the admin role-management flow.
 const trustedStaffRoleClaimPaths = [
+  ["staff", "role"],
   ["metadata", "role"],
   ["publicMetadata", "role"],
   ["appMetadata", "role"],
-  ["staff", "role"],
 ] as const;
 
 function isRecord(value: unknown): value is ClaimRecord {
