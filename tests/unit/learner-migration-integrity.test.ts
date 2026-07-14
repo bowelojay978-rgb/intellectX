@@ -147,6 +147,6 @@ describe("learner migration destination authority", () => {
     expect(source).toContain("selectedCourseSelection && !destinationCourseSelection");
     expect(source).toContain("if (!selectedNote || destinationNote)");
     expect(source).toContain("selectedStudyStats && !destinationStudyStatsRecord");
-    expect(source).toContain("destinationUserKey,\n      );");
+    expect(source).toMatch(/selectMonotonicLessonProgressForMigration\([\s\S]*?destinationUserKey,\s*\);/);
   });
 });
