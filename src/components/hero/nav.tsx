@@ -7,7 +7,7 @@ import { isMobileAppRuntime } from "@/lib/feature-scope";
 import { getLearnerSession, LEARNER_SESSION_CHANGE_EVENT, type LearnerSession } from "@/lib/learner-session";
 import { isAuthenticatedAppPath } from "@/lib/learner-routes";
 import { resolveMobileNavigationSurface } from "@/lib/navigation-surface";
-import { useUser } from "@clerk/nextjs";
+import { useLearnerAccessState } from "@/lib/use-learner-access-state";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -86,11 +86,11 @@ export function Nav() {
 
 function ClerkNav() {
   const pathname = usePathname();
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn } = useLearnerAccessState();
   const nativeAppSurface = useNativeAppSurface();
   const isAppRoute = isAuthenticatedAppPath(pathname);
   const showAuthenticatedNav = isAppRoute || (isLoaded && isSignedIn);
-  const navItems = showAuthenticatedNav ? appNavItems : publicNavItems;
+  const navItems = !isLoaded && !isAppRoute ? [] : showAuthenticatedNav ? appNavItems : publicNavItems;
   const logoHref = showAuthenticatedNav ? "/courses" : "/";
   const mobileNavigation = resolveMobileNavigationSurface({
     nativeAppSurface,
