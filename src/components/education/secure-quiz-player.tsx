@@ -77,23 +77,52 @@ function createSubmissionId() {
   return `quiz-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+async function postLocalQuizGrading<TResult>(body: Record<string, unknown>): Promise<TResult> {
+  const response = await fetch("/api/quiz-grading", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = (await response.json()) as { error?: unknown } & TResult;
+
+  if (!response.ok) {
+    throw new Error(typeof payload.error === "string" ? payload.error : "Unable to grade this quiz request.");
+  }
+
+  return payload;
+}
+
 export function SecureQuizPlayer({ quiz, surface = "web" }: SecureQuizPlayerProps) {
   if (!convexEnv.isConfigured) {
-    return (
-      <Card className={`rounded-lg ${elevatedGlassCardClassName}`}>
-        <CardHeader>
-          <CardTitle className="text-2xl tracking-tight">Secure quiz service unavailable</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm leading-6">
-            This quiz requires the configured IntellectX backend so answer keys and grading remain server-authoritative.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return <LocalServerSecureQuizPlayer quiz={quiz} surface={surface} />;
   }
 
   return <ConvexSecureQuizPlayer quiz={quiz} surface={surface} />;
+}
+
+function LocalServerSecureQuizPlayer({ quiz, surface = "web" }: SecureQuizPlayerProps) {
+  return (
+    <SecureQuizPlayerCore
+      quiz={quiz}
+      surface={surface}
+      onCheckAnswer={async (questionId, answer) =>
+        await postLocalQuizGrading<QuizQuestionFeedback>({
+          action: "check",
+          quizId: quiz.id,
+          questionId,
+          answer,
+        })
+      }
+      onComplete={async (answers, submissionId) =>
+        await postLocalQuizGrading<AuthoritativeQuizAttemptResult>({
+          action: "submit",
+          quizId: quiz.id,
+          submissionId,
+          answers,
+        })
+      }
+    />
+  );
 }
 
 function ConvexSecureQuizPlayer({ quiz, surface = "web" }: SecureQuizPlayerProps) {
@@ -165,6 +194,14 @@ function SecureQuizPlayerCore({ quiz, surface, onCheckAnswer, onComplete }: Secu
   const question = quiz.questions[currentIndex];
   const progress = hasQuestions ? ((currentIndex + (results ? 1 : 0)) / quiz.questions.length) * 100 : 0;
   const questionHeadingId = question ? `quiz-${quiz.id}-question-${question.id}` : undefined;
+  const timerAnnouncement =
+    surface === "web"
+      ? timeLeft === 60
+        ? "One minute remaining"
+        : timeLeft === 10
+          ? "Ten seconds remaining"
+          : ""
+      : "";
 
   const completeQuiz = useCallback(
     async (nextAnswers: number[], timedOut = false) => {
@@ -416,9 +453,17 @@ function SecureQuizPlayerCore({ quiz, surface, onCheckAnswer, onComplete }: Secu
             <span>
               Question {currentIndex + 1} of {quiz.questions.length}
             </span>
-            <span className={cn("shrink-0 font-medium", timeLeft <= 60 && "text-destructive")}>
+            <span
+              {...(surface === "mobile" ? { "aria-live": "polite" as const } : {})}
+              className={cn("shrink-0 font-medium", timeLeft <= 60 && "text-destructive")}
+            >
               Time left: {formatQuizTime(timeLeft)}
             </span>
+            {surface === "web" ? (
+              <span className="sr-only" aria-live="polite" aria-atomic="true">
+                {timerAnnouncement}
+              </span>
+            ) : null}
           </div>
           <ProgressBar value={progress} />
         </div>
