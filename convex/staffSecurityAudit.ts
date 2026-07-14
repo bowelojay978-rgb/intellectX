@@ -10,6 +10,12 @@ import { requireAdmin } from "./lib/staffRbac";
 const managedInstructorRoleValidator = v.union(v.literal("learner"), v.literal("instructor"));
 const auditPhaseValidator = v.union(v.literal("requested"), v.literal("completed"), v.literal("failed"));
 
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const recordInstructorAccessChange = mutationGeneric({
   args: {
     operationId: v.string(),
@@ -27,9 +33,14 @@ export const recordInstructorAccessChange = mutationGeneric({
     const eventType = getStaffRoleChangeAuditEventType(args.phase, args.nextRole);
     const existingEvents = await ctx.db
       .query("auditLogs")
-      .withIndex("by_operation_id", (q) => q.eq("operationId", args.operationId))
+      .withIndex("by_target", (q) => q.eq("targetType", "clerk_user").eq("targetId", args.targetUserId))
       .collect();
-    const duplicateEvent = existingEvents.find((event) => event.eventType === eventType);
+    const duplicateEvent = existingEvents.find(
+      (event) =>
+        event.eventType === eventType &&
+        isRecord(event.before) &&
+        event.before.operationId === args.operationId,
+    );
 
     if (duplicateEvent) {
       return duplicateEvent._id;
@@ -41,11 +52,10 @@ export const recordInstructorAccessChange = mutationGeneric({
       actorRole: actor.role,
       targetType: "clerk_user",
       targetId: args.targetUserId,
-      operationId: args.operationId,
       createdAt: Date.now(),
       reason: args.phase === "failed" ? "clerk_metadata_update_failed" : undefined,
-      before: { role: args.previousRole },
-      after: { role: args.nextRole },
+      before: { role: args.previousRole, operationId: args.operationId },
+      after: { role: args.nextRole, operationId: args.operationId },
     });
   },
 });
