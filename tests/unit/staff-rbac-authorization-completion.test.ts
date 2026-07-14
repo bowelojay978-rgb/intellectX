@@ -101,4 +101,42 @@ describe("staff RBAC and authorization completion", () => {
     expect(auditMutationSource).toContain("duplicateEvent");
     expect(auditMutationSource).toContain("operationId: args.operationId");
   });
+
+  it("reconciles a pending completed role change on same-role retry", () => {
+    const actionSource = readFileSync(
+      path.resolve(process.cwd(), "src/app/admin/instructors/actions.ts"),
+      "utf8",
+    );
+    const auditMutationSource = readFileSync(
+      path.resolve(process.cwd(), "convex/staffSecurityAudit.ts"),
+      "utf8",
+    );
+
+    const sameRolePosition = actionSource.indexOf("if (currentRole === nextRole)");
+    const reconcilePosition = actionSource.indexOf("await reconcilePendingInstructorAccessChange");
+
+    expect(sameRolePosition).toBeGreaterThanOrEqual(0);
+    expect(reconcilePosition).toBeGreaterThan(sameRolePosition);
+    expect(auditMutationSource).toContain("reconcilePendingInstructorAccessChange");
+    expect(auditMutationSource).toContain('reason: "reconciled_after_clerk_role_change"');
+    expect(auditMutationSource).toContain("hasTerminalEvent");
+  });
+
+  it("rolls back an un-audited instructor grant while keeping revocation least-privilege", () => {
+    const actionSource = readFileSync(
+      path.resolve(process.cwd(), "src/app/admin/instructors/actions.ts"),
+      "utf8",
+    );
+
+    expect(actionSource).toContain('if (nextRole === "instructor")');
+    expect(actionSource).toContain(
+      "Instructor access grant was rolled back because security audit completion failed.",
+    );
+    expect(actionSource).toContain(
+      "Critical partial failure: instructor access was granted, audit completion failed, and rollback failed.",
+    );
+    expect(actionSource).toContain(
+      "Instructor access was revoked, but security audit completion is pending reconciliation.",
+    );
+  });
 });
