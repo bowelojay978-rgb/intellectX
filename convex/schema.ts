@@ -188,6 +188,18 @@ export default defineSchema({
     subjectsOrModules: v.array(v.string()),
     updatedAt: v.number(),
   }).index("by_user", ["userKey"]),
+  learnerMigrationLedger: defineTable({
+    sourceUserKey: v.string(),
+    destinationUserKey: v.string(),
+    migrationVersion: v.number(),
+    academicProfiles: v.number(),
+    courseSelections: v.number(),
+    quizAttempts: v.number(),
+    lessonProgress: v.number(),
+    notes: v.number(),
+    studyStats: v.number(),
+    completedAt: v.number(),
+  }).index("by_source_destination_version", ["sourceUserKey", "destinationUserKey", "migrationVersion"]),
   entitlements: defineTable({
     userKey: v.string(),
     productKey: v.string(),
