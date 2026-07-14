@@ -10,43 +10,58 @@ import Link from "next/link";
 
 export function Hero() {
   const { isLoaded, isSignedIn } = useLearnerAccessState();
+  const authPending = !isLoaded;
   const authenticated = isLoaded && isSignedIn;
 
   return (
     <div className="z-1 grid w-full place-items-center px-8 pt-28 pb-8">
       <BackgroundBlur className="-top-40 md:-top-0" />
       <Nav />
-      <div className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-6" aria-busy={authPending || undefined}>
         <Pill>
-          <p className="text-muted-foreground px-2 text-xs font-medium sm:text-sm">
-            {authenticated ? "Your learning workspace is ready" : "Built for focused study habits and clearer next steps"}
+          <p className="text-muted-foreground px-2 text-xs font-medium sm:text-sm" aria-live="polite">
+            {authPending
+              ? "Checking your learning workspace"
+              : authenticated
+                ? "Your learning workspace is ready"
+                : "Built for focused study habits and clearer next steps"}
           </p>
         </Pill>
 
         <h1 className="text-center text-4xl leading-[1.1] font-medium tracking-tight sm:text-7xl">
           {authenticated ? "Welcome back." : "IntellectX"}
           <span className="text-muted-foreground block">
-            {authenticated ? "Keep Your Momentum." : "Learns With You."}
+            {authPending ? "Preparing Your Workspace." : authenticated ? "Keep Your Momentum." : "Learns With You."}
           </span>
         </h1>
 
         <p className="max-w-lg text-center leading-6 tracking-tight sm:text-xl">
-          {authenticated
-            ? "Continue your courses, quizzes, flashcards, and progress from one focused workspace."
-            : "AI-guided courses, adaptive quizzes, and focused study workflows for students who want momentum without the noise."}
+          {authPending
+            ? "Checking your session before showing the correct learning state."
+            : authenticated
+              ? "Continue your courses, quizzes, flashcards, and progress from one focused workspace."
+              : "AI-guided courses, adaptive quizzes, and focused study workflows for students who want momentum without the noise."}
         </p>
 
         <div className="mb-10 flex flex-col gap-3 sm:flex-row">
-          <Button size="lg" asChild>
-            <LearnerEntryLink signedInHref="/dashboard">
-              {authenticated ? "Continue Learning" : "Start Learning"}
-            </LearnerEntryLink>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href={authenticated ? "/courses" : "/pricing"}>
-              {authenticated ? "Browse Courses" : "View Pricing"}
-            </Link>
-          </Button>
+          {authPending ? (
+            <Button size="lg" disabled aria-disabled="true">
+              Checking session…
+            </Button>
+          ) : (
+            <>
+              <Button size="lg" asChild>
+                <LearnerEntryLink signedInHref="/dashboard">
+                  {authenticated ? "Continue Learning" : "Start Learning"}
+                </LearnerEntryLink>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href={authenticated ? "/courses" : "/pricing"}>
+                  {authenticated ? "Browse Courses" : "View Pricing"}
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <HeroInsightChart />
