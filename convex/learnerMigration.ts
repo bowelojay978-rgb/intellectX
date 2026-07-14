@@ -1,6 +1,11 @@
 import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { buildAuthoritativeCourseSelectionWrite } from "./lib/courseSelectionPolicy";
+import {
+  isLearnerVisibleCourseRecord,
+  learnerCourseVisibilityOptions,
+} from "./lib/courseWorkflow";
 import {
   prepareLearnerDataMigration,
   selectDestinationAuthoritativeRecordForMigration,
@@ -35,6 +40,19 @@ function quizAttemptExistsUnderDestination(
   );
 }
 
+async function assertLearnerVisibleCourseIds(ctx: any, courseIds: readonly string[]) {
+  for (const courseId of courseIds) {
+    const course = await ctx.db
+      .query("courses")
+      .withIndex("by_stable_id", (q: any) => q.eq("stableId", courseId))
+      .first();
+
+    if (!course || !isLearnerVisibleCourseRecord(course, learnerCourseVisibilityOptions)) {
+      throw new Error(`Course is not available for learner selection: ${courseId}.`);
+    }
+  }
+}
+
 export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
   args: {
     sourceUserKey: v.string(),
@@ -42,6 +60,7 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
   handler: async (ctx, args): Promise<MigrationSummary> => {
     const identity = await ctx.auth.getUserIdentity();
     const { sourceUserKey, destinationUserKey } = prepareLearnerDataMigration(identity, args.sourceUserKey);
+    const now = Date.now();
     const summary: MigrationSummary = {
       sourceUserKey,
       destinationUserKey,
@@ -98,16 +117,21 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
     const destinationCourseSelection = latestByUpdatedAt(destinationCourseSelections);
 
     if (selectedCourseSelection && !destinationCourseSelection) {
-      await ctx.db.insert("courseSelections", {
-        userKey: destinationUserKey,
-        selectedCourseIds: selectedCourseSelection.selectedCourseIds,
-        selectedAt: selectedCourseSelection.selectedAt,
-        gracePeriodEndsAt: selectedCourseSelection.gracePeriodEndsAt,
-        lockedAt: selectedCourseSelection.lockedAt,
-        locked: selectedCourseSelection.locked,
-        updatedAt: selectedCourseSelection.updatedAt,
+      const nextCourseSelection = buildAuthoritativeCourseSelectionWrite({
+        existing: null,
+        requestedCourseIds: selectedCourseSelection.selectedCourseIds,
+        now,
       });
-      summary.courseSelections = 1;
+
+      if (nextCourseSelection) {
+        await assertLearnerVisibleCourseIds(ctx, nextCourseSelection.selectedCourseIds);
+        await ctx.db.insert("courseSelections", {
+          userKey: destinationUserKey,
+          ...nextCourseSelection,
+          updatedAt: now,
+        });
+        summary.courseSelections = 1;
+      }
     }
 
     const sourceQuizAttempts = await ctx.db
