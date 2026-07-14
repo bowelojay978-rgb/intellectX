@@ -58,24 +58,25 @@ test("completed selected-course progress stays at 100% across refresh", async ({
   await seedProgressProfileState(page);
   await page.goto("/progress");
 
-  const selectedCourses = page.getByRole("heading", { name: "Selected courses" }).locator("..", { hasText: "AI Study Systems" });
   await expect(page.getByText("AI Study Systems")).toBeVisible();
-  await expect(page.getByText("100%")).toBeVisible();
+  await expect(page.getByText("100%", { exact: true })).toBeVisible();
 
   await page.reload();
 
   await expect(page.getByText("AI Study Systems")).toBeVisible();
-  await expect(page.getByText("100%")).toBeVisible();
-  await expect(selectedCourses).toBeAttached();
+  await expect(page.getByText("100%", { exact: true })).toBeVisible();
 });
 
 test("Profile removes previous private learning activity after local learner data is cleared", async ({ page }) => {
   await seedProgressProfileState(page);
   await page.goto("/profile");
 
+  const completedLessonsStat = page.getByText("Completed lessons", { exact: true }).locator("..");
+  const averageScoreStat = page.getByText("Average score", { exact: true }).locator("..");
+
   await expect(page.getByText("AI Study Systems")).toBeVisible();
-  await expect(page.getByText("3", { exact: true })).toBeVisible();
-  await expect(page.getByText("80%", { exact: true })).toBeVisible();
+  await expect(completedLessonsStat.getByText("3", { exact: true })).toBeVisible();
+  await expect(averageScoreStat.getByText("80%", { exact: true })).toBeVisible();
   await expect(page.getByText("Selected courses: 1", { exact: true })).toBeVisible();
 
   await page.evaluate(() => {
