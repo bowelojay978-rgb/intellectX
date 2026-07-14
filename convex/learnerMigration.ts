@@ -1,8 +1,9 @@
-﻿import { mutationGeneric } from "convex/server";
+import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import {
   prepareLearnerDataMigration,
+  selectDestinationAuthoritativeRecordForMigration,
   selectMonotonicLessonProgressForMigration,
 } from "./lib/migrateLearnerData";
 
@@ -17,8 +18,8 @@ type MigrationSummary = {
   studyStats: number;
 };
 
-function latestByUpdatedAt<T extends { updatedAt: number }>(records: T[]) {
-  return records.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
+function latestByUpdatedAt<T extends { updatedAt: number }>(records: readonly T[]) {
+  return [...records].sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
 }
 
 function quizAttemptExistsUnderDestination(
@@ -54,7 +55,8 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
 
     // Local/free migration bridge only. This copies or merges browser-derived
     // learner data into the authenticated account key; it is not an entitlement
-    // or paid-access mechanism.
+    // or paid-access mechanism. Existing authenticated destination data remains
+    // authoritative for singleton and per-lesson records.
     const sourceAcademicProfiles = await ctx.db
       .query("academicProfiles")
       .withIndex("by_user", (q) => q.eq("userKey", sourceUserKey))
@@ -63,24 +65,21 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
       .query("academicProfiles")
       .withIndex("by_user", (q) => q.eq("userKey", destinationUserKey))
       .collect();
-    const latestAcademicProfile = latestByUpdatedAt([...sourceAcademicProfiles, ...destinationAcademicProfiles]);
+    const selectedAcademicProfile = selectDestinationAuthoritativeRecordForMigration(
+      sourceAcademicProfiles,
+      destinationAcademicProfiles,
+    );
     const destinationAcademicProfile = latestByUpdatedAt(destinationAcademicProfiles);
 
-    if (latestAcademicProfile && latestAcademicProfile.userKey !== destinationUserKey) {
-      const nextProfile = {
+    if (selectedAcademicProfile && !destinationAcademicProfile) {
+      await ctx.db.insert("academicProfiles", {
         userKey: destinationUserKey,
-        educationLevel: latestAcademicProfile.educationLevel,
-        curriculumOrInstitution: latestAcademicProfile.curriculumOrInstitution,
-        gradeOrYear: latestAcademicProfile.gradeOrYear,
-        subjectsOrModules: latestAcademicProfile.subjectsOrModules,
-        updatedAt: latestAcademicProfile.updatedAt,
-      };
-
-      if (destinationAcademicProfile) {
-        await ctx.db.patch(destinationAcademicProfile._id, nextProfile);
-      } else {
-        await ctx.db.insert("academicProfiles", nextProfile);
-      }
+        educationLevel: selectedAcademicProfile.educationLevel,
+        curriculumOrInstitution: selectedAcademicProfile.curriculumOrInstitution,
+        gradeOrYear: selectedAcademicProfile.gradeOrYear,
+        subjectsOrModules: selectedAcademicProfile.subjectsOrModules,
+        updatedAt: selectedAcademicProfile.updatedAt,
+      });
       summary.academicProfiles = 1;
     }
 
@@ -92,25 +91,22 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
       .query("courseSelections")
       .withIndex("by_user", (q) => q.eq("userKey", destinationUserKey))
       .collect();
-    const latestCourseSelection = latestByUpdatedAt([...sourceCourseSelections, ...destinationCourseSelections]);
+    const selectedCourseSelection = selectDestinationAuthoritativeRecordForMigration(
+      sourceCourseSelections,
+      destinationCourseSelections,
+    );
     const destinationCourseSelection = latestByUpdatedAt(destinationCourseSelections);
 
-    if (latestCourseSelection && latestCourseSelection.userKey !== destinationUserKey) {
-      const nextSelection = {
+    if (selectedCourseSelection && !destinationCourseSelection) {
+      await ctx.db.insert("courseSelections", {
         userKey: destinationUserKey,
-        selectedCourseIds: latestCourseSelection.selectedCourseIds,
-        selectedAt: latestCourseSelection.selectedAt,
-        gracePeriodEndsAt: latestCourseSelection.gracePeriodEndsAt,
-        lockedAt: latestCourseSelection.lockedAt,
-        locked: latestCourseSelection.locked,
-        updatedAt: latestCourseSelection.updatedAt,
-      };
-
-      if (destinationCourseSelection) {
-        await ctx.db.patch(destinationCourseSelection._id, nextSelection);
-      } else {
-        await ctx.db.insert("courseSelections", nextSelection);
-      }
+        selectedCourseIds: selectedCourseSelection.selectedCourseIds,
+        selectedAt: selectedCourseSelection.selectedAt,
+        gracePeriodEndsAt: selectedCourseSelection.gracePeriodEndsAt,
+        lockedAt: selectedCourseSelection.lockedAt,
+        locked: selectedCourseSelection.locked,
+        updatedAt: selectedCourseSelection.updatedAt,
+      });
       summary.courseSelections = 1;
     }
 
@@ -154,6 +150,7 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
     for (const lessonId of lessonIds) {
       const mergedProgress = selectMonotonicLessonProgressForMigration(
         [...sourceLessonProgress, ...destinationLessonProgress].filter((progress) => progress.lessonId === lessonId),
+        destinationUserKey,
       );
       const destinationProgress = destinationLessonProgress.find((progress) => progress.lessonId === lessonId);
 
@@ -188,25 +185,24 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
     const noteLessonIds = new Set([...sourceNotes, ...destinationNotes].map((note) => note.lessonId));
 
     for (const lessonId of noteLessonIds) {
-      const latestNote = latestByUpdatedAt([...sourceNotes, ...destinationNotes].filter((note) => note.lessonId === lessonId));
-      const destinationNote = destinationNotes.find((note) => note.lessonId === lessonId);
+      const sourceNotesForLesson = sourceNotes.filter((note) => note.lessonId === lessonId);
+      const destinationNotesForLesson = destinationNotes.filter((note) => note.lessonId === lessonId);
+      const selectedNote = selectDestinationAuthoritativeRecordForMigration(
+        sourceNotesForLesson,
+        destinationNotesForLesson,
+      );
+      const destinationNote = latestByUpdatedAt(destinationNotesForLesson);
 
-      if (!latestNote || latestNote.userKey === destinationUserKey) {
+      if (!selectedNote || destinationNote) {
         continue;
       }
 
-      const nextNote = {
+      await ctx.db.insert("notes", {
         userKey: destinationUserKey,
-        lessonId: latestNote.lessonId,
-        body: latestNote.body,
-        updatedAt: latestNote.updatedAt,
-      };
-
-      if (destinationNote) {
-        await ctx.db.patch(destinationNote._id, nextNote);
-      } else {
-        await ctx.db.insert("notes", nextNote);
-      }
+        lessonId: selectedNote.lessonId,
+        body: selectedNote.body,
+        updatedAt: selectedNote.updatedAt,
+      });
       summary.notes += 1;
     }
 
@@ -218,24 +214,21 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
       .query("studyStats")
       .withIndex("by_user", (q) => q.eq("userKey", destinationUserKey))
       .collect();
-    const latestStudyStats = latestByUpdatedAt([...sourceStudyStats, ...destinationStudyStats]);
+    const selectedStudyStats = selectDestinationAuthoritativeRecordForMigration(
+      sourceStudyStats,
+      destinationStudyStats,
+    );
     const destinationStudyStatsRecord = latestByUpdatedAt(destinationStudyStats);
 
-    if (latestStudyStats && latestStudyStats.userKey !== destinationUserKey) {
-      const nextStats = {
+    if (selectedStudyStats && !destinationStudyStatsRecord) {
+      await ctx.db.insert("studyStats", {
         userKey: destinationUserKey,
-        currentStreak: latestStudyStats.currentStreak,
-        longestStreak: latestStudyStats.longestStreak,
-        weeklyActiveDays: latestStudyStats.weeklyActiveDays,
-        lastStudiedDate: latestStudyStats.lastStudiedDate,
-        updatedAt: latestStudyStats.updatedAt,
-      };
-
-      if (destinationStudyStatsRecord) {
-        await ctx.db.patch(destinationStudyStatsRecord._id, nextStats);
-      } else {
-        await ctx.db.insert("studyStats", nextStats);
-      }
+        currentStreak: selectedStudyStats.currentStreak,
+        longestStreak: selectedStudyStats.longestStreak,
+        weeklyActiveDays: selectedStudyStats.weeklyActiveDays,
+        lastStudiedDate: selectedStudyStats.lastStudiedDate,
+        updatedAt: selectedStudyStats.updatedAt,
+      });
       summary.studyStats = 1;
     }
 
