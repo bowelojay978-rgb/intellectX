@@ -55,6 +55,7 @@ export const convexApi = {
     getQuizzesByCourse: makeFunctionReference<"query">("quizzes:getQuizzesByCourse"),
     getQuizById: makeFunctionReference<"query">("quizzes:getQuizById"),
     getQuizAttempts: makeFunctionReference<"query">("quizzes:getQuizAttempts"),
+    checkQuizAnswer: makeFunctionReference<"mutation">("quizzes:checkQuizAnswer"),
     submitQuizAttempt: makeFunctionReference<"mutation">("quizzes:submitQuizAttempt"),
   },
   notes: {
