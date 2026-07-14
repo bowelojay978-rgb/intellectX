@@ -10,6 +10,10 @@ import { requireAdmin } from "./lib/staffRbac";
 
 const managedInstructorRoleValidator = v.union(v.literal("learner"), v.literal("instructor"));
 const auditPhaseValidator = v.union(v.literal("requested"), v.literal("completed"), v.literal("failed"));
+const failureReasonValidator = v.union(
+  v.literal("clerk_metadata_update_failed"),
+  v.literal("audit_completion_failed_rolled_back"),
+);
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -36,6 +40,7 @@ export const recordInstructorAccessChange = mutationGeneric({
     targetUserId: v.string(),
     previousRole: managedInstructorRoleValidator,
     nextRole: managedInstructorRoleValidator,
+    failureReason: v.optional(failureReasonValidator),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -64,7 +69,7 @@ export const recordInstructorAccessChange = mutationGeneric({
       targetType: "clerk_user",
       targetId: args.targetUserId,
       createdAt: Date.now(),
-      reason: args.phase === "failed" ? "clerk_metadata_update_failed" : undefined,
+      reason: args.phase === "failed" ? args.failureReason ?? "staff_role_change_failed" : undefined,
       before: { role: args.previousRole, operationId: args.operationId },
       after: { role: args.nextRole, operationId: args.operationId },
     });
