@@ -2,7 +2,9 @@
 
 import {
   ACADEMIC_PROFILE_CHANGE_EVENT,
+  ACADEMIC_PROFILE_SYNC_RETRY_EVENT,
   type AcademicProfile,
+  dispatchAcademicProfileSyncStatus,
   isAcademicProfile,
   isAcademicProfileComplete,
   loadAcademicProfile,
@@ -51,6 +53,19 @@ function persistAcademicProfileArgs(identityArgs: ConvexLearnerArgs, profile: Ac
 
 function getIdentityArgs(identity: ConvexLearnerIdentity): ConvexLearnerArgs {
   return identity.userKey ? { userKey: identity.userKey } : {};
+}
+
+function trackAcademicProfileSync(operation: Promise<unknown>, warningMessage: string) {
+  dispatchAcademicProfileSyncStatus("pending");
+
+  operation
+    .then(() => {
+      dispatchAcademicProfileSyncStatus("success");
+    })
+    .catch((error) => {
+      dispatchAcademicProfileSyncStatus("error");
+      console.warn(warningMessage, error);
+    });
 }
 
 export function AcademicProfileSync() {
@@ -112,15 +127,17 @@ function ConvexAcademicProfileSync() {
       const localProfile = loadAcademicProfile();
 
       if (localProfile && isAcademicProfileComplete(localProfile)) {
-        upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
-          console.warn("Unable to sync academic profile to Convex", error);
-        });
+        trackAcademicProfileSync(
+          upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)),
+          "Unable to sync academic profile to Convex",
+        );
         return;
       }
 
-      clearRemoteAcademicProfile(identityArgs).catch((error) => {
-        console.warn("Unable to clear academic profile from Convex", error);
-      });
+      trackAcademicProfileSync(
+        clearRemoteAcademicProfile(identityArgs),
+        "Unable to clear academic profile from Convex",
+      );
     }
 
     convex
@@ -176,9 +193,10 @@ function ConvexAcademicProfileSync() {
 
         const localProfile = loadAcademicProfile();
         if (localProfile && isAcademicProfileComplete(localProfile)) {
-          upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
-            console.warn("Unable to sync local academic profile to Convex", error);
-          });
+          trackAcademicProfileSync(
+            upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)),
+            "Unable to sync local academic profile to Convex",
+          );
         }
       })
       .catch((error) => {
@@ -214,21 +232,25 @@ function ConvexAcademicProfileSync() {
       const localProfile = loadAcademicProfile();
 
       if (localProfile && isAcademicProfileComplete(localProfile)) {
-        upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)).catch((error) => {
-          console.warn("Unable to sync academic profile to Convex", error);
-        });
+        trackAcademicProfileSync(
+          upsertAcademicProfile(persistAcademicProfileArgs(identityArgs, localProfile)),
+          "Unable to sync academic profile to Convex",
+        );
         return;
       }
 
-      clearRemoteAcademicProfile(identityArgs).catch((error) => {
-        console.warn("Unable to clear academic profile from Convex", error);
-      });
+      trackAcademicProfileSync(
+        clearRemoteAcademicProfile(identityArgs),
+        "Unable to clear academic profile from Convex",
+      );
     }
 
     window.addEventListener(ACADEMIC_PROFILE_CHANGE_EVENT, syncLocalProfileToConvex);
+    window.addEventListener(ACADEMIC_PROFILE_SYNC_RETRY_EVENT, syncLocalProfileToConvex);
 
     return () => {
       window.removeEventListener(ACADEMIC_PROFILE_CHANGE_EVENT, syncLocalProfileToConvex);
+      window.removeEventListener(ACADEMIC_PROFILE_SYNC_RETRY_EVENT, syncLocalProfileToConvex);
     };
   }, [clearRemoteAcademicProfile, identity, primaryEmailAddress, upsertAcademicProfile]);
 
