@@ -93,7 +93,8 @@ function readExistingRoleAudit(privateMetadata: Record<string, unknown> | undefi
       typeof entry.targetUserId === "string" &&
       (entry.previousRole === "learner" || entry.previousRole === "instructor") &&
       (entry.nextRole === "learner" || entry.nextRole === "instructor") &&
-      typeof entry.changedAt === "number"
+      typeof entry.changedAt === "number" &&
+      Number.isFinite(entry.changedAt)
     );
   });
 }
@@ -124,7 +125,9 @@ export function buildPrivateMetadataWithStaffRoleAudit(
 
   return {
     ...currentMetadata,
-    staffRoleAudit: [entry, ...existingAudit].slice(0, STAFF_ROLE_AUDIT_LIMIT),
+    staffRoleAudit: [entry, ...existingAudit]
+      .sort((left, right) => right.changedAt - left.changedAt)
+      .slice(0, STAFF_ROLE_AUDIT_LIMIT),
   };
 }
 
