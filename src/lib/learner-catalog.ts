@@ -38,8 +38,6 @@ export type ConvexQuestionRecord = {
   stableId?: unknown;
   prompt?: unknown;
   choices?: unknown;
-  answerIndex?: unknown;
-  explanation?: unknown;
   order?: unknown;
 };
 
@@ -186,20 +184,12 @@ function normalizeLearnerQuizQuestion(question: ConvexQuestionRecord): QuizQuest
     typeof question.stableId !== "string" ||
     typeof question.prompt !== "string" ||
     !Array.isArray(question.choices) ||
-    !question.choices.every((choice) => typeof choice === "string") ||
-    typeof question.answerIndex !== "number" ||
-    !Number.isInteger(question.answerIndex) ||
-    typeof question.explanation !== "string"
+    !question.choices.every((choice) => typeof choice === "string")
   ) {
     return null;
   }
 
-  if (
-    !question.prompt ||
-    question.choices.length < 2 ||
-    question.answerIndex < 0 ||
-    question.answerIndex >= question.choices.length
-  ) {
+  if (!question.prompt || question.choices.length < 2) {
     return null;
   }
 
@@ -207,8 +197,8 @@ function normalizeLearnerQuizQuestion(question: ConvexQuestionRecord): QuizQuest
     id: question.stableId,
     prompt: question.prompt,
     choices: question.choices,
-    answerIndex: question.answerIndex,
-    explanation: question.explanation,
+    answerIndex: -1,
+    explanation: "",
   };
 }
 
@@ -258,7 +248,6 @@ export async function getLearnerCourseDetail(id: string): Promise<LearnerCourseD
   ]);
 
   const lessons = convexLessons
-    .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
     .map((lesson) =>
       normalizeLearnerLesson(lesson, {
         course,
