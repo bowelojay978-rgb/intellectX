@@ -23,7 +23,7 @@ describe("learner UI flow contracts", () => {
     expect(source).toContain("<SignIn");
     expect(source).toContain("<SignUp");
     expect(source).toContain("clerkAppearance");
-    expect(source).toContain("ShieldCheckIcon");
+    expect(source).toContain("SparklesIcon");
   });
 
   it("prevents signed-in Clerk sessions from entering the SignIn redirect loop", () => {
