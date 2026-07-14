@@ -1,7 +1,9 @@
 "use server";
 
 import {
+  buildPrivateMetadataWithStaffRoleAudit,
   buildPublicMetadataWithStaffRole,
+  buildStaffRoleAuditEntry,
   getAdminClerkSession,
   readUserRole,
 } from "@/lib/server-staff-auth";
@@ -37,8 +39,17 @@ export async function setInstructorAccessAction(formData: FormData) {
     throw new Error("Admin roles cannot be changed from the instructor-management page.");
   }
 
+  const auditEntry = buildStaffRoleAuditEntry({
+    actorUserId: session.userId,
+    targetUserId: userId,
+    previousRole: currentRole,
+    nextRole,
+    changedAt: Date.now(),
+  });
+
   await client.users.updateUserMetadata(userId, {
     publicMetadata: buildPublicMetadataWithStaffRole(targetUser.publicMetadata, nextRole),
+    privateMetadata: buildPrivateMetadataWithStaffRoleAudit(targetUser.privateMetadata, auditEntry),
   });
 
   revalidatePath("/admin/instructors");
