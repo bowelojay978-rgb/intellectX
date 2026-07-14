@@ -5,18 +5,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  ACADEMIC_PROFILE_SYNC_STATUS_EVENT,
   type AcademicProfile,
+  type AcademicProfileSyncStatus,
+  type AcademicProfileSyncStatusDetail,
   clearAcademicProfile,
+  clearAcademicProfileDraft,
   educationLevels,
   getAcademicProfileOptions,
   getDefaultAcademicProfile,
   isAcademicProfileComplete,
   loadAcademicProfile,
+  loadAcademicProfileDraft,
   normalizeAcademicProfileForLevel,
+  requestAcademicProfileSyncRetry,
   saveAcademicProfile,
+  saveAcademicProfileDraft,
 } from "@/lib/academic-profile";
 import { cn } from "@/lib/utils";
-import { GraduationCapIcon, PencilIcon } from "lucide-react";
+import { GraduationCapIcon, PencilIcon, RefreshCwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type StudyProfileCardProps = {
@@ -24,6 +31,7 @@ type StudyProfileCardProps = {
   submitLabel?: string;
   showReset?: boolean;
   loadSavedProfile?: boolean;
+  draftScope?: string;
 };
 
 function academicProfilesMatch(left: AcademicProfile, right: AcademicProfile) {
@@ -39,17 +47,25 @@ function academicProfilesMatch(left: AcademicProfile, right: AcademicProfile) {
   );
 }
 
+function getSavedStatusLabel(syncStatus: AcademicProfileSyncStatus) {
+  if (syncStatus === "pending") return "Saving to your account…";
+  if (syncStatus === "success") return "Saved to your account";
+  return "Saved on this device";
+}
+
 export function StudyProfileCard({
   onSaved,
   submitLabel = "Save study profile",
   showReset = true,
   loadSavedProfile = true,
+  draftScope,
 }: StudyProfileCardProps) {
   const [profile, setProfile] = useState<AcademicProfile>(getDefaultAcademicProfile);
   const [savedProfile, setSavedProfile] = useState<AcademicProfile | null>(null);
   const [isEditing, setIsEditing] = useState(!loadSavedProfile);
   const [profileReady, setProfileReady] = useState(!loadSavedProfile);
   const [attemptedSave, setAttemptedSave] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<AcademicProfileSyncStatus>("idle");
   const normalizedProfile = normalizeAcademicProfileForLevel(profile);
   const profileOptions = getAcademicProfileOptions(normalizedProfile);
   const profileComplete = isAcademicProfileComplete(normalizedProfile);
@@ -57,7 +73,26 @@ export function StudyProfileCard({
   const canSave = profileComplete && hasUnsavedChanges;
 
   useEffect(() => {
-    if (!loadSavedProfile) return;
+    function handleSyncStatus(event: Event) {
+      const syncEvent = event as CustomEvent<AcademicProfileSyncStatusDetail>;
+      setSyncStatus(syncEvent.detail.status);
+    }
+
+    window.addEventListener(ACADEMIC_PROFILE_SYNC_STATUS_EVENT, handleSyncStatus);
+
+    return () => {
+      window.removeEventListener(ACADEMIC_PROFILE_SYNC_STATUS_EVENT, handleSyncStatus);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadSavedProfile) {
+      if (draftScope) {
+        const draft = loadAcademicProfileDraft(draftScope);
+        if (draft) setProfile(normalizeAcademicProfileForLevel(draft));
+      }
+      return;
+    }
 
     const storedProfile = loadAcademicProfile();
 
@@ -68,22 +103,33 @@ export function StudyProfileCard({
       if (isAcademicProfileComplete(normalizedStoredProfile)) {
         setSavedProfile(normalizedStoredProfile);
         setIsEditing(false);
+        if (draftScope) clearAcademicProfileDraft(draftScope);
       } else {
         setSavedProfile(null);
         setIsEditing(true);
       }
+    } else if (draftScope) {
+      const draft = loadAcademicProfileDraft(draftScope);
+      if (draft) setProfile(normalizeAcademicProfileForLevel(draft));
+      setSavedProfile(null);
+      setIsEditing(true);
     } else {
       setSavedProfile(null);
       setIsEditing(true);
     }
 
     setProfileReady(true);
-  }, [loadSavedProfile]);
+  }, [draftScope, loadSavedProfile]);
 
   function updateProfile(updater: (currentProfile: AcademicProfile) => AcademicProfile) {
     if (!isEditing) return;
     setAttemptedSave(false);
-    setProfile(updater);
+    setSyncStatus("idle");
+    setProfile((currentProfile) => {
+      const nextProfile = normalizeAcademicProfileForLevel(updater(currentProfile));
+      if (draftScope) saveAcademicProfileDraft(draftScope, nextProfile);
+      return nextProfile;
+    });
   }
 
   function toggleSubject(subject: string) {
@@ -109,6 +155,7 @@ export function StudyProfileCard({
     }
 
     saveAcademicProfile(normalizedProfile);
+    if (draftScope) clearAcademicProfileDraft(draftScope);
     setSavedProfile(normalizedProfile);
     setAttemptedSave(false);
 
@@ -121,15 +168,23 @@ export function StudyProfileCard({
 
   function startEditing() {
     setAttemptedSave(false);
+    setSyncStatus("idle");
     setIsEditing(true);
   }
 
   function resetProfile() {
     clearAcademicProfile();
+    if (draftScope) clearAcademicProfileDraft(draftScope);
     setProfile(getDefaultAcademicProfile());
     setSavedProfile(null);
     setIsEditing(true);
     setAttemptedSave(false);
+    setSyncStatus("idle");
+  }
+
+  function retrySync() {
+    setSyncStatus("pending");
+    requestAcademicProfileSyncRetry();
   }
 
   if (!profileReady) {
@@ -157,8 +212,8 @@ export function StudyProfileCard({
             Study profile
           </CardTitle>
           {savedProfile && !isEditing ? (
-            <Badge variant="secondary" role="status">
-              Saved on this device
+            <Badge variant="secondary" role="status" aria-live="polite">
+              {getSavedStatusLabel(syncStatus)}
             </Badge>
           ) : null}
         </div>
@@ -258,6 +313,17 @@ export function StudyProfileCard({
             </Button>
           ) : null}
         </div>
+        {savedProfile && !isEditing && syncStatus === "error" ? (
+          <div className="border-destructive/30 bg-destructive/5 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-destructive text-sm" role="alert">
+              Saved on this device, but IntellectX could not sync this Study Profile to your account.
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={retrySync}>
+              <RefreshCwIcon className="size-4" />
+              Retry sync
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -3,6 +3,15 @@ import type { Quiz } from "@/data/quizzes";
 
 export const ACADEMIC_PROFILE_KEY = "intellectx:academic-profile";
 export const ACADEMIC_PROFILE_CHANGE_EVENT = "intellectx-academic-profile-change";
+export const ACADEMIC_PROFILE_SYNC_STATUS_EVENT = "intellectx-academic-profile-sync-status";
+export const ACADEMIC_PROFILE_SYNC_RETRY_EVENT = "intellectx-academic-profile-sync-retry";
+export const ACADEMIC_PROFILE_DRAFT_KEY_PREFIX = "intellectx:academic-profile-draft";
+
+export type AcademicProfileSyncStatus = "idle" | "pending" | "success" | "error";
+
+export type AcademicProfileSyncStatusDetail = {
+  status: AcademicProfileSyncStatus;
+};
 
 export const educationLevels = [
   "Primary",
@@ -184,6 +193,45 @@ export function clearAcademicProfile() {
   window.dispatchEvent(new Event(ACADEMIC_PROFILE_CHANGE_EVENT));
 }
 
+function getAcademicProfileDraftKey(scope: string) {
+  return `${ACADEMIC_PROFILE_DRAFT_KEY_PREFIX}:${scope}`;
+}
+
+export function loadAcademicProfileDraft(scope: string): AcademicProfile | null {
+  const draftKey = getAcademicProfileDraftKey(scope);
+  const storedDraft = window.localStorage.getItem(draftKey);
+
+  if (!storedDraft) return null;
+
+  try {
+    const parsedDraft = JSON.parse(storedDraft);
+    return isAcademicProfile(parsedDraft) ? parsedDraft : null;
+  } catch {
+    window.localStorage.removeItem(draftKey);
+    return null;
+  }
+}
+
+export function saveAcademicProfileDraft(scope: string, profile: AcademicProfile) {
+  window.localStorage.setItem(getAcademicProfileDraftKey(scope), JSON.stringify(profile));
+}
+
+export function clearAcademicProfileDraft(scope: string) {
+  window.localStorage.removeItem(getAcademicProfileDraftKey(scope));
+}
+
+export function dispatchAcademicProfileSyncStatus(status: AcademicProfileSyncStatus) {
+  window.dispatchEvent(
+    new CustomEvent<AcademicProfileSyncStatusDetail>(ACADEMIC_PROFILE_SYNC_STATUS_EVENT, {
+      detail: { status },
+    }),
+  );
+}
+
+export function requestAcademicProfileSyncRetry() {
+  window.dispatchEvent(new Event(ACADEMIC_PROFILE_SYNC_RETRY_EVENT));
+}
+
 export function formatAcademicProfile(profile: AcademicProfile) {
   const label = isUniversityLevel(profile.educationLevel) ? "Year" : "Grade";
 
@@ -207,5 +255,3 @@ export function quizMatchesAcademicProfile(quiz: Quiz, courses: Course[], profil
 
   return course ? courseMatchesAcademicProfile(course, profile) : false;
 }
-
-
