@@ -19,6 +19,9 @@ export type Quiz = {
   accessLevel?: ContentAccessLevel;
 };
 
+// Public fallback quiz data intentionally contains no real answer keys or
+// explanations. Authoritative seed answers live under convex/ and are never
+// shipped as pre-submission learner data.
 export const quizzes: Quiz[] = [
   {
     id: "ai-study-systems-check",
@@ -37,8 +40,8 @@ export const quizzes: Quiz[] = [
           "Rewrite my notes in a longer format.",
           "Summarize every topic with no follow-up.",
         ],
-        answerIndex: 1,
-        explanation: "A learning loop creates feedback and retrieval practice instead of passive answer consumption.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q2",
@@ -49,8 +52,8 @@ export const quizzes: Quiz[] = [
           "Avoiding correction until the end of the term.",
           "Using only summaries instead of questions.",
         ],
-        answerIndex: 0,
-        explanation: "AI can generate practice, but source-grounded correction keeps learning accurate.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q3",
@@ -61,8 +64,8 @@ export const quizzes: Quiz[] = [
           "A full rewrite of every note.",
           "Skipping topics that felt difficult.",
         ],
-        answerIndex: 1,
-        explanation: "Weekly reviews become useful when they produce a specific next study decision.",
+        answerIndex: -1,
+        explanation: "",
       },
     ],
   },
@@ -83,8 +86,8 @@ export const quizzes: Quiz[] = [
           "To remove uncertainty from a topic.",
           "To replace source checking.",
         ],
-        answerIndex: 1,
-        explanation: "Argument maps clarify how a conclusion is supported and where it may be weak.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q2",
@@ -95,8 +98,8 @@ export const quizzes: Quiz[] = [
           "Ignore incentives if the writing sounds polished.",
           "Use only social proof.",
         ],
-        answerIndex: 1,
-        explanation: "Primary sources and recency reduce the risk of relying on stale or distorted claims.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q3",
@@ -107,8 +110,8 @@ export const quizzes: Quiz[] = [
           "They replace evidence.",
           "They make arguments less precise.",
         ],
-        answerIndex: 0,
-        explanation: "Counterexamples stress-test the scope of an idea and improve precision.",
+        answerIndex: -1,
+        explanation: "",
       },
     ],
   },
@@ -129,8 +132,8 @@ export const quizzes: Quiz[] = [
           "It guarantees a perfect score.",
           "It makes spaced repetition unnecessary.",
         ],
-        answerIndex: 0,
-        explanation: "A diagnostic shows which gaps matter most so study time can be targeted.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q2",
@@ -141,8 +144,8 @@ export const quizzes: Quiz[] = [
           "Avoid mistakes entirely.",
           "Study only when confidence is high.",
         ],
-        answerIndex: 1,
-        explanation: "Producing an answer exposes what memory can actually retrieve.",
+        answerIndex: -1,
+        explanation: "",
       },
       {
         id: "q3",
@@ -153,8 +156,8 @@ export const quizzes: Quiz[] = [
           "Nothing until exam day.",
           "Only questions you answered correctly.",
         ],
-        answerIndex: 1,
-        explanation: "Timed practice improves when you inspect both the answer and the decision process.",
+        answerIndex: -1,
+        explanation: "",
       },
     ],
   },
