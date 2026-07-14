@@ -127,6 +127,10 @@ describe("staff RBAC and authorization completion", () => {
       path.resolve(process.cwd(), "src/app/admin/instructors/actions.ts"),
       "utf8",
     );
+    const auditMutationSource = readFileSync(
+      path.resolve(process.cwd(), "convex/staffSecurityAudit.ts"),
+      "utf8",
+    );
 
     expect(actionSource).toContain('if (nextRole === "instructor")');
     expect(actionSource).toContain(
@@ -138,5 +142,9 @@ describe("staff RBAC and authorization completion", () => {
     expect(actionSource).toContain(
       "Instructor access was revoked, but security audit completion is pending reconciliation.",
     );
+    expect(actionSource).toContain('failureReason: "clerk_metadata_update_failed"');
+    expect(actionSource).toContain('failureReason: "audit_completion_failed_rolled_back"');
+    expect(auditMutationSource).toContain('v.literal("clerk_metadata_update_failed")');
+    expect(auditMutationSource).toContain('v.literal("audit_completion_failed_rolled_back")');
   });
 });

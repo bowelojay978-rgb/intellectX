@@ -19,6 +19,9 @@ const reconcilePendingInstructorAccessChangeAudit = makeFunctionReference<"mutat
 );
 
 type ManagedInstructorRole = "learner" | "instructor";
+type InstructorAccessFailureReason =
+  | "clerk_metadata_update_failed"
+  | "audit_completion_failed_rolled_back";
 
 async function getAuthenticatedAdminConvexToken(expectedUserId: string) {
   const authState = await auth();
@@ -42,6 +45,7 @@ async function writeInstructorAccessAudit(args: {
   targetUserId: string;
   previousRole: ManagedInstructorRole;
   nextRole: ManagedInstructorRole;
+  failureReason?: InstructorAccessFailureReason;
 }) {
   const { token, ...mutationArgs } = args;
   await fetchMutation(recordInstructorAccessChangeAudit, mutationArgs, { token });
@@ -131,6 +135,7 @@ export async function setInstructorAccessAction(formData: FormData) {
       await writeInstructorAccessAudit({
         ...auditBase,
         phase: "failed",
+        failureReason: "clerk_metadata_update_failed",
       });
     } catch {
       // The requested audit event already persists the attempted transition.
@@ -160,6 +165,7 @@ export async function setInstructorAccessAction(formData: FormData) {
         await writeInstructorAccessAudit({
           ...auditBase,
           phase: "failed",
+          failureReason: "audit_completion_failed_rolled_back",
         });
       } catch {
         // The requested event still records the attempted privilege grant.
