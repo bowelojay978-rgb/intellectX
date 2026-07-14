@@ -1,6 +1,27 @@
 import { mutationGeneric, queryGeneric } from "convex/server";
 import { v } from "convex/values";
+import {
+  buildAuthoritativeCourseSelectionWrite,
+  deriveAuthoritativeCourseSelectionState,
+} from "./lib/courseSelectionPolicy";
+import {
+  isLearnerVisibleCourseRecord,
+  learnerCourseVisibilityOptions,
+} from "./lib/courseWorkflow";
 import { resolveLearnerUserKey } from "./lib/identity";
+
+async function assertLearnerVisibleCourseIds(ctx: any, courseIds: readonly string[]) {
+  for (const courseId of courseIds) {
+    const course = await ctx.db
+      .query("courses")
+      .withIndex("by_stable_id", (q: any) => q.eq("stableId", courseId))
+      .first();
+
+    if (!course || !isLearnerVisibleCourseRecord(course, learnerCourseVisibilityOptions)) {
+      throw new Error(`Course is not available for learner selection: ${courseId}.`);
+    }
+  }
+}
 
 export const getCourseSelection = queryGeneric({
   args: { userKey: v.optional(v.string()) },
@@ -10,8 +31,16 @@ export const getCourseSelection = queryGeneric({
       .query("courseSelections")
       .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
+    const existing = selections.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
 
-    return selections.sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
+    if (!existing) {
+      return null;
+    }
+
+    return {
+      ...existing,
+      ...deriveAuthoritativeCourseSelectionState(existing, Date.now()),
+    };
   },
 });
 
@@ -31,22 +60,34 @@ export const upsertCourseSelection = mutationGeneric({
       .withIndex("by_user", (q) => q.eq("userKey", userKey))
       .collect();
     const [existing, ...duplicates] = existingSelections.sort((left, right) => right.updatedAt - left.updatedAt);
-    const nextSelection = {
+    const now = Date.now();
+    const nextSelection = buildAuthoritativeCourseSelectionWrite({
+      existing: existing ?? null,
+      requestedCourseIds: args.selectedCourseIds,
+      now,
+    });
+
+    if (!nextSelection) {
+      await Promise.all(duplicates.map((selection) => ctx.db.delete(selection._id)));
+      return null;
+    }
+
+    if (!existing || !deriveAuthoritativeCourseSelectionState(existing, now).locked) {
+      await assertLearnerVisibleCourseIds(ctx, nextSelection.selectedCourseIds);
+    }
+
+    const authoritativeSelection = {
       userKey,
-      selectedCourseIds: args.selectedCourseIds,
-      selectedAt: args.selectedAt,
-      gracePeriodEndsAt: args.gracePeriodEndsAt,
-      lockedAt: args.lockedAt,
-      locked: args.locked,
-      updatedAt: Date.now(),
+      ...nextSelection,
+      updatedAt: now,
     };
 
     if (existing) {
-      await ctx.db.patch(existing._id, nextSelection);
+      await ctx.db.patch(existing._id, authoritativeSelection);
       await Promise.all(duplicates.map((selection) => ctx.db.delete(selection._id)));
       return existing._id;
     }
 
-    return await ctx.db.insert("courseSelections", nextSelection);
+    return await ctx.db.insert("courseSelections", authoritativeSelection);
   },
 });
