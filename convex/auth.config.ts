@@ -1,7 +1,9 @@
-﻿export default {
+import { requireClerkJwtIssuerDomain } from "./lib/authConfigPolicy";
+
+export default {
   providers: [
     {
-      domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
+      domain: requireClerkJwtIssuerDomain(),
       applicationID: "convex",
     },
   ],
