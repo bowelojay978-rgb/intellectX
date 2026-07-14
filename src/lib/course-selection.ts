@@ -2,6 +2,8 @@
 
 export const COURSE_SELECTION_KEY = "intellectx:course-selection";
 export const COURSE_SELECTION_CHANGE_EVENT = "intellectx:course-selection-change";
+export const COURSE_SELECTION_SYNC_STATUS_EVENT = "intellectx-course-selection-sync-status";
+export const COURSE_SELECTION_SYNC_RETRY_EVENT = "intellectx-course-selection-sync-retry";
 export const COURSE_SELECTION_LIMIT = 5;
 export const COURSE_SELECTION_GRACE_PERIOD_DAYS = 7;
 
@@ -19,6 +21,29 @@ export type CourseSelectionUpdate = {
   selection: CourseSelection;
   error?: string;
 };
+
+export type CourseSelectionSyncStatus = "idle" | "pending" | "success" | "error";
+
+export type CourseSelectionSyncStatusDetail = {
+  status: CourseSelectionSyncStatus;
+};
+
+export function dispatchCourseSelectionSyncStatus(status: CourseSelectionSyncStatus) {
+  window.dispatchEvent(
+    new CustomEvent<CourseSelectionSyncStatusDetail>(COURSE_SELECTION_SYNC_STATUS_EVENT, {
+      detail: { status },
+    }),
+  );
+}
+
+export function retryCourseSelectionSync() {
+  window.dispatchEvent(new Event(COURSE_SELECTION_SYNC_RETRY_EVENT));
+}
+
+export function getSelectedCourseIdsOutsideVisibleCourses(selectedCourseIds: string[], visibleCourseIds: string[]) {
+  const visibleCourseIdsSet = new Set(visibleCourseIds);
+  return selectedCourseIds.filter((courseId) => !visibleCourseIdsSet.has(courseId));
+}
 
 export function getEmptyCourseSelection(): CourseSelection {
   return {
