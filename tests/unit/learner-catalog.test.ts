@@ -174,7 +174,7 @@ describe("learner catalog normalization", () => {
     ).toBeNull();
   });
 
-  it("normalizes quiz questions safely and rejects hidden parents or unknown playable quizzes", () => {
+  it("normalizes learner-safe quiz questions without answer keys and rejects hidden parents or unknown playable quizzes", () => {
     const quiz = normalizeLearnerQuiz(
       {
         stableId: "quiz-one",
@@ -188,16 +188,12 @@ describe("learner catalog normalization", () => {
             stableId: "bad",
             prompt: "Bad question",
             choices: ["Only one"],
-            answerIndex: 0,
-            explanation: "Invalid",
             order: 1,
           },
           {
             stableId: "q1",
             prompt: "Good question?",
             choices: ["No", "Yes"],
-            answerIndex: 1,
-            explanation: "Valid",
             order: 2,
           },
         ],
@@ -213,7 +209,8 @@ describe("learner catalog normalization", () => {
         {
           id: "q1",
           prompt: "Good question?",
-          answerIndex: 1,
+          answerIndex: -1,
+          explanation: "",
         },
       ],
     });
@@ -230,8 +227,6 @@ describe("learner catalog normalization", () => {
               stableId: "q1",
               prompt: "Hidden?",
               choices: ["No", "Yes"],
-              answerIndex: 1,
-              explanation: "Hidden",
             },
           ],
         },
@@ -280,16 +275,12 @@ describe("learner catalog normalization", () => {
               stableId: "invalid",
               prompt: "Invalid?",
               choices: ["Only one"],
-              answerIndex: 0,
-              explanation: "Nope",
               order: 1,
             },
             {
               stableId: "valid",
               prompt: "Valid?",
               choices: ["No", "Yes"],
-              answerIndex: 1,
-              explanation: "Playable",
               order: 2,
             },
           ],
