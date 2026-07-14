@@ -11,6 +11,7 @@ import {
   selectDestinationAuthoritativeRecordForMigration,
   selectMonotonicLessonProgressForMigration,
 } from "./lib/migrateLearnerData";
+import { quizAnswersMatch } from "./lib/quizIntegrity";
 
 type MigrationSummary = {
   sourceUserKey: string;
@@ -31,13 +32,19 @@ function quizAttemptExistsUnderDestination(
   sourceAttempt: Doc<"quizAttempts">,
   destinationAttempts: Doc<"quizAttempts">[],
 ) {
-  return destinationAttempts.some(
-    (attempt) =>
+  return destinationAttempts.some((attempt) => {
+    if (sourceAttempt.submissionId && attempt.submissionId) {
+      return sourceAttempt.submissionId === attempt.submissionId;
+    }
+
+    return (
       attempt.quizId === sourceAttempt.quizId &&
       attempt.completedAt === sourceAttempt.completedAt &&
       attempt.score === sourceAttempt.score &&
-      attempt.totalQuestions === sourceAttempt.totalQuestions,
-  );
+      attempt.totalQuestions === sourceAttempt.totalQuestions &&
+      quizAnswersMatch(attempt.answers, sourceAttempt.answers)
+    );
+  });
 }
 
 async function assertLearnerVisibleCourseIds(ctx: any, courseIds: readonly string[]) {
@@ -151,6 +158,7 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
       await ctx.db.insert("quizAttempts", {
         userKey: destinationUserKey,
         quizId: sourceAttempt.quizId,
+        ...(sourceAttempt.submissionId ? { submissionId: sourceAttempt.submissionId } : {}),
         score: sourceAttempt.score,
         totalQuestions: sourceAttempt.totalQuestions,
         answers: sourceAttempt.answers,
