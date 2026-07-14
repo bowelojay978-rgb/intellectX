@@ -1,7 +1,7 @@
 "use client";
 
 import { PageShell } from "@/components/education/page-shell";
-import { QuizPlayer } from "@/components/education/quiz-player";
+import { SecureQuizPlayer } from "@/components/education/secure-quiz-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Quiz } from "@/data/quizzes";
@@ -43,7 +43,7 @@ export function QuizPageContent({ quiz, courseId, mobileRequested }: QuizPageCon
           Select an answer, check your result, and use the feedback to close the learning loop. Completed attempts are
           saved so your scores and learning activity can appear across IntellectX.
         </p>
-        <QuizPlayer quiz={quiz} surface={mobileSurface ? "mobile" : "web"} />
+        <SecureQuizPlayer quiz={quiz} surface={mobileSurface ? "mobile" : "web"} />
         <Button className="mt-6 min-h-12" variant="ghost" asChild>
           <Link href={mobileSurface ? "/mobile-quizzes" : `/courses/${courseId}`}>
             {mobileSurface ? "Back to mobile quizzes" : "Back to course"}
