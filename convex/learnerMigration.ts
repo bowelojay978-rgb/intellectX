@@ -1,6 +1,5 @@
 import { mutationGeneric } from "convex/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
 import {
   getLearnerMigrationAuditTargetId,
   getQuizAttemptMigrationFingerprint,
@@ -46,10 +45,6 @@ function createMigrationSummary(
   };
 }
 
-function hasCompletedMigrationEvent(events: readonly Doc<"auditLogs">[]) {
-  return events.some((event) => event.eventType === MIGRATION_COMPLETED_EVENT);
-}
-
 export const recordLocalLearnerMigrationAttempt = mutationGeneric({
   args: {
     sourceUserKey: v.string(),
@@ -58,13 +53,17 @@ export const recordLocalLearnerMigrationAttempt = mutationGeneric({
     const identity = await ctx.auth.getUserIdentity();
     const plan = prepareLearnerDataMigration(identity, args.sourceUserKey);
     const targetId = getLearnerMigrationAuditTargetId(plan);
-    const recentEvents = await ctx.db
+    const completedEvent = await ctx.db
       .query("auditLogs")
-      .withIndex("by_target", (q) => q.eq("targetType", MIGRATION_TARGET_TYPE).eq("targetId", targetId))
-      .order("desc")
-      .take(20);
+      .withIndex("by_target_event", (q) =>
+        q
+          .eq("targetType", MIGRATION_TARGET_TYPE)
+          .eq("targetId", targetId)
+          .eq("eventType", MIGRATION_COMPLETED_EVENT),
+      )
+      .first();
 
-    if (hasCompletedMigrationEvent(recentEvents)) {
+    if (completedEvent) {
       return { alreadyCompleted: true };
     }
 
@@ -91,13 +90,17 @@ export const recordLocalLearnerMigrationFailure = mutationGeneric({
     const identity = await ctx.auth.getUserIdentity();
     const plan = prepareLearnerDataMigration(identity, args.sourceUserKey);
     const targetId = getLearnerMigrationAuditTargetId(plan);
-    const recentEvents = await ctx.db
+    const completedEvent = await ctx.db
       .query("auditLogs")
-      .withIndex("by_target", (q) => q.eq("targetType", MIGRATION_TARGET_TYPE).eq("targetId", targetId))
-      .order("desc")
-      .take(20);
+      .withIndex("by_target_event", (q) =>
+        q
+          .eq("targetType", MIGRATION_TARGET_TYPE)
+          .eq("targetId", targetId)
+          .eq("eventType", MIGRATION_COMPLETED_EVENT),
+      )
+      .first();
 
-    if (hasCompletedMigrationEvent(recentEvents)) {
+    if (completedEvent) {
       return { alreadyCompleted: true };
     }
 
@@ -125,13 +128,17 @@ export const migrateLocalLearnerDataToAuthenticatedAccount = mutationGeneric({
     const identity = await ctx.auth.getUserIdentity();
     const { sourceUserKey, destinationUserKey } = prepareLearnerDataMigration(identity, args.sourceUserKey);
     const targetId = getLearnerMigrationAuditTargetId({ sourceUserKey, destinationUserKey });
-    const recentMigrationEvents = await ctx.db
+    const completedEvent = await ctx.db
       .query("auditLogs")
-      .withIndex("by_target", (q) => q.eq("targetType", MIGRATION_TARGET_TYPE).eq("targetId", targetId))
-      .order("desc")
-      .take(20);
+      .withIndex("by_target_event", (q) =>
+        q
+          .eq("targetType", MIGRATION_TARGET_TYPE)
+          .eq("targetId", targetId)
+          .eq("eventType", MIGRATION_COMPLETED_EVENT),
+      )
+      .first();
 
-    if (hasCompletedMigrationEvent(recentMigrationEvents)) {
+    if (completedEvent) {
       return createMigrationSummary(sourceUserKey, destinationUserKey, true);
     }
 
