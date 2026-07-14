@@ -34,6 +34,7 @@ type VideoPlayerProps = {
 type MediaNotice = {
   message: string;
   retryable?: boolean;
+  announcement?: "polite" | "assertive";
 };
 
 const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -67,6 +68,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const playerRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const retryTimeRef = useRef(0);
   const settingsContainerRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const speedOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -190,6 +192,7 @@ export function VideoPlayer({
     const video = videoRef.current;
     if (!video || !videoUrl) return;
 
+    retryTimeRef.current = Number.isFinite(video.currentTime) ? Math.max(video.currentTime, 0) : currentTime;
     setMediaNotice(null);
     setPlaying(false);
     video.load();
@@ -240,13 +243,42 @@ export function VideoPlayer({
               className="h-full w-full cursor-pointer bg-blue-600 object-contain"
               onClick={() => void togglePlay()}
               onLoadedMetadata={(event) => {
-                setDuration(event.currentTarget.duration);
+                const loadedDuration = event.currentTarget.duration;
+                setDuration(loadedDuration);
+                const retryTime = Math.min(
+                  retryTimeRef.current,
+                  Number.isFinite(loadedDuration) ? loadedDuration : retryTimeRef.current,
+                );
+                if (retryTime > 0) {
+                  event.currentTarget.currentTime = retryTime;
+                  setCurrentTime(retryTime);
+                }
+                retryTimeRef.current = 0;
                 setMediaNotice(null);
               }}
               onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
               onPlay={() => setPlaying(true)}
+              onPlaying={() => {
+                setPlaying(true);
+                setMediaNotice(null);
+              }}
               onPause={() => setPlaying(false)}
               onEnded={() => setPlaying(false)}
+              onWaiting={() =>
+                setMediaNotice({
+                  message: "Video is buffering. Playback will resume automatically.",
+                  announcement: "polite",
+                })
+              }
+              onCanPlay={() =>
+                setMediaNotice((notice) => (notice?.announcement === "polite" ? null : notice))
+              }
+              onStalled={() =>
+                setMediaNotice({
+                  message: "Video playback was interrupted. Retry from your current position or check your connection.",
+                  retryable: true,
+                })
+              }
               onError={() =>
                 setMediaNotice({
                   message: "This video could not be loaded. Check your connection or try again.",
@@ -270,7 +302,8 @@ export function VideoPlayer({
 
           {mediaNotice ? (
             <div
-              role="alert"
+              role={mediaNotice.announcement === "polite" ? "status" : "alert"}
+              aria-atomic="true"
               className="absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-3 rounded-lg border border-white/15 bg-black/85 p-3 text-sm text-white shadow-xl backdrop-blur sm:inset-x-4"
             >
               <p className="leading-5">{mediaNotice.message}</p>
@@ -278,6 +311,7 @@ export function VideoPlayer({
                 <button
                   type="button"
                   onClick={retryVideo}
+                  aria-label="Retry video playback"
                   className="shrink-0 rounded-md border border-white/20 px-2 py-1 text-xs font-medium hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 >
                   Retry
