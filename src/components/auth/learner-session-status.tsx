@@ -1,10 +1,11 @@
 "use client";
 
+import { useLearnerAuthRuntime } from "@/components/providers/learner-auth-runtime-provider";
 import { Button } from "@/components/ui/button";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { getClerkDisplayName } from "@/lib/auth-identity";
 import { isClerkAuthEnabled } from "@/lib/auth-mode";
 import { clearLearnerSession, type LearnerSession } from "@/lib/learner-session";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -22,13 +23,18 @@ export function LearnerSessionStatus({ compact = false, session }: LearnerSessio
 }
 
 function ClerkLearnerSessionStatus({ compact = false }: Pick<LearnerSessionStatusProps, "compact">) {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded, isSignedIn } = useLearnerAuthRuntime();
+  const { user } = useUser();
 
   if (!isLoaded) {
     return null;
   }
 
-  if (isSignedIn && user) {
+  if (isSignedIn) {
+    if (!user) {
+      return null;
+    }
+
     const displayName = getClerkDisplayName(user);
     const email = user.primaryEmailAddress?.emailAddress;
 
