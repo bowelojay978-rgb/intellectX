@@ -34,7 +34,8 @@ export const recordInstructorAccessChange = mutationGeneric({
     const existingEvents = await ctx.db
       .query("auditLogs")
       .withIndex("by_target", (q) => q.eq("targetType", "clerk_user").eq("targetId", args.targetUserId))
-      .collect();
+      .order("desc")
+      .take(20);
     const duplicateEvent = existingEvents.find(
       (event) =>
         event.eventType === eventType &&
