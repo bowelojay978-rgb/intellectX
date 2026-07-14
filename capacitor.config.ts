@@ -4,6 +4,11 @@ const config: CapacitorConfig = {
   appId: "com.intellectx.app",
   appName: "IntellectX",
   webDir: "public",
+  loggingBehavior: "debug",
+  android: {
+    allowMixedContent: false,
+    webContentsDebuggingEnabled: false,
+  },
   server: {
     url: "https://intellect-x-coral.vercel.app",
     cleartext: false,

@@ -72,3 +72,15 @@ test("native app redirects web-only routes back to the mobile quiz home", async 
   await expect(page).toHaveURL(/\/mobile-quizzes$/);
   await expect(page.getByRole("heading", { name: "Practice with focused quizzes" })).toBeVisible();
 });
+
+test("mobile shell reports offline connectivity and clears the message after recovery", async ({ context, page }) => {
+  await page.goto("/mobile-quizzes");
+
+  await context.setOffline(true);
+  await expect(page.getByRole("status")).toContainText("You're offline");
+  await expect(page.getByRole("status")).toContainText("Live content and account sync may be unavailable");
+  await expect(page).toHaveURL(/\/mobile-quizzes$/);
+
+  await context.setOffline(false);
+  await expect(page.getByRole("status")).toHaveCount(0);
+});
