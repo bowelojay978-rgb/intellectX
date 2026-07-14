@@ -2,6 +2,7 @@
 
 import { LearnerSessionName } from "@/components/auth/learner-session-name";
 import { ProfileLearnerSession } from "@/components/auth/profile-learner-session";
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { CourseCard } from "@/components/education/course-card";
 import { DataSourceBadge } from "@/components/education/data-source-badge";
 import { EmptyState } from "@/components/education/empty-state";
@@ -120,17 +121,22 @@ export function LocalProfileContent() {
     };
   }, []);
 
-  const selectedCourses = useMemo(() => {
-    const selectedIds = selection?.selectedCourseIds ?? [];
-    return selectedIds
-      .map((courseId) => catalog.courseById.get(courseId))
-      .filter((course): course is Course => Boolean(course));
-  }, [catalog.courseById, selection]);
+  const selectionReady = selection !== null;
+  const selectedCourseIds = selection?.selectedCourseIds ?? [];
+  const selectedCourses = useMemo(
+    () =>
+      selectedCourseIds
+        .map((courseId) => catalog.courseById.get(courseId))
+        .filter((course): course is Course => Boolean(course)),
+    [catalog.courseById, selectedCourseIds],
+  );
 
   const visibleSelectedCourses = showAllSelectedCourses
     ? selectedCourses
     : selectedCourses.slice(0, selectedCoursePreviewCount);
   const hasAdditionalSelectedCourses = selectedCourses.length > selectedCoursePreviewCount;
+  const unavailableSelectedCourseCount = Math.max(0, selectedCourseIds.length - selectedCourses.length);
+  const waitingForSelectedCourseCatalog = catalog.isLoading && selectedCourseIds.length > 0;
 
   return (
     <>
@@ -191,12 +197,32 @@ export function LocalProfileContent() {
               </Button>
             ) : null}
           </div>
-          {selectedCourses.length > 0 ? (
-            <div id="selected-courses-grid" className="grid gap-5 md:grid-cols-2">
-              {visibleSelectedCourses.map((course) => (
-                <CourseCard key={course.id} course={course} showProgress={false} />
-              ))}
+          {!selectionReady || waitingForSelectedCourseCatalog ? (
+            <div className="flex min-h-40 items-center justify-center" role="status" aria-live="polite">
+              <AppLoadingSpinner label="Loading selected courses" showLabel />
             </div>
+          ) : selectedCourses.length > 0 ? (
+            <div className="space-y-4">
+              <div id="selected-courses-grid" className="grid gap-5 md:grid-cols-2">
+                {visibleSelectedCourses.map((course) => (
+                  <CourseCard key={course.id} course={course} showProgress={false} />
+                ))}
+              </div>
+              {unavailableSelectedCourseCount > 0 ? (
+                <p className="text-muted-foreground text-sm" role="status">
+                  {unavailableSelectedCourseCount} selected course{unavailableSelectedCourseCount === 1 ? " is" : "s are"}{" "}
+                  temporarily unavailable in the current catalog. The selection remains preserved on this profile.
+                </p>
+              ) : null}
+            </div>
+          ) : selectedCourseIds.length > 0 ? (
+            <EmptyState
+              title="Selected courses are unavailable right now"
+              description="Your course selection is preserved and will reappear when those courses are available in the current catalog."
+              actionHref="/courses"
+              actionLabel="View course selection"
+              icon={BookOpenIcon}
+            />
           ) : (
             <EmptyState
               title="No selected courses on this profile"
@@ -221,7 +247,9 @@ export function LocalProfileContent() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-3 text-sm leading-6">
               <p>Plan: Learner access</p>
-              <p>Selected courses: {selectedCourses.length === 0 ? "None yet" : selectedCourses.length}</p>
+              <p>
+                Selected courses: {!selectionReady ? "Loading…" : selectedCourseIds.length === 0 ? "None yet" : selectedCourseIds.length}
+              </p>
               <p>
                 Lesson activity:{" "}
                 {lessonSummary.lessonCount === 0 ? "No lessons recorded yet" : `${lessonSummary.lessonCount} lessons viewed`}
