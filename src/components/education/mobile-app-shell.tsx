@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileConnectivityStatus } from "@/components/education/mobile-connectivity-status";
 import { BackgroundBlur } from "@/components/ui/background-blur";
 import { cn } from "@/lib/utils";
 import { BookOpenCheckIcon, Layers3Icon } from "lucide-react";
@@ -39,7 +40,10 @@ export function MobileAppShell({ children }: MobileAppShellProps) {
         </span>
       </header>
 
-      <main className="relative z-10 mx-auto w-full max-w-md">{children}</main>
+      <main className="relative z-10 mx-auto w-full max-w-md">
+        <MobileConnectivityStatus />
+        {children}
+      </main>
 
       <nav
         aria-label="Mobile study navigation"
