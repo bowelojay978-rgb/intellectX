@@ -1,4 +1,4 @@
-﻿# Real Auth Activation
+# Real Auth Activation
 
 This checklist is developer-facing and must be completed before IntellectX treats Clerk and Convex auth as production-ready. Do not commit secret values or screenshots containing secret values.
 
@@ -32,6 +32,48 @@ Do not deploy `convex/auth.config.ts` to an environment until these values are p
 Get `CLERK_JWT_ISSUER_DOMAIN` from the Clerk Dashboard after activating the Convex integration. Use the Clerk app's Frontend API URL: development values usually look like `https://verb-noun-00.clerk.accounts.dev`, while production values usually use the custom Clerk domain. Set it in the Convex dashboard or with Convex env tooling; do not hardcode it into source.
 
 The browser-facing auth environment helper can detect Clerk and Convex public configuration, but it cannot prove server-side issuer configuration or whether Convex auth config has been deployed to the intended environment. Real authentication is only proven when a signed-in Clerk user can load a protected route, frontend Convex calls are sent through `ConvexProviderWithClerk`, and `ctx.auth.getUserIdentity()` returns a non-null identity for user-owned Convex reads and writes.
+
+## Backend Auth Completion Controls
+
+The backend authentication lane now requires all of the following source controls:
+
+- authenticated Convex identity always overrides client-supplied `userKey`;
+- browser-supplied local `userKey` fallback is denied by default in production-like environments;
+- `ALLOW_LOCAL_USERKEY_FALLBACK` is normalized with trimming and case-insensitive parsing before policy decisions;
+- `convex/auth.config.ts` fails clearly when `CLERK_JWT_ISSUER_DOMAIN` is missing, malformed, or not HTTPS;
+- the Convex Clerk audience remains `applicationID: "convex"`;
+- every learner-owned Convex module routes identity through `resolveLearnerUserKey`;
+- account migration requires authenticated email ownership and fails closed on mismatches;
+- `convex/authDiagnostics.ts` exposes only boolean runtime proof fields and never returns raw identity claims.
+
+## FF-011 Coordination Boundary
+
+Frontend owns FF-011 reproduction and classification across:
+
+- normal browser window;
+- incognito;
+- fresh browser profile;
+- localhost;
+- hosted HTTPS production link.
+
+Frontend must prove whether the mixed login/logged-in homepage state comes from presentation state, Clerk session state, cookies/origin, hydration, caching, or environment configuration before editing authentication behavior.
+
+Backend must not change homepage presentation, loading UI, or Clerk card behavior while FF-011 is under frontend diagnosis. Backend owns only Clerk -> Convex identity trust, JWT issuer configuration, protected Convex reads/writes, account isolation, migration ownership, and fail-closed behavior.
+
+## Runtime Auth Proof Protocol
+
+For each FF-011 test environment, collect these backend auth facts alongside frontend observations:
+
+1. Clerk runtime reaches a loaded state.
+2. Signed-out state produces no authenticated Convex identity.
+3. Signed-in state makes `authDiagnostics:getAuthRuntimeDiagnostic` report `authenticated: true`, with token identifier, subject, and issuer presence all true.
+4. A signed-in learner-owned Convex read succeeds without a browser-supplied `userKey`.
+5. A signed-in learner-owned Convex write succeeds without a browser-supplied `userKey`.
+6. A forged browser `userKey` cannot override the authenticated Convex identity.
+7. After sign-out, protected learner writes fail closed in production-like configuration.
+8. Account switching does not hydrate another learner's local migration source.
+
+This protocol separates a frontend mixed-state defect from a real Clerk/Convex identity failure. A homepage presentation mismatch is not, by itself, evidence that Convex authentication failed.
 
 ## Staff role claim setup
 

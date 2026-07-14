@@ -20,7 +20,7 @@ export function getAuthenticatedLearnerUserKey(identity: UserIdentity) {
 }
 
 export function isLocalUserKeyFallbackAllowed(env: IdentityPolicyEnv = process.env as IdentityPolicyEnv) {
-  const explicitFallbackPolicy = env.ALLOW_LOCAL_USERKEY_FALLBACK?.toLowerCase();
+  const explicitFallbackPolicy = env.ALLOW_LOCAL_USERKEY_FALLBACK?.trim().toLowerCase();
 
   if (explicitFallbackPolicy === "true") {
     return true;
@@ -74,8 +74,7 @@ export function resolveLearnerUserKeyFromIdentity(
 export async function resolveLearnerUserKey(ctx: AuthContext, args: UserKeyArgs) {
   const identity = await ctx.auth.getUserIdentity();
 
-  // Temporary compatibility bridge: local/free mode still sends a browser-derived
-  // userKey before Convex auth.config.ts is enabled. This fallback is denied by
-  // default in production-like environments; opt in only for local development.
+  // Compatibility bridge for explicitly permitted local development only.
+  // Production-like environments deny browser-supplied userKey fallback by default.
   return resolveLearnerUserKeyFromIdentity(identity, args.userKey);
 }
