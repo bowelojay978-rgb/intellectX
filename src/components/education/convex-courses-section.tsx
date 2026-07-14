@@ -15,8 +15,13 @@ import {
   COURSE_SELECTION_CHANGE_EVENT,
   COURSE_SELECTION_GRACE_PERIOD_DAYS,
   COURSE_SELECTION_LIMIT,
+  COURSE_SELECTION_SYNC_STATUS_EVENT,
   type CourseSelection,
+  type CourseSelectionSyncStatus,
+  type CourseSelectionSyncStatusDetail,
+  getSelectedCourseIdsOutsideVisibleCourses,
   loadCourseSelection,
+  retryCourseSelectionSync,
   toggleSelectedCourse,
 } from "@/lib/course-selection";
 import { convexEnv } from "@/lib/education-data";
@@ -31,6 +36,7 @@ type ConvexCoursesSectionProps = {
 function useCourseSelection() {
   const [selection, setSelection] = useState<CourseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<CourseSelectionSyncStatus>("idle");
 
   useEffect(() => {
     function syncSelection() {
@@ -43,8 +49,14 @@ function useCourseSelection() {
       }
     }
 
+    function syncPersistenceStatus(event: Event) {
+      const detail = (event as CustomEvent<CourseSelectionSyncStatusDetail>).detail;
+      setSyncStatus(detail?.status ?? "idle");
+    }
+
     syncSelection();
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+    window.addEventListener(COURSE_SELECTION_SYNC_STATUS_EVENT, syncPersistenceStatus);
     window.addEventListener("storage", syncSelection);
     window.addEventListener("focus", syncSelection);
     window.addEventListener("pageshow", syncSelection);
@@ -52,6 +64,7 @@ function useCourseSelection() {
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncSelection);
+      window.removeEventListener(COURSE_SELECTION_SYNC_STATUS_EVENT, syncPersistenceStatus);
       window.removeEventListener("storage", syncSelection);
       window.removeEventListener("focus", syncSelection);
       window.removeEventListener("pageshow", syncSelection);
@@ -65,23 +78,62 @@ function useCourseSelection() {
     setError(update.error ?? null);
   }
 
-  return { selection, error, toggleCourse };
+  return { selection, error, syncStatus, toggleCourse };
+}
+
+function CourseSelectionSyncFeedback({ status }: { status: CourseSelectionSyncStatus }) {
+  if (status === "pending") {
+    return (
+      <p className="text-muted-foreground mt-3 text-sm" role="status" aria-live="polite">
+        Saving course selection to your account…
+      </p>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <p className="text-muted-foreground mt-3 text-sm" role="status" aria-live="polite">
+        Course selection saved to your account.
+      </p>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="border-destructive/30 bg-destructive/5 mt-3 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between" role="alert">
+        <p className="text-destructive text-sm leading-6">
+          We couldn&apos;t sync your course selection. Your current selection is still saved on this device.
+        </p>
+        <Button type="button" size="sm" variant="outline" onClick={retryCourseSelectionSync}>
+          Retry sync
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function CourseSelectionFilters({
   courses,
+  allCourses,
   selectedCourseIds,
   locked,
   error,
+  syncStatus,
   onToggle,
 }: {
   courses: Course[];
+  allCourses: Course[];
   selectedCourseIds: string[];
   locked: boolean;
   error: string | null;
+  syncStatus: CourseSelectionSyncStatus;
   onToggle: (courseId: string) => void;
 }) {
-  const targetCount = Math.min(COURSE_SELECTION_LIMIT, courses.length);
+  const visibleCourseIds = courses.map((course) => course.id);
+  const otherSelectedCourseIds = getSelectedCourseIdsOutsideVisibleCourses(selectedCourseIds, visibleCourseIds);
+  const courseById = new Map(allCourses.map((course) => [course.id, course]));
 
   return (
     <section
@@ -94,9 +146,16 @@ function CourseSelectionFilters({
           Choose up to {COURSE_SELECTION_LIMIT} courses. You have a {COURSE_SELECTION_GRACE_PERIOD_DAYS}-day grace
           period to adjust them, then your selection locks.
         </p>
-        <p className="shrink-0 font-medium text-foreground">
-          {selectedCourseIds.length} / {targetCount} selected
-        </p>
+        <div className="shrink-0 sm:text-right">
+          <p className="font-medium text-foreground">
+            {selectedCourseIds.length} / {COURSE_SELECTION_LIMIT} selected
+          </p>
+          {locked ? (
+            <p className="mt-1 text-xs font-medium text-foreground" role="status">
+              Selection locked
+            </p>
+          ) : null}
+        </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {courses.map((course) => {
@@ -117,13 +176,47 @@ function CourseSelectionFilters({
           );
         })}
       </div>
-      {error ? <p className="text-destructive mt-3 text-sm">{error}</p> : null}
+      {otherSelectedCourseIds.length > 0 ? (
+        <div className="border-border/70 mt-4 rounded-lg border border-dashed p-3">
+          <p className="font-medium text-foreground">Other selected courses</p>
+          <p className="mt-1 text-sm leading-6">
+            These selections are outside the current course list but still count toward your {COURSE_SELECTION_LIMIT}-course limit.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {otherSelectedCourseIds.map((courseId) => {
+              const course = courseById.get(courseId);
+              const label = course?.title ?? "Course no longer available";
+
+              return (
+                <Button
+                  key={courseId}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={locked}
+                  aria-pressed="true"
+                  aria-label={`Remove selected course ${course?.title ?? courseId}`}
+                  onClick={() => onToggle(courseId)}
+                >
+                  {label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      {error ? (
+        <p className="text-destructive mt-3 text-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <CourseSelectionSyncFeedback status={syncStatus} />
     </section>
   );
 }
 
-function CourseGrid({ courses }: { courses: Course[] }) {
-  const { selection, error, toggleCourse } = useCourseSelection();
+function CourseGrid({ courses, allCourses }: { courses: Course[]; allCourses: Course[] }) {
+  const { selection, error, syncStatus, toggleCourse } = useCourseSelection();
   const selectedCourseIds = selection?.selectedCourseIds ?? [];
   const locked = Boolean(selection?.locked);
 
@@ -131,9 +224,11 @@ function CourseGrid({ courses }: { courses: Course[] }) {
     <>
       <CourseSelectionFilters
         courses={courses}
+        allCourses={allCourses}
         selectedCourseIds={selectedCourseIds}
         locked={locked}
         error={error}
+        syncStatus={syncStatus}
         onToggle={toggleCourse}
       />
       <section className="grid gap-5 md:grid-cols-3">
@@ -192,7 +287,7 @@ function PersonalizedCourses({ courses }: { courses: Course[] }) {
   return (
     <div className="space-y-6">
       {matchedCourses.length > 0 ? (
-        <CourseGrid courses={matchedCourses} />
+        <CourseGrid courses={matchedCourses} allCourses={courses} />
       ) : (
         <EmptyState
           title="No exact course matches yet"

@@ -8,7 +8,9 @@ import {
 } from "@/lib/convex-learner-identity";
 import {
   COURSE_SELECTION_CHANGE_EVENT,
+  COURSE_SELECTION_SYNC_RETRY_EVENT,
   type CourseSelection,
+  dispatchCourseSelectionSyncStatus,
   loadCourseSelection,
   normalizeCourseSelection,
   saveCourseSelection,
@@ -52,6 +54,19 @@ function persistCourseSelectionArgs(identityArgs: ConvexLearnerArgs, selection: 
 
 function getIdentityArgs(identity: ConvexLearnerIdentity): ConvexLearnerArgs {
   return identity.userKey ? { userKey: identity.userKey } : {};
+}
+
+function trackCourseSelectionSync(operation: Promise<unknown>, warningMessage: string) {
+  dispatchCourseSelectionSyncStatus("pending");
+
+  operation
+    .then(() => {
+      dispatchCourseSelectionSyncStatus("success");
+    })
+    .catch((error) => {
+      dispatchCourseSelectionSyncStatus("error");
+      console.warn(warningMessage, error);
+    });
 }
 
 export function CourseSelectionSync() {
@@ -109,9 +124,10 @@ function ConvexCourseSelectionSync() {
         return;
       }
 
-      upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())).catch((error) => {
-        console.warn("Unable to sync course selection to Convex", error);
-      });
+      trackCourseSelectionSync(
+        upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())),
+        "Unable to sync course selection to Convex",
+      );
     }
 
     convex
@@ -167,9 +183,10 @@ function ConvexCourseSelectionSync() {
 
         const localSelection = loadCourseSelection();
         if (localSelection.selectedCourseIds.length > 0) {
-          upsertCourseSelection(persistCourseSelectionArgs(identityArgs, localSelection)).catch((error) => {
-            console.warn("Unable to sync local course selection to Convex", error);
-          });
+          trackCourseSelectionSync(
+            upsertCourseSelection(persistCourseSelectionArgs(identityArgs, localSelection)),
+            "Unable to sync local course selection to Convex",
+          );
         }
       })
       .catch((error) => {
@@ -202,15 +219,18 @@ function ConvexCourseSelectionSync() {
       }
 
       const identityArgs = getIdentityArgs(identity);
-      upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())).catch((error) => {
-        console.warn("Unable to sync course selection to Convex", error);
-      });
+      trackCourseSelectionSync(
+        upsertCourseSelection(persistCourseSelectionArgs(identityArgs, loadCourseSelection())),
+        "Unable to sync course selection to Convex",
+      );
     }
 
     window.addEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
+    window.addEventListener(COURSE_SELECTION_SYNC_RETRY_EVENT, syncLocalSelectionToConvex);
 
     return () => {
       window.removeEventListener(COURSE_SELECTION_CHANGE_EVENT, syncLocalSelectionToConvex);
+      window.removeEventListener(COURSE_SELECTION_SYNC_RETRY_EVENT, syncLocalSelectionToConvex);
     };
   }, [identity, primaryEmailAddress, upsertCourseSelection]);
 
