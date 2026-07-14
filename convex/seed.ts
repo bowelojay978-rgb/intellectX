@@ -7,6 +7,7 @@ import {
   shouldRemoveObsoleteSeedManagedCatalogRecord,
   shouldRunSeedCleanup,
 } from "./lib/seedCatalogSafety";
+import { getSeedQuizAnswer } from "./seedQuizAnswers";
 
 type CatalogTable = "courses" | "lessons" | "quizzes" | "questions";
 
@@ -48,16 +49,20 @@ const quizDocs = quizzes.map((quiz) => ({
 }));
 
 const questionDocs = quizzes.flatMap((quiz) =>
-  quiz.questions.map((question, index) => ({
-    stableId: `${quiz.id}-${question.id}`,
-    quizStableId: quiz.id,
-    prompt: question.prompt,
-    choices: question.choices,
-    answerIndex: question.answerIndex,
-    explanation: question.explanation,
-    order: index,
-    seedManaged: true,
-  })),
+  quiz.questions.map((question, index) => {
+    const answer = getSeedQuizAnswer(quiz.id, question.id);
+
+    return {
+      stableId: `${quiz.id}-${question.id}`,
+      quizStableId: quiz.id,
+      prompt: question.prompt,
+      choices: question.choices,
+      answerIndex: answer.answerIndex,
+      explanation: answer.explanation,
+      order: index,
+      seedManaged: true,
+    };
+  }),
 );
 
 async function getByStableId(ctx: any, table: CatalogTable, stableId: string) {
