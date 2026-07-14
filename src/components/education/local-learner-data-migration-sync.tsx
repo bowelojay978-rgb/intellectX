@@ -25,6 +25,12 @@ export function LocalLearnerDataMigrationSync({
   authenticatedEmail,
 }: LocalLearnerDataMigrationSyncProps) {
   const attemptedMarkerKey = useRef<string | null>(null);
+  const recordMigrationAttempt = useMutation(
+    convexApi.learnerMigration.recordLocalLearnerMigrationAttempt,
+  );
+  const recordMigrationFailure = useMutation(
+    convexApi.learnerMigration.recordLocalLearnerMigrationFailure,
+  );
   const migrateLocalLearnerData = useMutation(
     convexApi.learnerMigration.migrateLocalLearnerDataToAuthenticatedAccount,
   );
@@ -58,16 +64,56 @@ export function LocalLearnerDataMigrationSync({
     attemptedMarkerKey.current = attemptKey;
     writeLocalLearnerMigrationMarker(migrationSource.markerKey, "attempted");
 
-    migrateLocalLearnerData({ sourceUserKey: migrationSource.sourceUserKey })
-      .then(() => {
+    let cancelled = false;
+
+    async function runMigration() {
+      try {
+        const attempt = await recordMigrationAttempt({
+          sourceUserKey: migrationSource.sourceUserKey,
+        });
+
+        if (cancelled) return;
+
+        if (attempt?.alreadyCompleted) {
+          writeLocalLearnerMigrationMarker(migrationSource.markerKey, "succeeded");
+          clearLearnerSession();
+          return;
+        }
+
+        await migrateLocalLearnerData({ sourceUserKey: migrationSource.sourceUserKey });
+
+        if (cancelled) return;
+
         writeLocalLearnerMigrationMarker(migrationSource.markerKey, "succeeded");
         clearLearnerSession();
-      })
-      .catch((error) => {
+      } catch (error) {
+        if (cancelled) return;
+
         console.warn("Unable to migrate local learner data to authenticated account", error);
         writeLocalLearnerMigrationMarker(migrationSource.markerKey, "failed");
-      });
-  }, [authenticatedEmail, authenticatedUserId, isAuthLoaded, isSignedIn, migrateLocalLearnerData]);
+
+        try {
+          await recordMigrationFailure({ sourceUserKey: migrationSource.sourceUserKey });
+        } catch (auditError) {
+          console.warn("Unable to persist learner migration failure audit", auditError);
+        }
+      }
+    }
+
+    void runMigration();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authenticatedEmail,
+    authenticatedUserId,
+    isAuthLoaded,
+    isSignedIn,
+    migrateLocalLearnerData,
+    recordMigrationAttempt,
+    recordMigrationFailure,
+  ]);
 
   return null;
 }

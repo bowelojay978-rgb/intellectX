@@ -62,6 +62,7 @@ export default defineSchema({
     after: v.optional(v.any()),
   })
     .index("by_target", ["targetType", "targetId"])
+    .index("by_target_event", ["targetType", "targetId", "eventType"])
     .index("by_actor", ["actorUserId"])
     .index("by_event_type", ["eventType"]),
   staffMediaUploads: defineTable({
