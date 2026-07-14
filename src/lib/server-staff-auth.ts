@@ -10,9 +10,30 @@ export type AdminManagedUser = {
   lastSignInAt: number | null;
 };
 
+type StaffAssignableRole = "learner" | "instructor";
+
 type ClerkMetadataUser = {
   publicMetadata?: Record<string, unknown>;
 };
+
+type ClerkPrivateMetadataUser = {
+  privateMetadata?: Record<string, unknown>;
+};
+
+export type StaffRoleAuditEntry = {
+  eventType: "staff_role_changed";
+  actorUserId: string;
+  targetUserId: string;
+  previousRole: StaffAssignableRole;
+  nextRole: StaffAssignableRole;
+  changedAt: number;
+};
+
+const STAFF_ROLE_AUDIT_LIMIT = 25;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function normalizeRole(value: unknown): AdminManagedUser["role"] {
   if (typeof value !== "string") return "learner";
@@ -34,7 +55,7 @@ export function readUserRole(user: ClerkMetadataUser) {
 
 export function buildPublicMetadataWithStaffRole(
   publicMetadata: Record<string, unknown> | undefined,
-  nextRole: "learner" | "instructor",
+  nextRole: StaffAssignableRole,
 ) {
   const currentMetadata = publicMetadata ?? {};
   const currentStaff = currentMetadata.staff;
@@ -49,6 +70,61 @@ export function buildPublicMetadataWithStaffRole(
       ...staffMetadata,
       role: nextRole,
     },
+  };
+}
+
+function normalizeStaffAssignableRole(role: AdminManagedUser["role"]): StaffAssignableRole {
+  return role === "instructor" ? "instructor" : "learner";
+}
+
+function readExistingRoleAudit(privateMetadata: Record<string, unknown> | undefined): StaffRoleAuditEntry[] {
+  const audit = privateMetadata?.staffRoleAudit;
+
+  if (!Array.isArray(audit)) {
+    return [];
+  }
+
+  return audit.filter((entry): entry is StaffRoleAuditEntry => {
+    if (!isRecord(entry)) return false;
+
+    return (
+      entry.eventType === "staff_role_changed" &&
+      typeof entry.actorUserId === "string" &&
+      typeof entry.targetUserId === "string" &&
+      (entry.previousRole === "learner" || entry.previousRole === "instructor") &&
+      (entry.nextRole === "learner" || entry.nextRole === "instructor") &&
+      typeof entry.changedAt === "number"
+    );
+  });
+}
+
+export function buildStaffRoleAuditEntry(args: {
+  actorUserId: string;
+  targetUserId: string;
+  previousRole: AdminManagedUser["role"];
+  nextRole: StaffAssignableRole;
+  changedAt: number;
+}): StaffRoleAuditEntry {
+  return {
+    eventType: "staff_role_changed",
+    actorUserId: args.actorUserId,
+    targetUserId: args.targetUserId,
+    previousRole: normalizeStaffAssignableRole(args.previousRole),
+    nextRole: args.nextRole,
+    changedAt: args.changedAt,
+  };
+}
+
+export function buildPrivateMetadataWithStaffRoleAudit(
+  privateMetadata: ClerkPrivateMetadataUser["privateMetadata"],
+  entry: StaffRoleAuditEntry,
+) {
+  const currentMetadata = privateMetadata ?? {};
+  const existingAudit = readExistingRoleAudit(currentMetadata);
+
+  return {
+    ...currentMetadata,
+    staffRoleAudit: [entry, ...existingAudit].slice(0, STAFF_ROLE_AUDIT_LIMIT),
   };
 }
 
