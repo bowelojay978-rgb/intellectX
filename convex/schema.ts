@@ -142,6 +142,7 @@ export default defineSchema({
     userId: v.optional(v.id("users")),
     userKey: v.string(),
     quizId: v.string(),
+    submissionId: v.optional(v.string()),
     score: v.number(),
     totalQuestions: v.number(),
     answers: v.array(v.number()),
@@ -150,7 +151,8 @@ export default defineSchema({
     completedAt: v.number(),
   })
     .index("by_user", ["userKey"])
-    .index("by_quiz", ["quizId"]),
+    .index("by_quiz", ["quizId"])
+    .index("by_user_submission_id", ["userKey", "submissionId"]),
   studyStats: defineTable({
     userId: v.optional(v.id("users")),
     userKey: v.string(),
@@ -218,7 +220,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userKey"])
-    .index("by_user_product", ["userKey", "productKey"])
-    .index("by_user_product_provider_subscription", ["userKey", "productKey", "provider", "providerSubscriptionId"])
-    .index("by_product_status", ["productKey", "status"]),
+    .index("by_product", ["productKey"])
+    .index("by_provider_event", ["providerEventId"]),
 });
