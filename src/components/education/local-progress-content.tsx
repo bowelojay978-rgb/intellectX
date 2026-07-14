@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { AppLoadingSpinner } from "@/components/ui/app-loading-spinner";
 import { CourseCard } from "@/components/education/course-card";
 import { EmptyState } from "@/components/education/empty-state";
 import { glassCardClassName } from "@/components/education/glass-card";
@@ -92,12 +93,16 @@ export function LocalProgressContent() {
     };
   }, []);
 
-  const selectedCourses = useMemo(() => {
-    const selectedIds = selection?.selectedCourseIds ?? [];
-    return selectedIds
-      .map((courseId) => catalog.courseById.get(courseId))
-      .filter((course): course is Course => Boolean(course));
-  }, [catalog.courseById, selection]);
+  const selectedCourseIds = selection?.selectedCourseIds ?? [];
+  const selectionReady = selection !== null;
+
+  const selectedCourses = useMemo(
+    () =>
+      selectedCourseIds
+        .map((courseId) => catalog.courseById.get(courseId))
+        .filter((course): course is Course => Boolean(course)),
+    [catalog.courseById, selectedCourseIds],
+  );
 
   const selectedCoursesWithProgress = useMemo(
     () =>
@@ -107,6 +112,9 @@ export function LocalProgressContent() {
       })),
     [lessonHistory, selectedCourses],
   );
+
+  const unavailableSelectedCourseCount = Math.max(0, selectedCourseIds.length - selectedCourses.length);
+  const waitingForSelectedCourseCatalog = catalog.isLoading && selectedCourseIds.length > 0;
 
   return (
     <>
@@ -138,12 +146,32 @@ export function LocalProgressContent() {
             <CardTitle>Selected courses</CardTitle>
           </CardHeader>
           <CardContent>
-            {selectedCoursesWithProgress.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2">
-                {selectedCoursesWithProgress.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
+            {!selectionReady || waitingForSelectedCourseCatalog ? (
+              <div className="flex min-h-40 items-center justify-center" role="status" aria-live="polite">
+                <AppLoadingSpinner label="Loading selected course progress" showLabel />
               </div>
+            ) : selectedCoursesWithProgress.length > 0 ? (
+              <div className="space-y-4">
+                <div className="grid gap-5 md:grid-cols-2">
+                  {selectedCoursesWithProgress.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                </div>
+                {unavailableSelectedCourseCount > 0 ? (
+                  <p className="text-muted-foreground text-sm" role="status">
+                    {unavailableSelectedCourseCount} selected course{unavailableSelectedCourseCount === 1 ? " is" : "s are"}{" "}
+                    temporarily unavailable in the current catalog. Your selection is preserved and no progress is invented.
+                  </p>
+                ) : null}
+              </div>
+            ) : selectedCourseIds.length > 0 ? (
+              <EmptyState
+                title="Selected courses are unavailable right now"
+                description="Your course selection is preserved. Progress will appear when those courses are available in the current catalog."
+                actionHref="/courses"
+                actionLabel="View course selection"
+                icon={BookOpenCheckIcon}
+              />
             ) : (
               <EmptyState
                 title="No selected courses yet"
