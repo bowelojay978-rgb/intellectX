@@ -62,6 +62,12 @@ export const convexApi = {
     upsertLessonNote: makeFunctionReference<"mutation">("notes:upsertLessonNote"),
   },
   learnerMigration: {
+    recordLocalLearnerMigrationAttempt: makeFunctionReference<"mutation">(
+      "learnerMigration:recordLocalLearnerMigrationAttempt",
+    ),
+    recordLocalLearnerMigrationFailure: makeFunctionReference<"mutation">(
+      "learnerMigration:recordLocalLearnerMigrationFailure",
+    ),
     migrateLocalLearnerDataToAuthenticatedAccount: makeFunctionReference<"mutation">(
       "learnerMigration:migrateLocalLearnerDataToAuthenticatedAccount",
     ),
