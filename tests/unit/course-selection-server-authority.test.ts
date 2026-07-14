@@ -128,4 +128,15 @@ describe("server-authoritative course selection policy", () => {
     expect(source).not.toContain("lockedAt: args.lockedAt");
     expect(source).not.toContain("locked: args.locked");
   });
+
+  it("does not let local-to-auth migration bypass course selection authority", () => {
+    const source = readFileSync(path.resolve(process.cwd(), "convex/learnerMigration.ts"), "utf8");
+
+    expect(source).toContain("buildAuthoritativeCourseSelectionWrite");
+    expect(source).toContain("assertLearnerVisibleCourseIds");
+    expect(source).not.toContain("selectedAt: selectedCourseSelection.selectedAt");
+    expect(source).not.toContain("gracePeriodEndsAt: selectedCourseSelection.gracePeriodEndsAt");
+    expect(source).not.toContain("lockedAt: selectedCourseSelection.lockedAt");
+    expect(source).not.toContain("locked: selectedCourseSelection.locked");
+  });
 });
