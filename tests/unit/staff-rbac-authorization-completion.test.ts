@@ -96,8 +96,9 @@ describe("staff RBAC and authorization completion", () => {
     expect(completionAuditPosition).toBeGreaterThan(clerkUpdatePosition);
 
     expect(auditMutationSource).toContain("requireAdmin(identity)");
-    expect(auditMutationSource).toContain('withIndex("by_operation_id"');
+    expect(auditMutationSource).toContain('withIndex("by_target"');
     expect(auditMutationSource).toContain('targetType: "clerk_user"');
     expect(auditMutationSource).toContain("duplicateEvent");
+    expect(auditMutationSource).toContain("operationId: args.operationId");
   });
 });
