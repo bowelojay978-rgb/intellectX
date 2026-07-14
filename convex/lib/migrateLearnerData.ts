@@ -25,6 +25,11 @@ export type LessonProgressMigrationCandidate = {
   updatedAt: number;
 };
 
+type DestinationAuthoritativeMigrationRecord = {
+  userKey: string;
+  updatedAt: number;
+};
+
 function normalizeLessonProgress(progress: number) {
   if (!Number.isFinite(progress)) {
     return 0;
@@ -33,8 +38,20 @@ function normalizeLessonProgress(progress: number) {
   return Math.min(Math.max(progress, 0), 100);
 }
 
+function latestByUpdatedAt<T extends { updatedAt: number }>(records: readonly T[]) {
+  return [...records].sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
+}
+
+export function selectDestinationAuthoritativeRecordForMigration<T extends DestinationAuthoritativeMigrationRecord>(
+  sourceRecords: readonly T[],
+  destinationRecords: readonly T[],
+): T | null {
+  return latestByUpdatedAt(destinationRecords) ?? latestByUpdatedAt(sourceRecords);
+}
+
 export function selectMonotonicLessonProgressForMigration(
   records: readonly LessonProgressMigrationCandidate[],
+  preferredUserKey?: string,
 ): LessonProgressMigrationCandidate | null {
   let selected: LessonProgressMigrationCandidate | null = null;
 
@@ -46,10 +63,18 @@ export function selectMonotonicLessonProgressForMigration(
       status: progress >= 100 ? "completed" : record.status,
     };
 
+    const shouldPreferOnExactTie =
+      Boolean(preferredUserKey) &&
+      normalized.userKey === preferredUserKey &&
+      selected?.userKey !== preferredUserKey &&
+      normalized.progress === selected?.progress &&
+      normalized.updatedAt === selected?.updatedAt;
+
     if (
       !selected ||
       normalized.progress > selected.progress ||
-      (normalized.progress === selected.progress && normalized.updatedAt > selected.updatedAt)
+      (normalized.progress === selected.progress && normalized.updatedAt > selected.updatedAt) ||
+      shouldPreferOnExactTie
     ) {
       selected = normalized;
     }
