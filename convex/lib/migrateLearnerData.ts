@@ -25,6 +25,23 @@ export type LessonProgressMigrationCandidate = {
   updatedAt: number;
 };
 
+export type QuizAttemptMigrationCandidate = {
+  quizId: string;
+  completedAt: number;
+  score: number;
+  totalQuestions: number;
+  answers: readonly number[];
+};
+
+export type DestinationAuthoritativeMigrationCandidate = {
+  userKey: string;
+  updatedAt: number;
+};
+
+function latestByUpdatedAt<T extends { updatedAt: number }>(records: readonly T[]) {
+  return [...records].sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null;
+}
+
 function normalizeLessonProgress(progress: number) {
   if (!Number.isFinite(progress)) {
     return 0;
@@ -56,6 +73,22 @@ export function selectMonotonicLessonProgressForMigration(
   }
 
   return selected;
+}
+
+export function selectDestinationAuthoritativeMigrationRecord<
+  T extends DestinationAuthoritativeMigrationCandidate,
+>(sourceRecords: readonly T[], destinationRecords: readonly T[]): T | null {
+  return latestByUpdatedAt(destinationRecords) ?? latestByUpdatedAt(sourceRecords);
+}
+
+export function getQuizAttemptMigrationFingerprint(attempt: QuizAttemptMigrationCandidate) {
+  return JSON.stringify([
+    attempt.quizId,
+    attempt.completedAt,
+    attempt.score,
+    attempt.totalQuestions,
+    [...attempt.answers],
+  ]);
 }
 
 export function isLocalLearnerMigrationSourceUserKey(userKey: string | null | undefined) {
