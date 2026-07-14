@@ -14,8 +14,26 @@ import { revalidatePath } from "next/cache";
 const recordInstructorAccessChangeAudit = makeFunctionReference<"mutation">(
   "staffSecurityAudit:recordInstructorAccessChange",
 );
+const reconcilePendingInstructorAccessChangeAudit = makeFunctionReference<"mutation">(
+  "staffSecurityAudit:reconcilePendingInstructorAccessChange",
+);
 
 type ManagedInstructorRole = "learner" | "instructor";
+
+async function getAuthenticatedAdminConvexToken(expectedUserId: string) {
+  const authState = await auth();
+
+  if (authState.userId !== expectedUserId) {
+    throw new Error("Unauthorized: authenticated admin session changed during role update.");
+  }
+
+  const token = await authState.getToken();
+  if (!token) {
+    throw new Error("Unable to obtain authenticated Convex token for staff security audit.");
+  }
+
+  return token;
+}
 
 async function writeInstructorAccessAudit(args: {
   token: string;
@@ -27,6 +45,25 @@ async function writeInstructorAccessAudit(args: {
 }) {
   const { token, ...mutationArgs } = args;
   await fetchMutation(recordInstructorAccessChangeAudit, mutationArgs, { token });
+}
+
+async function writeInstructorAccessAuditWithRetry(
+  args: Parameters<typeof writeInstructorAccessAudit>[0],
+) {
+  try {
+    await writeInstructorAccessAudit(args);
+  } catch {
+    await writeInstructorAccessAudit(args);
+  }
+}
+
+async function reconcilePendingInstructorAccessChange(args: {
+  token: string;
+  targetUserId: string;
+  currentRole: ManagedInstructorRole;
+}) {
+  const { token, ...mutationArgs } = args;
+  await fetchMutation(reconcilePendingInstructorAccessChangeAudit, mutationArgs, { token });
 }
 
 export async function setInstructorAccessAction(formData: FormData) {
@@ -58,20 +95,17 @@ export async function setInstructorAccessAction(formData: FormData) {
     throw new Error("Admin roles cannot be changed from the instructor-management page.");
   }
 
+  const token = await getAuthenticatedAdminConvexToken(session.userId);
+
   if (currentRole === nextRole) {
+    await reconcilePendingInstructorAccessChange({
+      token,
+      targetUserId: userId,
+      currentRole,
+    });
     revalidatePath("/admin/instructors");
     revalidatePath("/admin");
     return;
-  }
-
-  const authState = await auth();
-  if (!authState.isAuthenticated || authState.userId !== session.userId) {
-    throw new Error("Unauthorized: authenticated admin session changed during role update.");
-  }
-
-  const token = await authState.getToken();
-  if (!token) {
-    throw new Error("Unable to obtain authenticated Convex token for staff security audit.");
   }
 
   const operationId = randomUUID();
@@ -99,19 +133,44 @@ export async function setInstructorAccessAction(formData: FormData) {
         phase: "failed",
       });
     } catch {
-      // The requested audit event already exists. Do not hide the Clerk mutation failure.
+      // The requested audit event already persists the attempted transition.
     }
 
     throw new Error("Unable to update instructor access in Clerk.");
   }
 
   try {
-    await writeInstructorAccessAudit({
+    await writeInstructorAccessAuditWithRetry({
       ...auditBase,
       phase: "completed",
     });
   } catch {
-    throw new Error("Instructor access was updated, but security audit completion failed.");
+    if (nextRole === "instructor") {
+      try {
+        await client.users.updateUserMetadata(userId, {
+          publicMetadata: buildPublicMetadataWithStaffRole(targetUser.publicMetadata, currentRole),
+        });
+      } catch {
+        throw new Error(
+          "Critical partial failure: instructor access was granted, audit completion failed, and rollback failed.",
+        );
+      }
+
+      try {
+        await writeInstructorAccessAudit({
+          ...auditBase,
+          phase: "failed",
+        });
+      } catch {
+        // The requested event still records the attempted privilege grant.
+      }
+
+      throw new Error("Instructor access grant was rolled back because security audit completion failed.");
+    }
+
+    throw new Error(
+      "Instructor access was revoked, but security audit completion is pending reconciliation.",
+    );
   }
 
   revalidatePath("/admin/instructors");

@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import {
   assertManagedInstructorRoleTransition,
   getStaffRoleChangeAuditEventType,
+  type ManagedInstructorRole,
 } from "./lib/staffRoleChangeAudit";
 import { requireAdmin } from "./lib/staffRbac";
 
@@ -14,6 +15,18 @@ type UnknownRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readManagedRole(value: unknown): ManagedInstructorRole | null {
+  return value === "learner" || value === "instructor" ? value : null;
+}
+
+function readOperationId(value: unknown) {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function hasOperationId(event: { before?: unknown }, operationId: string) {
+  return isRecord(event.before) && event.before.operationId === operationId;
 }
 
 export const recordInstructorAccessChange = mutationGeneric({
@@ -37,10 +50,7 @@ export const recordInstructorAccessChange = mutationGeneric({
       .order("desc")
       .take(20);
     const duplicateEvent = existingEvents.find(
-      (event) =>
-        event.eventType === eventType &&
-        isRecord(event.before) &&
-        event.before.operationId === args.operationId,
+      (event) => event.eventType === eventType && hasOperationId(event, args.operationId),
     );
 
     if (duplicateEvent) {
@@ -58,5 +68,69 @@ export const recordInstructorAccessChange = mutationGeneric({
       before: { role: args.previousRole, operationId: args.operationId },
       after: { role: args.nextRole, operationId: args.operationId },
     });
+  },
+});
+
+export const reconcilePendingInstructorAccessChange = mutationGeneric({
+  args: {
+    targetUserId: v.string(),
+    currentRole: managedInstructorRoleValidator,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const actor = requireAdmin(identity);
+    const existingEvents = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_target", (q) => q.eq("targetType", "clerk_user").eq("targetId", args.targetUserId))
+      .order("desc")
+      .take(50);
+
+    for (const requestedEvent of existingEvents) {
+      if (
+        requestedEvent.eventType !== "staff_instructor_access_change_requested" ||
+        !isRecord(requestedEvent.before) ||
+        !isRecord(requestedEvent.after)
+      ) {
+        continue;
+      }
+
+      const operationId = readOperationId(requestedEvent.before.operationId);
+      const previousRole = readManagedRole(requestedEvent.before.role);
+      const requestedRole = readManagedRole(requestedEvent.after.role);
+
+      if (!operationId || !previousRole || !requestedRole || requestedRole !== args.currentRole) {
+        continue;
+      }
+
+      assertManagedInstructorRoleTransition(previousRole, requestedRole);
+
+      const completedEventType = getStaffRoleChangeAuditEventType("completed", requestedRole);
+      const hasTerminalEvent = existingEvents.some(
+        (event) =>
+          (event.eventType === completedEventType ||
+            event.eventType === "staff_instructor_access_change_failed") &&
+          hasOperationId(event, operationId),
+      );
+
+      if (hasTerminalEvent) {
+        return { reconciled: false };
+      }
+
+      await ctx.db.insert("auditLogs", {
+        eventType: completedEventType,
+        actorUserId: actor.actorUserId,
+        actorRole: actor.role,
+        targetType: "clerk_user",
+        targetId: args.targetUserId,
+        createdAt: Date.now(),
+        reason: "reconciled_after_clerk_role_change",
+        before: { role: previousRole, operationId },
+        after: { role: requestedRole, operationId },
+      });
+
+      return { reconciled: true };
+    }
+
+    return { reconciled: false };
   },
 });
