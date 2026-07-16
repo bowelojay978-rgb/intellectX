@@ -27,11 +27,11 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] Clerk auth UI bridge exists.
 - [ ] Clerk-aware nav, session, and profile UI exists.
 - [ ] Dual-mode route guard exists for protected app routes.
-- [ ] Local browser-backed learner sessions remain active when Clerk environment keys are missing.
+- [ ] Local browser-backed learner sessions remain available only in development/test; production requires complete Clerk + Convex configuration.
 - [ ] Convex learner identity resolution is centralized for user-owned data.
 - [ ] Authenticated Clerk/Convex identity is preferred when available.
 - [ ] Production Convex user-owned reads and writes fail closed without authenticated identity.
-- [ ] `ALLOW_LOCAL_USERKEY_FALLBACK` is unset or `false` in production; use it only for local/development fallback testing.
+- [ ] `ALLOW_LOCAL_USERKEY_FALLBACK` is unset or `false` in production; production rejects it even when accidentally enabled, and development/test Convex fallback requires an explicit `true` opt-in.
 - [ ] Frontend Convex sync is auth-aware: Clerk+Convex mode can hydrate and write account-backed profile, course selection, quiz, lesson progress, and study activity data without requiring a local browser learner session.
 - [ ] Local-to-auth learner data migration bridge exists for account activation.
 - [ ] Migration only runs when authenticated Convex identity exists; automatic frontend migration uses only the current browser's local learner identity as the source key.
@@ -46,6 +46,7 @@ Use this checklist before sharing builds, deploying releases, or handing artifac
 - [ ] `convex/auth.config.ts` is added only after the issuer exists and uses `CLERK_JWT_ISSUER_DOMAIN` with Convex application ID `convex`.
 - [ ] Clerk has a JWT template named `convex` with the default Convex audience plus any required trusted staff role claim.
 - [ ] Staff role claims use only `learner`, `instructor`, or `admin` at `staff.role`, `metadata.role`, `publicMetadata.role`, or `appMetadata.role`.
+- [ ] Record the Clerk `convex` JWT template Token lifetime (`exp - iat`) and verify role revocation denies privileged access after token refresh within that window.
 - [ ] Full production Convex identity security still requires adding, deploying, and validating `convex/auth.config.ts` after `CLERK_JWT_ISSUER_DOMAIN` is configured.
 - [ ] Keep payments blocked until real authentication, secure entitlements, checkout verification, webhook verification, and subscription lifecycle are complete.
 - [ ] Keep paid access blocked until fallback `userKey` trust is removed or restricted away from paid paths.

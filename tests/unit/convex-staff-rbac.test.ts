@@ -102,4 +102,12 @@ describe("Convex staff RBAC", () => {
     expect(canReviewCourse(actor.role)).toBe(true);
     expect(canManageInstructorCourse(actor.role, { instructorId: "other-user" }, actor.actorUserId)).toBe(true);
   });
+
+  it("denies privileged access once a refreshed identity no longer carries the staff role", () => {
+    expect(requireInstructorOrAdmin(identity({ staff: { role: INSTRUCTOR } })).role).toBe("instructor");
+    expect(() => requireInstructorOrAdmin(identity({ staff: { role: "learner" } }))).toThrow(
+      "trusted instructor or admin role is required",
+    );
+    expect(() => requireInstructorOrAdmin(identity())).toThrow("trusted instructor or admin role is required");
+  });
 });

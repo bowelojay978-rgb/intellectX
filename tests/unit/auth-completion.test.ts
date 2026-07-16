@@ -17,7 +17,7 @@ const learnerOwnedModules = [
 ];
 
 describe("authentication completion contract", () => {
-  it("normalizes explicit local fallback policy before applying environment defaults", () => {
+  it("requires explicit local fallback in development and always rejects it in production", () => {
     expect(
       isLocalUserKeyFallbackAllowed({
         ALLOW_LOCAL_USERKEY_FALLBACK: " false ",
@@ -29,6 +29,13 @@ describe("authentication completion contract", () => {
       isLocalUserKeyFallbackAllowed({
         ALLOW_LOCAL_USERKEY_FALLBACK: " TRUE ",
         NODE_ENV: "production",
+      }),
+    ).toBe(false);
+
+    expect(
+      isLocalUserKeyFallbackAllowed({
+        ALLOW_LOCAL_USERKEY_FALLBACK: " TRUE ",
+        NODE_ENV: "development",
       }),
     ).toBe(true);
   });

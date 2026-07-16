@@ -31,30 +31,43 @@ describe("Convex learner identity resolution", () => {
     });
   });
 
-  it("allows the temporary local fallback userKey only when explicitly allowed", () => {
-    expect(
+  it("rejects the temporary local fallback in production even when explicitly enabled", () => {
+    expect(() =>
       resolveLearnerUserKeyFromIdentity(null, " learner:local@example.com ", {
         ALLOW_LOCAL_USERKEY_FALLBACK: "true",
         NODE_ENV: "production",
+      }),
+    ).toThrow("Authenticated learner identity is required.");
+
+    expect(() =>
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", {
+        ALLOW_LOCAL_USERKEY_FALLBACK: "true",
+        CONVEX_DEPLOYMENT: "prod:example",
+      }),
+    ).toThrow("Authenticated learner identity is required.");
+  });
+
+  it("allows the temporary local fallback only with explicit opt-in in safe contexts", () => {
+    expect(
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", {
+        ALLOW_LOCAL_USERKEY_FALLBACK: "true",
+        NODE_ENV: "development",
+      }),
+    ).toEqual({ userKey: "learner:local@example.com", source: "local-fallback" });
+
+    expect(
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", {
+        ALLOW_LOCAL_USERKEY_FALLBACK: "true",
+        CONVEX_DEPLOYMENT: "dev:example",
       }),
     ).toEqual({
       userKey: "learner:local@example.com",
       source: "local-fallback",
     });
-  });
 
-  it("allows the temporary local fallback for clearly local development contexts", () => {
-    expect(resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", { NODE_ENV: "development" })).toEqual({
-      userKey: "learner:local@example.com",
-      source: "local-fallback",
-    });
-
-    expect(
-      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", { CONVEX_DEPLOYMENT: "dev:example" }),
-    ).toEqual({
-      userKey: "learner:local@example.com",
-      source: "local-fallback",
-    });
+    expect(() =>
+      resolveLearnerUserKeyFromIdentity(null, "learner:local@example.com", { NODE_ENV: "development" }),
+    ).toThrow("Authenticated learner identity is required.");
   });
 
   it("rejects local fallback in production-like contexts without an opt-in flag", () => {
@@ -105,13 +118,25 @@ describe("Convex learner identity resolution", () => {
   });
 
   it("detects when local userKey fallback is allowed", () => {
-    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "production" })).toBe(true);
-    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", NODE_ENV: "development" })).toBe(false);
-    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", CONVEX_DEPLOYMENT: "dev:example" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "production" })).toBe(false);
+    expect(
+      isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", CONVEX_DEPLOYMENT: "prod:example" }),
+    ).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "development" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", NODE_ENV: "test" })).toBe(true);
+    expect(
+      isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "true", CONVEX_DEPLOYMENT: "dev:example" }),
+    ).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", NODE_ENV: "development" })).toBe(
+      false,
+    );
+    expect(
+      isLocalUserKeyFallbackAllowed({ ALLOW_LOCAL_USERKEY_FALLBACK: "false", CONVEX_DEPLOYMENT: "dev:example" }),
+    ).toBe(false);
     expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "production" })).toBe(false);
-    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "development" })).toBe(true);
-    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "test" })).toBe(true);
-    expect(isLocalUserKeyFallbackAllowed({ CONVEX_DEPLOYMENT: "dev:example" })).toBe(true);
+    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "development" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ NODE_ENV: "test" })).toBe(false);
+    expect(isLocalUserKeyFallbackAllowed({ CONVEX_DEPLOYMENT: "dev:example" })).toBe(false);
     expect(isLocalUserKeyFallbackAllowed({ CONVEX_DEPLOYMENT: "prod:example" })).toBe(false);
     expect(isLocalUserKeyFallbackAllowed({})).toBe(false);
   });

@@ -63,8 +63,19 @@ export const generateStaffMediaUploadUrl = mutationGeneric({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    requireInstructorOrAdmin(identity);
-    return await ctx.storage.generateUploadUrl();
+    const actor = requireInstructorOrAdmin(identity);
+    const uploadUrl = await ctx.storage.generateUploadUrl();
+
+    await ctx.db.insert("auditLogs", {
+      eventType: "staff_media.upload_url_generated",
+      actorUserId: actor.actorUserId,
+      actorRole: actor.role,
+      targetType: "staff_media_upload",
+      targetId: actor.actorUserId,
+      createdAt: Date.now(),
+    });
+
+    return uploadUrl;
   },
 });
 
@@ -100,15 +111,32 @@ export const registerStaffMediaUpload = mutationGeneric({
       return existing._id;
     }
 
-    return await ctx.db.insert("staffMediaUploads", {
+    const createdAt = Date.now();
+    const uploadId = await ctx.db.insert("staffMediaUploads", {
       storageId: args.storageId,
       uploadedBy: actor.actorUserId,
       uploaderRole: actor.role,
       kind: args.kind,
       contentType: validated.contentType,
       size: validated.size,
-      createdAt: Date.now(),
+      createdAt,
     });
+
+    await ctx.db.insert("auditLogs", {
+      eventType: "staff_media.registered",
+      actorUserId: actor.actorUserId,
+      actorRole: actor.role,
+      targetType: "staff_media",
+      targetId: String(args.storageId),
+      createdAt,
+      after: {
+        kind: args.kind,
+        contentType: validated.contentType,
+        size: validated.size,
+      },
+    });
+
+    return uploadId;
   },
 });
 
