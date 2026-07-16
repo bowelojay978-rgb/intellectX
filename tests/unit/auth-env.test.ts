@@ -59,4 +59,30 @@ describe("auth environment mode detection", () => {
       awaitingConvexAuthConfig: false,
     });
   });
+
+  it("fails closed in production unless both Clerk and Convex public configuration are present", () => {
+    expect(() => getAuthEnvironmentStatus({ NODE_ENV: "production" })).toThrow(
+      "Production authentication requires NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and NEXT_PUBLIC_CONVEX_URL.",
+    );
+    expect(() =>
+      getAuthEnvironmentStatus({
+        NODE_ENV: "production",
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_live_example",
+      }),
+    ).toThrow("Production authentication requires");
+    expect(() =>
+      getAuthEnvironmentStatus({
+        NODE_ENV: "production",
+        NEXT_PUBLIC_CONVEX_URL: "https://example.convex.cloud",
+      }),
+    ).toThrow("Production authentication requires");
+
+    expect(
+      getAuthEnvironmentStatus({
+        NODE_ENV: "production",
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_live_example",
+        NEXT_PUBLIC_CONVEX_URL: "https://example.convex.cloud",
+      }).mode,
+    ).toBe("clerk-convex-ready");
+  });
 });

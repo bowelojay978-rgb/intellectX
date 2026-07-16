@@ -22,23 +22,22 @@ export function getAuthenticatedLearnerUserKey(identity: UserIdentity) {
 export function isLocalUserKeyFallbackAllowed(env: IdentityPolicyEnv = process.env as IdentityPolicyEnv) {
   const explicitFallbackPolicy = env.ALLOW_LOCAL_USERKEY_FALLBACK?.trim().toLowerCase();
 
-  if (explicitFallbackPolicy === "true") {
-    return true;
+  // Production is never allowed to accept a browser-supplied owner key, even
+  // when an unsafe flag is accidentally carried into the deployment.
+  if (env.CONVEX_DEPLOYMENT?.startsWith("prod:") || env.NODE_ENV === "production") {
+    return false;
   }
 
   if (explicitFallbackPolicy === "false") {
     return false;
   }
 
-  if (env.CONVEX_DEPLOYMENT?.startsWith("dev:")) {
-    return true;
-  }
-
-  if (env.CONVEX_DEPLOYMENT?.startsWith("prod:") || env.NODE_ENV === "production") {
-    return false;
-  }
-
-  return env.NODE_ENV === "development" || env.NODE_ENV === "test";
+  // Local fallback requires both an explicit opt-in and an environment that is
+  // clearly development/test. An unset or ambiguous environment fails closed.
+  return (
+    explicitFallbackPolicy === "true" &&
+    (env.CONVEX_DEPLOYMENT?.startsWith("dev:") || env.NODE_ENV === "development" || env.NODE_ENV === "test")
+  );
 }
 
 export function resolveLearnerUserKeyFromIdentity(

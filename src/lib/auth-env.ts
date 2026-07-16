@@ -2,6 +2,8 @@
 
 export type AuthEnvironmentMode = "local-fallback" | "clerk-only" | "convex-only" | "clerk-convex-ready";
 
+type RuntimeAuthEnv = PublicAuthEnv & { NODE_ENV?: string };
+
 export type AuthEnvironmentStatus = {
   clerkPublishableKeyPresent: boolean;
   convexUrlPresent: boolean;
@@ -14,9 +16,10 @@ export type AuthEnvironmentStatus = {
 };
 
 export function getAuthEnvironmentStatus(
-  env: PublicAuthEnv = {
+  env: RuntimeAuthEnv = {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+    NODE_ENV: process.env.NODE_ENV,
   },
 ): AuthEnvironmentStatus {
   const clerkPublishableKeyPresent = Boolean(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
@@ -28,6 +31,10 @@ export function getAuthEnvironmentStatus(
     : convexUrlPresent
       ? "convex-only"
       : "local-fallback";
+
+  if (env.NODE_ENV === "production" && mode !== "clerk-convex-ready") {
+    throw new Error("Production authentication requires NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and NEXT_PUBLIC_CONVEX_URL.");
+  }
 
   return {
     clerkPublishableKeyPresent,

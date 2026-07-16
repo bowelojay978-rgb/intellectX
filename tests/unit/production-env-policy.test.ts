@@ -1,5 +1,6 @@
 ﻿import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 
 const scriptPath = "scripts/check-production-env.mjs";
 
@@ -18,6 +19,14 @@ function runPreflight(env: Record<string, string | undefined>, strict = false) {
 }
 
 describe("production environment preflight", () => {
+  it("runs strict authentication configuration validation before every production build", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.prebuild).toBe("node scripts/check-production-env.mjs --strict");
+  });
+
   it("passes strict mode when Clerk and Convex auth requirements are present and unsafe flags are disabled", () => {
     const output = runPreflight(
       {

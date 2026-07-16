@@ -9,7 +9,7 @@ import { resolveLearnerUserKey } from "./lib/identity";
 
 export const getPaidAccessDecision = queryGeneric({
   args: {
-    userKey: v.string(),
+    userKey: v.optional(v.string()),
     productKey: v.string(),
   },
   handler: async (ctx, args) => {
